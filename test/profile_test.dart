@@ -67,6 +67,29 @@ void main() {
     expect(fit.unseenAwards, isEmpty);
   });
 
+  test('a medal won while opening the app still gets its celebration', () {
+    fit.sessions.add(LoggedSession(DateTime.now(), 1800, const []));
+    fit.persistNow();
+    fit.pendingAwards.clear();
+    fit.loadFromStore();
+
+    expect(fit.hasAward(AwardId.firstWorkout), true);
+    expect(fit.pendingAwards, contains(AwardId.firstWorkout),
+        reason: 'se ganaba en silencio y aparecía en el perfil sin animación');
+  });
+
+  test('a medal already celebrated does not come back on the next launch', () {
+    fit.sessions.add(LoggedSession(DateTime.now(), 1800, const []));
+    fit.refreshAwards();
+    while (fit.nextCelebration != null) {
+      fit.celebrationShown();
+    }
+    fit.persistNow();
+    fit.loadFromStore();
+
+    expect(fit.pendingAwards, isEmpty);
+  });
+
   test('a medal you have not earned reports how far along you are', () {
     expect(fit.hasAward(AwardId.sets1000), false);
     expect(fit.awardProgress(AwardId.sets1000), 0);

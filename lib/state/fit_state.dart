@@ -124,6 +124,9 @@ class FitState extends FitCore
     _seedCalculatorsFromProfile();
     _loading = false;
     refreshAwards(silent: true);
+    pendingAwards
+      ..clear()
+      ..addAll(unseenAwards);
     notifyListeners();
   }
 
