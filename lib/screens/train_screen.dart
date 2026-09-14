@@ -229,6 +229,20 @@ class _TrainScreenState extends State<TrainScreen> {
         ),
         const SizedBox(width: 10),
         GestureDetector(
+          onTap: fit.toggleResetPicks,
+          child: Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: gc.bgRaised,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: gc.border),
+            ),
+            child: Icon(PhosphorIconsRegular.arrowCounterClockwise, size: 20, color: gc.textSecondary),
+          ),
+        ),
+        const SizedBox(width: 10),
+        GestureDetector(
           onTap: () => showCreateExerciseSheet(context, onCreated: (id) {
             fit.togglePick(id);
             _clearSearch();
