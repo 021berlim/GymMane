@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gymmane/app/gymmane_app.dart';
 import 'package:gymmane/state/fit_state.dart';
@@ -14,8 +15,9 @@ void main() {
     await tester.pumpWidget(const GymManeApp());
     await tester.pumpAndSettle();
 
-    // Verify Reset button icon is present
-    expect(find.byIcon(PhosphorIconsRegular.arrowCounterClockwise), findsOneWidget);
+    final iconFinder = find.byIcon(PhosphorIconsRegular.arrowCounterClockwise);
+    expect(iconFinder, findsOneWidget);
+    final initialIcon = tester.widget<Icon>(iconFinder);
 
     // Verify Plus button icon is present
     expect(find.byIcon(PhosphorIconsRegular.plus), findsOneWidget);
@@ -23,15 +25,19 @@ void main() {
     // Verify picks initially non-empty
     expect(fit.sessionPicks.isNotEmpty, true);
 
-    // Tap reset button -> clears picks
-    await tester.tap(find.byIcon(PhosphorIconsRegular.arrowCounterClockwise));
+    // Tap reset button -> clears picks, button becomes dimmed
+    await tester.tap(iconFinder);
     await tester.pumpAndSettle();
     expect(fit.sessionPicks.isEmpty, true);
+    final clearedIcon = tester.widget<Icon>(iconFinder);
+    expect(clearedIcon.color != initialIcon.color, true);
 
-    // Tap reset button again -> restores default picks
-    await tester.tap(find.byIcon(PhosphorIconsRegular.arrowCounterClockwise));
+    // Tap reset button again -> restores default picks, button lights up again
+    await tester.tap(iconFinder);
     await tester.pumpAndSettle();
     expect(fit.sessionPicks.isNotEmpty, true);
+    final restoredIcon = tester.widget<Icon>(iconFinder);
+    expect(restoredIcon.color == initialIcon.color, true);
 
     fit.route = 'home';
   });

@@ -229,16 +229,22 @@ class _TrainScreenState extends State<TrainScreen> {
         ),
         const SizedBox(width: 10),
         GestureDetector(
-          onTap: fit.toggleResetPicks,
+          onTap: () => setState(() => fit.toggleResetPicks()),
           child: Container(
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: gc.bgRaised,
+              color: fit.sessionPicks.isNotEmpty ? gc.emberSoft : gc.bgRaised,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: gc.border),
+              border: Border.all(
+                color: fit.sessionPicks.isNotEmpty ? gc.ember.withValues(alpha: 0.3) : gc.border,
+              ),
             ),
-            child: Icon(PhosphorIconsRegular.arrowCounterClockwise, size: 20, color: gc.textSecondary),
+            child: Icon(
+              PhosphorIconsRegular.arrowCounterClockwise,
+              size: 20,
+              color: fit.sessionPicks.isNotEmpty ? gc.ember : gc.textTertiary,
+            ),
           ),
         ),
         const SizedBox(width: 10),
