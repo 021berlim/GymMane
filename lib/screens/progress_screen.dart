@@ -15,6 +15,7 @@ import '../widgets/body_map.dart';
 import '../widgets/bodyweight_sheet.dart';
 import '../widgets/charts.dart';
 import '../widgets/goal_progress_widgets.dart';
+import '../widgets/share_photo_sheet.dart';
 import '../widgets/svg_icon.dart';
 import '../widgets/ui_kit.dart';
 import 'muscle_distribution_screen.dart';
@@ -261,7 +262,35 @@ class _DaySheet extends StatelessWidget {
               ],
             ]),
             const SizedBox(height: 16),
-            Text(t.tapToDelete, style: AppTheme.s(11, color: gc.textTertiary)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(t.tapToDelete, style: AppTheme.s(11, color: gc.textTertiary)),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    final durMins = s.durationSec > 0 ? (s.durationSec / 60).round() : 30;
+                    final durStr = s.durationSec > 0 ? '$durMins MIN' : '30 MIN';
+                    final volKg = s.volume;
+                    final calories = (durMins * 5 + volKg * 0.02).round().clamp(20, 2000);
+                    showSharePhotoSheet(
+                      context,
+                      durationStr: durStr,
+                      prCount: 0,
+                      volumeKg: volKg,
+                      calories: calories,
+                      muscleGroupsStr: 'Treino ${t.shortDate(date)}',
+                    );
+                  },
+                  icon: Icon(Icons.camera_alt, size: 14, color: gc.accent),
+                  label: Text('Compartilhar Foto', style: AppTheme.s(12, weight: FontWeight.w600, color: gc.text)),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: gc.border),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 8),
             for (final logged in fit.sessionsOn(date))
               for (final ex in [...logged.exercises])

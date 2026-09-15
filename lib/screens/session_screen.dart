@@ -10,6 +10,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/exercise_media.dart';
 import '../widgets/bodyweight_sheet.dart';
+import '../widgets/share_photo_sheet.dart';
 import '../widgets/svg_icon.dart';
 import '../widgets/ui_kit.dart';
 
@@ -600,6 +601,35 @@ class _SessionScreenState extends State<SessionScreen> {
             _bodyweightComparison(gc, beforeWeight, afterWeight),
           ],
           const SizedBox(height: 18),
+          OutlinedButton.icon(
+            onPressed: () {
+              final durStr = fit.summaryDurationLabel;
+              final prCount = prs;
+              final volKg = vol;
+              final durSec = fit.session?.summaryDuration ?? 0;
+              final durationMins = durSec > 0 ? (durSec / 60).round() : 30;
+              final calories = (durationMins * 5 + volKg * 0.02).round().clamp(20, 2000);
+              final muscles = fit.activeRoutine?.name ?? 'Treino Completo';
+
+              showSharePhotoSheet(
+                context,
+                durationStr: durStr,
+                prCount: prCount,
+                volumeKg: volKg,
+                calories: calories,
+                muscleGroupsStr: muscles,
+              );
+            },
+            icon: Icon(Icons.camera_alt, size: 18, color: gc.accent),
+            label: Text('Compartilhar Foto',
+                style: AppTheme.s(14, weight: FontWeight.w700, color: gc.text)),
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(color: gc.accent),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+            ),
+          ),
+          const SizedBox(height: 10),
           PrimaryButton(label: t.saveAndExit, onTap: fit.saveAndExit),
         ],
       ),
