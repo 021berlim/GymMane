@@ -74,12 +74,10 @@ jobs:
           if [ -n "$KEYSTORE_BASE64" ]; then
             echo "$KEYSTORE_BASE64" | base64 -d -i > android/app/fitiron-release.jks
             if [ -s android/app/fitiron-release.jks ]; then
-              cat > android/key.properties <<EOF
-storePassword=$KEYSTORE_PASSWORD
-keyPassword=$KEY_PASSWORD
-keyAlias=$KEY_ALIAS
-storeFile=fitiron-release.jks
-EOF
+              echo "storePassword=$KEYSTORE_PASSWORD" > android/key.properties
+              echo "keyPassword=$KEY_PASSWORD" >> android/key.properties
+              echo "keyAlias=$KEY_ALIAS" >> android/key.properties
+              echo "storeFile=fitiron-release.jks" >> android/key.properties
             fi
           fi
 
