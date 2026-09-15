@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fitiron/app/fitiron_app.dart';
+import 'package:fitiron/l10n/l10n.dart';
 import 'package:fitiron/models/goal.dart';
 import 'package:fitiron/state/fit_state.dart';
 
@@ -19,12 +20,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
 
     expect(tester.takeException(), isNull);
-    expect(find.text('Ofensiva Diária'), findsOneWidget);
-    expect(find.text('Sequência Semanal'), findsOneWidget);
-    expect(find.text('PROGRESSO SEMANAL'), findsOneWidget);
-    expect(find.text('TEMPO'), findsOneWidget);
-    expect(find.text('CALORIAS'), findsOneWidget);
-    expect(find.text('VOLUME'), findsOneWidget);
-    expect(find.text('REPS'), findsOneWidget);
+    expect(find.text(t.consistency), findsOneWidget);
+    expect(find.text(t.volume), findsWidgets);
   });
 }

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class SqliteStore {
@@ -56,8 +57,36 @@ class SqliteStore {
         },
         onCreate: _onCreate,
       );
+      await _migrateLegacyDataIfNeeded();
     } catch (e, stack) {
       debugPrint('SqliteStore.init fallo: $e\n$stack');
+    }
+  }
+
+  Future<void> _migrateLegacyDataIfNeeded() async {
+    try {
+      final db = await _ensureDb;
+      final check = await db.query('app_settings', where: "key = 'migrated_v1'");
+      if (check.isNotEmpty) return;
+
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString('fitiron_v1');
+      if (raw != null && raw.isNotEmpty) {
+        final decoded = jsonDecode(raw);
+        if (decoded is Map<String, dynamic>) {
+          await saveFullState(decoded);
+          await prefs.remove('fitiron_v1');
+        }
+      }
+    } catch (e) {
+      debugPrint('Legacy migration error: $e');
+    }
+  }
+
+  Future<void> close() async {
+    if (_db != null && _db!.isOpen) {
+      await _db!.close();
+      _db = null;
     }
   }
 

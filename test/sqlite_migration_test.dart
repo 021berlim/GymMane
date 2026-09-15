@@ -83,6 +83,8 @@ void main() {
       'fitiron_v1': jsonEncode(legacyMap),
     });
 
+    await SqliteStore.instance.close();
+
     // Initialize Store (opens SQLite and triggers LegacyMigrator)
     await Store.instance.init();
 
