@@ -6,6 +6,8 @@ import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+
 /// Metadata about an available update from GitHub Releases.
 class UpdateInfo {
   final String version;
@@ -33,6 +35,93 @@ class UpdateService {
   static const _repo = 'GymMane';
 
   static const _installChannel = MethodChannel('com.fitiron.app/install');
+  static const _updateNotificationId = 9999;
+  static final _notifications = FlutterLocalNotificationsPlugin();
+  static bool _notificationsInitialized = false;
+
+  static Future<void> _initNotifications() async {
+    if (_notificationsInitialized) return;
+    try {
+      const androidInit = AndroidInitializationSettings('@drawable/ic_notification');
+      await _notifications.initialize(
+        settings: const InitializationSettings(android: androidInit),
+        onDidReceiveNotificationResponse: (response) {
+          final path = response.payload;
+          if (path != null && path.isNotEmpty) {
+            _installChannel.invokeMethod('installApk', {'path': path});
+          }
+        },
+      );
+      _notificationsInitialized = true;
+    } catch (_) {}
+  }
+
+  static Future<void> _showProgressNotification(String version, int percent) async {
+    try {
+      final androidDetails = AndroidNotificationDetails(
+        'fitiron_updates',
+        'App Updates',
+        channelDescription: 'Notifications for app update downloads',
+        importance: Importance.low,
+        priority: Priority.low,
+        showProgress: true,
+        maxProgress: 100,
+        progress: percent,
+        ongoing: true,
+        onlyAlertOnce: true,
+        icon: 'ic_notification',
+      );
+      await _notifications.show(
+        id: _updateNotificationId,
+        title: 'Baixando FIT//IRON v$version',
+        body: '$percent% concluído',
+        notificationDetails: NotificationDetails(android: androidDetails),
+      );
+    } catch (_) {}
+  }
+
+  static Future<void> _showCompletedNotification(String version, String apkPath) async {
+    try {
+      final androidDetails = AndroidNotificationDetails(
+        'fitiron_updates',
+        'App Updates',
+        channelDescription: 'Notifications for app update downloads',
+        importance: Importance.high,
+        priority: Priority.high,
+        ongoing: false,
+        autoCancel: true,
+        icon: 'ic_notification',
+      );
+      await _notifications.show(
+        id: _updateNotificationId,
+        title: 'Atualização v$version pronta!',
+        body: 'Toque para instalar a nova versão.',
+        notificationDetails: NotificationDetails(android: androidDetails),
+        payload: apkPath,
+      );
+    } catch (_) {}
+  }
+
+  static Future<void> _showErrorNotification(String version) async {
+    try {
+      final androidDetails = AndroidNotificationDetails(
+        'fitiron_updates',
+        'App Updates',
+        channelDescription: 'Notifications for app update downloads',
+        importance: Importance.defaultImportance,
+        priority: Priority.defaultPriority,
+        ongoing: false,
+        autoCancel: true,
+        icon: 'ic_notification',
+      );
+      await _notifications.show(
+        id: _updateNotificationId,
+        title: 'Falha no download da v$version',
+        body: 'Verifique sua conexão e tente novamente.',
+        notificationDetails: NotificationDetails(android: androidDetails),
+      );
+    } catch (_) {}
+  }
 
   /// Returns info about a newer release, or `null` when the app is up-to-date,
   /// offline, rate-limited, or any other error occurs (fail-silent).
@@ -96,26 +185,44 @@ class UpdateService {
     UpdateInfo info,
     void Function(double progress) onProgress,
   ) async {
-    final request = http.Request('GET', Uri.parse(info.apkUrl));
-    final streamedResponse = await request.send();
+    try {
+      await _initNotifications();
+      _showProgressNotification(info.version, 0);
 
-    final contentLength = streamedResponse.contentLength ?? 0;
-    final bytes = <int>[];
-    int received = 0;
+      final request = http.Request('GET', Uri.parse(info.apkUrl));
+      final streamedResponse = await request.send();
 
-    await for (final chunk in streamedResponse.stream) {
-      bytes.addAll(chunk);
-      received += chunk.length;
-      if (contentLength > 0) {
-        onProgress(received / contentLength);
+      final contentLength = streamedResponse.contentLength ?? 0;
+      final bytes = <int>[];
+      int received = 0;
+      int lastPercent = -1;
+
+      await for (final chunk in streamedResponse.stream) {
+        bytes.addAll(chunk);
+        received += chunk.length;
+        if (contentLength > 0) {
+          final progress = received / contentLength;
+          onProgress(progress);
+
+          final percent = (progress * 100).toInt();
+          if (percent - lastPercent >= 5 || percent == 100) {
+            lastPercent = percent;
+            _showProgressNotification(info.version, percent);
+          }
+        }
       }
+
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/fitiron_update.apk');
+      await file.writeAsBytes(bytes, flush: true);
+
+      _showCompletedNotification(info.version, file.path);
+
+      await _installChannel.invokeMethod('installApk', {'path': file.path});
+    } catch (e) {
+      _showErrorNotification(info.version);
+      rethrow;
     }
-
-    final dir = await getTemporaryDirectory();
-    final file = File('${dir.path}/fitiron_update.apk');
-    await file.writeAsBytes(bytes, flush: true);
-
-    await _installChannel.invokeMethod('installApk', {'path': file.path});
   }
 
   /// Returns the primary ABI of the device (e.g. "arm64-v8a").

@@ -15,8 +15,7 @@ on:
 permissions:
   contents: write
 
-# Pinned Flutter version. F-Droid extracts this exact value from the recipe so
-# its build matches upstream. Defined once here and reused by both jobs.
+# Pinned Flutter version. Defined once here and reused.
 env:
   FLUTTER_VERSION: '3.41.9'
 
@@ -24,6 +23,9 @@ jobs:
   build:
     name: Build split APKs
     runs-on: ubuntu-latest
+
+    env:
+      PUB_CACHE: ${{ github.workspace }}/.pub-cache
 
     steps:
       - name: Checkout
@@ -54,9 +56,36 @@ jobs:
       - name: Test
         run: flutter test
 
+      # Reproducibility: force --build-id=none for libdartjni.so
+      - name: Patch jni build-id
+        run: |
+          if [ -d "$PUB_CACHE/hosted/pub.dev" ]; then
+            find "$PUB_CACHE/hosted/pub.dev" -path "*/jni-*/src/CMakeLists.txt" -exec sed -i -e 's/-Wl,/-Wl,--build-id=none,/' {} + || true
+          fi
+
+      # Configure signing if secrets are present
+      - name: Set up signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d -i > android/app/fitiron-release.jks
+            if [ -s android/app/fitiron-release.jks ]; then
+              cat > android/key.properties <<EOF
+storePassword=$KEYSTORE_PASSWORD
+keyPassword=$KEY_PASSWORD
+keyAlias=$KEY_ALIAS
+storeFile=fitiron-release.jks
+EOF
+            fi
+          fi
+
       # ABI splits keep each APK small instead of one fat APK.
       - name: Build split APKs
-        run: flutter build apk --release --split-per-abi
+        run: flutter build apk --release --split-per-abi --split-debug-info=build/symbols
 
       - name: Rename APKs
         run: |
@@ -76,16 +105,7 @@ jobs:
     name: Publish release
     needs: build
     runs-on: ubuntu-latest
-    # Only when manually dispatched with a tag. The release body is left empty
-    # on purpose so it can be filled in by hand after publishing.
     if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
-
-    # Reproducible build: keep the pub cache at a fixed path inside the workspace
-    # (/home/runner/work/FitIron/FitIron/.pub-cache). F-Droid relocates its build
-    # to this exact same path and uses the same PUB_CACHE, so the embedded paths
-    # match.
-    env:
-      PUB_CACHE: ${{ github.workspace }}/.pub-cache
 
     steps:
       - name: Checkout
@@ -95,67 +115,11 @@ jobs:
         id: tag
         run: echo "value=${{ inputs.tag || github.ref_name }}" >> "$GITHUB_OUTPUT"
 
-      - name: Set up Java
-        uses: actions/setup-java@v6
+      - name: Download built APKs
+        uses: actions/download-artifact@v5
         with:
-          distribution: temurin
-          java-version: '17'
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          cache: true
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      # Reproducibility: the jni package bakes a unique build-id into libdartjni.so.
-      # Force --build-id=none so the native lib is deterministic. F-Droid applies
-      # this exact same patch in its recipe.
-      - name: Patch jni build-id
-        run: sed -i -e 's/-Wl,/-Wl,--build-id=none,/' "$PUB_CACHE"/hosted/pub.dev/jni-*/src/CMakeLists.txt
-
-      # Sign the release APKs with the release keystore (kept in GitHub Secrets)
-      # so the published binaries match F-Droid's reproducible build.
-      - name: Set up signing
-        env:
-          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-        run: |
-          if [ -z "$KEYSTORE_BASE64" ]; then
-            echo "ERROR: GitHub Secret KEYSTORE_BASE64 is empty or not set."
-            exit 1
-          fi
-          echo "$KEYSTORE_BASE64" | base64 -d -i > android/app/fitiron-release.jks
-          if [ ! -s android/app/fitiron-release.jks ]; then
-            echo "ERROR: Decoded keystore file android/app/fitiron-release.jks is empty. Check KEYSTORE_BASE64 secret."
-            exit 1
-          fi
-          cat > android/key.properties <<EOF
-          storePassword=$KEYSTORE_PASSWORD
-          keyPassword=$KEY_PASSWORD
-          keyAlias=$KEY_ALIAS
-          storeFile=fitiron-release.jks
-          EOF
-
-      # Reproducible build: version name AND code come entirely from pubspec.yaml
-      # (1.0.0+1), exactly like F-Droid builds it. Do NOT pass --build-name or
-      # --build-number here, or the APK won't match F-Droid's.
-      # --split-debug-info moves the path-laden debug symbols out of libapp.so so
-      # it builds deterministically. F-Droid uses the same flag.
-      - name: Build split APKs
-        run: flutter build apk --release --split-per-abi --split-debug-info=build/symbols
-
-      - name: Rename APKs
-        run: |
-          cd build/app/outputs/flutter-apk
-          mv app-arm64-v8a-release.apk     FitIron-arm64-v8a.apk
-          mv app-armeabi-v7a-release.apk   FitIron-armeabi-v7a.apk
-          mv app-x86_64-release.apk        FitIron-x86_64.apk
+          name: fitiron-apks
+          path: apks
 
       # Clean source archive straight from the git tree (no build artifacts).
       - name: Package source code
@@ -166,8 +130,9 @@ jobs:
         with:
           tag_name: ${{ steps.tag.outputs.value }}
           name: FitIron ${{ steps.tag.outputs.value }}
+          generate_release_notes: true
           files: |
-            build/app/outputs/flutter-apk/FitIron-arm64-v8a.apk
-            build/app/outputs/flutter-apk/FitIron-armeabi-v7a.apk
-            build/app/outputs/flutter-apk/FitIron-x86_64.apk
+            apks/FitIron-arm64-v8a.apk
+            apks/FitIron-armeabi-v7a.apk
+            apks/FitIron-x86_64.apk
             FitIron-source-${{ steps.tag.outputs.value }}.zip
