@@ -247,7 +247,8 @@ class _RoutineEditScreenState extends State<RoutineEditScreen> {
             shrinkWrap: true,
             buildDefaultDragHandles: false,
             physics: const NeverScrollableScrollPhysics(),
-            onReorderItem: (from, to) => fit.reorderRoutineExercise(routine.id, from, to),
+            // ignore: deprecated_member_use
+            onReorder: (from, to) => fit.reorderRoutineExercise(routine.id, from, to),
             children: [
               for (int i = 0; i < fit.routineExercises(routine).length; i++)
                 _chosenRow(gc, fit.routineExercises(routine)[i], i),
