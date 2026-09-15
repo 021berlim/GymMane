@@ -43,6 +43,7 @@ class UpdateService {
       );
       final response = await http.get(url, headers: {
         'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'FitIron-App',
       }).timeout(const Duration(seconds: 10));
 
       if (response.statusCode != 200) return null;
@@ -138,11 +139,13 @@ class UpdateService {
   }
 
   static (int, int, int)? _parseSemver(String v) {
-    final parts = v.split('.');
-    if (parts.length != 3) return null;
+    final clean = v.trim().replaceFirst(RegExp(r'^[vV]'), '');
+    final core = clean.split(RegExp(r'[-+]'))[0];
+    final parts = core.split('.');
+    if (parts.length < 2) return null;
     final major = int.tryParse(parts[0]);
     final minor = int.tryParse(parts[1]);
-    final patch = int.tryParse(parts[2]);
+    final patch = parts.length > 2 ? int.tryParse(parts[2]) : 0;
     if (major == null || minor == null || patch == null) return null;
     return (major, minor, patch);
   }

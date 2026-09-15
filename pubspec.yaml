@@ -1,7 +1,7 @@
 name: fitiron
 description: "FitIron — an offline, ad-free gym log for Android."
 publish_to: "none"
-version: 1.0.2+2
+version: 1.0.3+3
 
 environment:
   sdk: ^3.11.5
@@ -55,6 +55,7 @@ flutter:
   generate: true
 
   assets:
+    - assets/icon/
     - assets/img/
     - assets/art/
     - assets/audio/
