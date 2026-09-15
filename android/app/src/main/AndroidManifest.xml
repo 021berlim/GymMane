@@ -10,6 +10,8 @@
   <!-- MIUI y otras capas matan la app al bloquear; el aviso debe sobrevivir. -->
   <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
   <uses-permission android:name="android.permission.WAKE_LOCK"/>
+  <!-- Sideloaded APK: the in-app updater needs to install downloaded releases. -->
+  <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
   <application
         android:label="FIT//IRON"
         android:name="${applicationName}"
@@ -79,6 +81,17 @@
     <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+    <!-- FileProvider for the in-app updater: exposes the downloaded APK to the
+         system installer via a content:// URI. -->
+    <provider
+        android:name="androidx.core.content.FileProvider"
+        android:authorities="${applicationId}.fileprovider"
+        android:exported="false"
+        android:grantUriPermissions="true">
+      <meta-data
+          android:name="android.support.FILE_PROVIDER_PATHS"
+          android:resource="@xml/provider_paths" />
+    </provider>
   </application>
   <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
@@ -89,6 +102,9 @@
     <intent>
       <action android:name="android.intent.action.PROCESS_TEXT"/>
       <data android:mimeType="text/plain"/>
+    </intent>
+    <intent>
+      <action android:name="android.intent.action.INSTALL_PACKAGE"/>
     </intent>
   </queries>
 </manifest>

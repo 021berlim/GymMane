@@ -33,6 +33,8 @@ dependencies:
   video_player: ^2.9.2
   archive: ^4.0.9
   app_settings: ^8.0.3
+  package_info_plus: ^8.0.0
+  http: ^1.2.0
 
 dev_dependencies:
   flutter_test:

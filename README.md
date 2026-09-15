@@ -217,6 +217,49 @@ flutter build apk --release
 
 ---
 
+## 📦 Releasing
+
+Creating and pushing a semver tag is all it takes to publish a new release:
+
+```bash
+# Bump version in pubspec.yaml, then:
+git tag v1.2.3
+git push --tags
+```
+
+The GitHub Actions workflow will automatically build split APKs, sign them with
+the release keystore, and publish a GitHub Release with the APK assets attached.
+You can also trigger the workflow manually from the Actions tab via
+`workflow_dispatch`.
+
+### Required repository secrets
+
+These must be set in **Settings → Secrets and variables → Actions** before the
+release job can sign the APKs:
+
+| Secret | Description |
+|---|---|
+| `KEYSTORE_BASE64` | Base64-encoded release keystore (`.jks`) |
+| `KEYSTORE_PASSWORD` | Keystore password |
+| `KEY_ALIAS` | Key alias inside the keystore |
+| `KEY_PASSWORD` | Key password |
+
+Without these secrets the release APKs will be signed with the debug key.
+
+### Forced updates
+
+Prefix the release title with `[FORCE]` (e.g. `[FORCE] v1.2.3 — critical fix`)
+to hide the "Not now" button in the in-app update dialog, making the update
+mandatory.
+
+### In-app updater
+
+The app automatically checks the latest GitHub Release on startup (Android
+only). If a newer version is found, a dialog shows the changelog and offers to
+download and install the APK. Network failures are handled silently.
+
+---
+
 ## 🤝 Contributing
 
 Bug reports, ideas and pull requests are all welcome — see

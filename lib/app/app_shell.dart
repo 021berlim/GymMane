@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
@@ -20,6 +22,8 @@ import '../state/fit_state.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_background.dart';
+import '../widgets/update_dialog.dart';
+import '../services/update_service.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
@@ -34,6 +38,22 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     fit.refreshAlarmPermission();
+    _checkForUpdate();
+  }
+
+  /// Checks GitHub Releases for a newer APK (Android-only, fail-silent).
+  void _checkForUpdate() {
+    if (!Platform.isAndroid) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        final info = await UpdateService.checkForUpdate();
+        if (info != null && mounted) {
+          showUpdateDialog(context, info);
+        }
+      } catch (_) {
+        // Fail silently — never block the app.
+      }
+    });
   }
 
   @override
