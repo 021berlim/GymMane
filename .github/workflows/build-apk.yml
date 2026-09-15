@@ -109,7 +109,7 @@ jobs:
           cache: true
 
       - name: Install dependencies
-        run: flutter pub get --enforce-lockfile
+        run: flutter pub get
 
       # Reproducibility: the jni package bakes a unique build-id into libdartjni.so.
       # Force --build-id=none so the native lib is deterministic. F-Droid applies
