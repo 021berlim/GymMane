@@ -8,6 +8,7 @@ import '../l10n/l10n.dart';
 import '../screens/about_screen.dart';
 import '../screens/exercise_detail_screen.dart';
 import '../screens/exercises_screen.dart';
+import '../screens/gallery_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/onboarding_screen.dart';
 import '../screens/progress_screen.dart';
@@ -164,6 +165,8 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     switch (fit.route) {
       case 'progress':
         return ProgressScreen();
+      case 'gallery':
+        return const GalleryScreen();
       case 'routine-choice':
       case 'train':
         return TrainScreen();
