@@ -57,12 +57,11 @@ class BodyweightEntry extends WeightEntry {
     DateTime date,
     double kg, {
     String? id,
-    WeightContext context = WeightContext.manual,
+    super.context = WeightContext.manual,
   }) : super(
           id: id ?? 'entry_${date.millisecondsSinceEpoch}',
           timestamp: date,
           weightKg: kg,
-          context: context,
         );
 
   factory BodyweightEntry.fromJson(Map<String, dynamic> j) {

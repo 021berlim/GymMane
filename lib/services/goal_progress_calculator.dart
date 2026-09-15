@@ -1,5 +1,4 @@
 import '../models/goal.dart';
-import '../models/weight_entry.dart';
 import '../models/workout.dart';
 import 'weight_trend_calculator.dart';
 

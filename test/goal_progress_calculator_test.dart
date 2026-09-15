@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fitiron/models/goal.dart';
-import 'package:fitiron/models/weight_entry.dart';
 import 'package:fitiron/models/workout.dart';
 import 'package:fitiron/services/goal_progress_calculator.dart';
 import 'package:fitiron/state/fit_state.dart';

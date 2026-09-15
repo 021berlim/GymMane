@@ -126,7 +126,15 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         run: |
-          echo "$KEYSTORE_BASE64" | base64 -d > android/app/fitiron-release.jks
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "ERROR: GitHub Secret KEYSTORE_BASE64 is empty or not set."
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d -i > android/app/fitiron-release.jks
+          if [ ! -s android/app/fitiron-release.jks ]; then
+            echo "ERROR: Decoded keystore file android/app/fitiron-release.jks is empty. Check KEYSTORE_BASE64 secret."
+            exit 1
+          fi
           cat > android/key.properties <<EOF
           storePassword=$KEYSTORE_PASSWORD
           keyPassword=$KEY_PASSWORD

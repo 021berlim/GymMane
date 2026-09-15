@@ -24,7 +24,6 @@ import '../services/workout_import.dart';
 import '../services/recommendation_service.dart';
 import '../services/goal_progress_calculator.dart';
 import '../services/ofensiva_calculator.dart';
-import '../models/weight_entry.dart';
 
 part 'fit_core.dart';
 part 'library_state.dart';
