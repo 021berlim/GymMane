@@ -19,7 +19,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final _page = PageController();
   late final TextEditingController _name = TextEditingController();
   int _index = 0;
-  static const _last = 4;
+  static const _last = 6;
 
   @override
   void dispose() {
@@ -61,7 +61,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       _nameStep(gc),
                       _bodyStep(gc),
                       _goalStep(gc),
+                      _focusStep(gc),
                       _unitsStep(gc),
+                      _photosStep(gc),
                     ],
                   ),
                 ),
@@ -203,7 +205,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Text(t.welcomeKicker,
               style: AppTheme.d(12, weight: FontWeight.w600, color: gc.brass, letterSpacing: 3)),
           const SizedBox(height: 6),
-          Text('GYMMANE', style: AppTheme.d(46, weight: FontWeight.w700, color: gc.text, letterSpacing: 1)),
+          Text('FIT//IRON', style: AppTheme.d(46, weight: FontWeight.w700, color: gc.text, letterSpacing: 1)),
           const SizedBox(height: 12),
           Text(t.welcomeBlurb, style: AppTheme.s(15, color: gc.textSecondary, height: 1.45)),
           const SizedBox(height: 26),
@@ -314,10 +316,65 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  Widget _unitsStep(GymColors gc) {
+  Widget _focusStep(GymColors gc) {
+    final p = fit.profile;
+    final options = [
+      ('hipertrofia', t.focusHypertrophy, PhosphorIconsRegular.barbell),
+      ('forca', t.focusStrength, PhosphorIconsRegular.lightning),
+      ('emagrecimento', t.focusWeightLoss, PhosphorIconsRegular.fire),
+      ('resistencia', t.focusEndurance, PhosphorIconsRegular.timer),
+      ('health', t.focusHealth, PhosphorIconsRegular.heartbeat),
+    ];
+
     return _step(
       gc,
       step: 4,
+      icon: PhosphorIconsRegular.target,
+      title: t.onbFocusTitle,
+      why: t.onbFocusWhy,
+      child: Column(
+        children: [
+          for (final opt in options)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: GestureDetector(
+                onTap: () => _up(() => fit.updateProfile(trainingFocus: opt.$1)),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                  decoration: BoxDecoration(
+                    color: p.trainingFocus == opt.$1 ? gc.ember : gc.bgRaised,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: p.trainingFocus == opt.$1 ? gc.ember : gc.border),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(opt.$3, color: p.trainingFocus == opt.$1 ? gc.onEmber : gc.textSecondary, size: 22),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Text(
+                          opt.$2,
+                          style: AppTheme.d(16,
+                              weight: FontWeight.w600,
+                              color: p.trainingFocus == opt.$1 ? gc.onEmber : gc.text),
+                        ),
+                      ),
+                      if (p.trainingFocus == opt.$1)
+                        Icon(PhosphorIconsRegular.checkCircle, color: gc.onEmber, size: 20),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _unitsStep(GymColors gc) {
+    return _step(
+      gc,
+      step: 5,
       icon: PhosphorIconsRegular.scales,
       title: t.onbUnitsTitle,
       why: t.autofills,
@@ -346,6 +403,41 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  Widget _photosStep(GymColors gc) {
+    return _step(
+      gc,
+      step: 6,
+      icon: PhosphorIconsRegular.camera,
+      title: t.onbPhotosTitle,
+      why: t.onbPhotosWhy,
+      child: Column(
+        children: [
+          _row(
+            gc,
+            t.enablePhotosLabel,
+            Switch(
+              value: fit.enablePhotos,
+              onChanged: (v) => _up(() => fit.setEnablePhotos(v)),
+              activeThumbColor: gc.accent,
+            ),
+          ),
+          if (fit.enablePhotos) ...[
+            const SizedBox(height: 16),
+            _row(
+              gc,
+              t.photoTimingLabel,
+              SegToggle([
+                SegOption(t.photoTimingBefore, fit.photoTiming == 'before', () => _up(() => fit.setPhotoTiming('before'))),
+                SegOption(t.photoTimingAfter, fit.photoTiming == 'after', () => _up(() => fit.setPhotoTiming('after'))),
+                SegOption(t.photoTimingBoth, fit.photoTiming == 'both', () => _up(() => fit.setPhotoTiming('both'))),
+              ], hPad: 10, fontSize: 11),
+            ),
+          ],
         ],
       ),
     );

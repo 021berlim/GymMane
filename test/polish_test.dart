@@ -2,12 +2,12 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gymmane/catalog/exercise_catalog.dart';
-import 'package:gymmane/l10n/l10n.dart';
-import 'package:gymmane/models/workout.dart';
-import 'package:gymmane/services/local_store.dart';
-import 'package:gymmane/state/fit_state.dart';
-import 'package:gymmane/theme/app_colors.dart';
+import 'package:fitiron/catalog/exercise_catalog.dart';
+import 'package:fitiron/l10n/l10n.dart';
+import 'package:fitiron/models/workout.dart';
+import 'package:fitiron/services/local_store.dart';
+import 'package:fitiron/state/fit_state.dart';
+import 'package:fitiron/theme/app_colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -98,6 +98,7 @@ void main() {
 
     void doWorkout(double kg) {
       fit.startWorkout();
+      fit.startCustomWorkout();
       fit.toggleMuscle('chest');
       fit.trainContinue();
       fit.startSession();
@@ -133,6 +134,7 @@ void main() {
 
     test('nothing logged means no fake celebration', () {
       fit.startWorkout();
+      fit.startCustomWorkout();
       fit.toggleMuscle('chest');
       fit.trainContinue();
       fit.startSession();
@@ -152,11 +154,10 @@ void main() {
       return (math.max(la, lb) + 0.05) / (math.min(la, lb) + 0.05);
     }
 
-    double warmth(Color c) => (c.r - c.b) * 255;
-
-    test('light neutrals are warm, not cold grey', () {
+    test('light neutrals are green-tinted, not earthy', () {
       for (final c in [GymColors.light.bg, GymColors.light.bgRaised2, GymColors.light.border]) {
-        expect(warmth(c), greaterThan(6), reason: 'neutro frío: $c');
+        expect(c.g, greaterThan(c.r - 0.01), reason: 'neutro sem verde: $c');
+        expect(c.g, greaterThan(c.b - 0.01), reason: 'neutro sem verde: $c');
       }
     });
 

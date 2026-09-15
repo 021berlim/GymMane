@@ -1,7 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gymmane/models/profile.dart';
-import 'package:gymmane/services/local_store.dart';
-import 'package:gymmane/state/fit_state.dart';
+import 'package:fitiron/models/profile.dart';
+import 'package:fitiron/services/local_store.dart';
+import 'package:fitiron/services/sqlite_store.dart';
+import 'package:fitiron/state/fit_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -67,6 +68,42 @@ void main() {
     await pumpEventQueue();
     fit.loadFromStore();
     expectEverythingIsThere();
+  });
+
+  test('starts the routine scheduled for today', () {
+    final routineId = fit.createRoutine('Hoje');
+    fit.toggleRoutineExercise(routineId, kFirstId);
+    fit.assignRoutineToDay(DateTime.now().weekday, routineId);
+
+    fit.startWorkout();
+
+    expect(fit.route, 'routine-choice');
+    fit.startRoutine(fit.routines.first);
+    expect(fit.route, 'session');
+    expect(fit.session!.exercises.single.id, kFirstId);
+    fit.saveAndExit();
+  });
+
+  test('asks which routine to use when several are available', () {
+    for (final name in ['A', 'B']) {
+      final routineId = fit.createRoutine(name);
+      fit.toggleRoutineExercise(routineId, kFirstId);
+    }
+
+    fit.startWorkout();
+
+    expect(fit.route, 'routine-choice');
+  });
+
+  test('keeps personalized training available without routines', () {
+    fit.startWorkout();
+    expect(fit.route, 'routine-choice');
+    fit.startCustomWorkout();
+    expect(fit.route, 'train');
+    expect(fit.trainStep, 'select');
+
+    fit.toggleMuscle('chest');
+    expect(fit.selectedMuscles, ['chest']);
   });
 
   test('a backup round-trips through export and import', () {
@@ -138,6 +175,30 @@ void main() {
     fit.deleteRoutine(r);
     expect(fit.weeklyPlan[3], isNull);
     expect(fit.todayRoutine, isNull);
+  });
+
+  test('loadFromStore handles corrupt store data without throwing', () {
+    Store.instance.save({
+      'routines': ['corrupted_item_not_a_map'],
+      'weeklyPlan': {'invalid_key': 123},
+      'checkins': [12345],
+    });
+    expect(() => fit.loadFromStore(), returnsNormally);
+  });
+
+  test('saving empty data does not wipe existing database state', () async {
+    fillEverything();
+    await SqliteStore.instance.saveFullState({});
+    fit.loadFromStore();
+    expectEverythingIsThere();
+  });
+
+  test('persistNow completes asynchronously', () async {
+    fit.updateProfile(name: 'AsyncUser');
+    await fit.persistNow();
+    await Store.instance.init();
+    fit.loadFromStore();
+    expect(fit.profile.name, 'AsyncUser');
   });
 }
 

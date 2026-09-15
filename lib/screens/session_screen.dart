@@ -9,103 +9,181 @@ import '../state/fit_state.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/exercise_media.dart';
+import '../widgets/bodyweight_sheet.dart';
 import '../widgets/svg_icon.dart';
 import '../widgets/ui_kit.dart';
 
-class SessionScreen extends StatelessWidget {
+class SessionScreen extends StatefulWidget {
   const SessionScreen({super.key});
 
   @override
+  State<SessionScreen> createState() => _SessionScreenState();
+}
+
+class _SessionScreenState extends State<SessionScreen> {
+  late PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: fit.session?.currentIndex ?? 0);
+    fit.addListener(_onFitChange);
+  }
+
+  @override
+  void dispose() {
+    fit.removeListener(_onFitChange);
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _onFitChange() {
+    if (!mounted || fit.session == null || !_pageController.hasClients) return;
+    final targetPage = fit.session!.currentIndex;
+    if ((_pageController.page ?? 0).round() != targetPage) {
+      _pageController.animateToPage(
+        targetPage,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOutCubic,
+      );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (fit.isSessionComplete && !fit.bodyweightFinishPromptShown) {
+      fit.bodyweightFinishPromptShown = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) showBodyweightSheet(context, beforeWorkout: false);
+      });
+    } else if (!fit.isSessionComplete && !fit.bodyweightStartPromptShown) {
+      fit.bodyweightStartPromptShown = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) showBodyweightSheet(context, beforeWorkout: true);
+      });
+    }
+
     final gc = context.gc;
+    final bottomInset = MediaQuery.of(context).padding.bottom;
     return SafeArea(
       bottom: false,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
-        child: fit.isSessionComplete ? _complete(context, gc) : _active(context, gc),
-      ),
+      child: fit.isSessionComplete
+          ? SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(20, 12, 20, 32 + bottomInset),
+              child: _complete(context, gc),
+            )
+          : _active(context, gc),
     );
   }
 
   Widget _active(BuildContext context, GymColors gc) {
     final s = fit.session!;
-    final ex = fit.currentExercise;
-    final exIdx = s.currentIndex;
-    final def = fit.exerciseById(ex?.id ?? '') ?? kExercises.first;
+    final bottomInset = MediaQuery.of(context).padding.bottom;
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(children: [
-              Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                    color: fit.sessionPaused ? gc.textTertiary : gc.ember, shape: BoxShape.circle),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                fit.sessionPaused ? t.paused : t.inProgress,
-                style: AppTheme.d(12,
-                    weight: FontWeight.w600,
-                    color: fit.sessionPaused ? gc.textTertiary : gc.ember,
-                    letterSpacing: 2),
-              ),
-            ]),
-            Row(children: [
-              Text(fit.elapsedLabel,
-                  style: AppTheme.d(18,
-                      weight: FontWeight.w700, color: fit.sessionPaused ? gc.textSecondary : gc.text)),
-              const SizedBox(width: 10),
-              Semantics(
-                button: true,
-                label: fit.sessionPaused ? t.resumeWorkout : t.pauseWorkout,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: fit.toggleSessionPause,
-                  child: SizedBox(
-                    width: 48,
-                    height: 48,
-                    child: Center(
-                      child: Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: fit.sessionPaused ? gc.ember : gc.bgRaised2,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: fit.sessionPaused ? gc.ember : gc.border),
-                        ),
-                        child: Icon(
-                          fit.sessionPaused ? PhosphorIconsFill.play : PhosphorIconsFill.pause,
-                          size: 16,
-                          color: fit.sessionPaused ? gc.onEmber : gc.text,
-                        ),
-                      ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+          child: _sessionHeader(gc),
+        ),
+        Expanded(
+          child: PageView.builder(
+            controller: _pageController,
+            onPageChanged: fit.goToExercise,
+            itemCount: s.exercises.length,
+            itemBuilder: (context, i) => SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
+              child: _exercisePage(context, gc, i),
+            ),
+          ),
+        ),
+        Padding(
+          padding: EdgeInsets.fromLTRB(20, 6, 20, 16 + bottomInset),
+          child: _sessionFooter(gc),
+        ),
+      ],
+    );
+  }
+
+  Widget _sessionHeader(GymColors gc) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+                color: fit.sessionPaused ? gc.textTertiary : gc.ember, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            fit.sessionPaused ? t.paused : t.inProgress,
+            style: AppTheme.d(12,
+                weight: FontWeight.w600,
+                color: fit.sessionPaused ? gc.textTertiary : gc.ember,
+                letterSpacing: 2),
+          ),
+        ]),
+        Row(children: [
+          Text(fit.elapsedLabel,
+              style: AppTheme.d(18,
+                  weight: FontWeight.w700, color: fit.sessionPaused ? gc.textSecondary : gc.text)),
+          const SizedBox(width: 10),
+          Semantics(
+            button: true,
+            label: fit.sessionPaused ? t.resumeWorkout : t.pauseWorkout,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: fit.toggleSessionPause,
+              child: SizedBox(
+                width: 48,
+                height: 48,
+                child: Center(
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: fit.sessionPaused ? gc.ember : gc.bgRaised2,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: fit.sessionPaused ? gc.ember : gc.border),
+                    ),
+                    child: Icon(
+                      fit.sessionPaused ? PhosphorIconsFill.play : PhosphorIconsFill.pause,
+                      size: 16,
+                      color: fit.sessionPaused ? gc.onEmber : gc.text,
                     ),
                   ),
                 ),
               ),
-            ]),
-          ],
-        ),
-        const SizedBox(height: 18),
+            ),
+          ),
+        ]),
+      ],
+    );
+  }
+
+  Widget _exercisePage(BuildContext context, GymColors gc, int exIdx) {
+    final s = fit.session!;
+    final ex = s.exercises[exIdx];
+    final def = fit.exerciseById(ex.id) ?? kExercises.first;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(fit.sessionProgressLabel,
+            Text(t.exerciseXofY(exIdx + 1, s.exercises.length),
                 style: AppTheme.s(12, weight: FontWeight.w600, color: gc.textSecondary, letterSpacing: 1)),
             const SizedBox(height: 4),
-            Text(ex?.name ?? '', style: AppTheme.d(26, weight: FontWeight.w700, color: gc.text)),
+            Text(ex.name, style: AppTheme.d(26, weight: FontWeight.w700, color: gc.text)),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(color: gc.emberSoft, borderRadius: BorderRadius.circular(100)),
-              child: Text(muscleLabel(ex?.primary ?? ''),
+              child: Text(muscleLabel(ex.primary),
                   style: AppTheme.s(12, weight: FontWeight.w600, color: gc.ember)),
             ),
-            if (ex != null && fit.lastSummaryFor(ex.id) != null) ...[
+            if (fit.lastSummaryFor(ex.id) != null) ...[
               const SizedBox(height: 10),
               Row(children: [
                 Text(t.last,
@@ -120,7 +198,7 @@ class SessionScreen extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 14),
-        if (ex != null) ExerciseMedia(ex: def, height: 170, live: true),
+        ExerciseMedia(ex: def, height: 170, live: true),
         const SizedBox(height: 18),
         if (s.restRemaining != null) ...[
           Container(
@@ -169,7 +247,7 @@ class SessionScreen extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(_rowPad, 0, _rowPad, 10),
                 child: _setsHeader(gc),
               ),
-              for (int j = 0; j < (ex?.sets.length ?? 0); j++) _setRow(gc, exIdx, j, ex!.sets[j]),
+              for (int j = 0; j < ex.sets.length; j++) _setRow(gc, exIdx, j, ex.sets[j]),
               const SizedBox(height: 10),
               GestureDetector(
                 onTap: () => fit.addSet(exIdx),
@@ -190,7 +268,7 @@ class SessionScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 18),
-        if (ex != null && s.exercises.length > 1)
+        if (s.exercises.length > 1)
           Center(
             child: Semantics(
               button: true,
@@ -205,16 +283,18 @@ class SessionScreen extends StatelessWidget {
               ),
             ),
           ),
-        const SizedBox(height: 6),
-        Row(children: [
-          _circleBtn(gc, Ic.chevronLeft, fit.prevExercise),
-          const SizedBox(width: 10),
-          Expanded(child: PrimaryButton(label: t.finishSession, onTap: fit.finishSession, height: 56)),
-          const SizedBox(width: 10),
-          _circleBtn(gc, Ic.chevronRightBold, fit.nextExercise),
-        ]),
       ],
     );
+  }
+
+  Widget _sessionFooter(GymColors gc) {
+    return Row(children: [
+      _circleBtn(gc, Ic.chevronLeft, fit.prevExercise),
+      const SizedBox(width: 10),
+      Expanded(child: PrimaryButton(label: t.finishSession, onTap: fit.finishSession, height: 56)),
+      const SizedBox(width: 10),
+      _circleBtn(gc, Ic.chevronRightBold, fit.nextExercise),
+    ]);
   }
 
   Widget _restNudge(GymColors gc, String glyph, String semantic, VoidCallback onTap) {
@@ -264,7 +344,7 @@ class SessionScreen extends StatelessWidget {
   }
 
   static const _numCol = 24.0;
-  static const _checkCol = 40.0;
+  static const _checkCol = 44.0;
   static const _gap = 6.0;
   static const _cardPad = 8.0;
   static const _rowPad = 8.0;
@@ -381,12 +461,12 @@ class SessionScreen extends StatelessWidget {
             behavior: HitTestBehavior.opaque,
             onTap: t,
             child: SizedBox(
-              width: 34,
+              width: 30,
               height: 44,
               child: Center(
                 child: Container(
-                  width: 28,
-                  height: 28,
+                  width: 26,
+                  height: 26,
                   decoration: BoxDecoration(color: gc.bgRaised2, borderRadius: BorderRadius.circular(8)),
                   alignment: Alignment.center,
                   child: Text(g, style: TextStyle(color: gc.text, fontSize: 17, height: 1)),
@@ -397,22 +477,29 @@ class SessionScreen extends StatelessWidget {
         );
     return Builder(
       builder: (context) => Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
           b('–', t.decrease, dec),
-          const SizedBox(width: 3),
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () => onEdit(context),
-            child: Container(
-              constraints: BoxConstraints(minWidth: minW),
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              alignment: Alignment.center,
-              child: Text(value,
-                  style: TextStyle(fontWeight: FontWeight.w600, color: gc.text, fontSize: 14)),
+          Flexible(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => onEdit(context),
+              child: Container(
+                constraints: BoxConstraints(minWidth: minW),
+                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                alignment: Alignment.center,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    value,
+                    maxLines: 1,
+                    style: TextStyle(fontWeight: FontWeight.w600, color: gc.text, fontSize: 14),
+                  ),
+                ),
+              ),
             ),
           ),
-          const SizedBox(width: 3),
           b('+', t.increase, inc),
         ],
       ),
@@ -489,6 +576,8 @@ class SessionScreen extends StatelessWidget {
     final goalHit = fit.goalPct >= 100;
     final vsLast = fit.summaryVsLast;
     final vol = fit.summaryVolumeKg;
+    final beforeWeight = fit.session?.bodyweightBeforeKg;
+    final afterWeight = fit.session?.bodyweightAfterKg;
 
     return Padding(
       padding: const EdgeInsets.only(top: 24),
@@ -506,10 +595,56 @@ class SessionScreen extends StatelessWidget {
           ]),
           const SizedBox(height: 10),
           if (vsLast != null && vsLast > 0) _vsLastCard(gc, vol, vsLast) else _firstTimeCard(gc),
+          if (beforeWeight != null && afterWeight != null) ...[
+            const SizedBox(height: 18),
+            _bodyweightComparison(gc, beforeWeight, afterWeight),
+          ],
           const SizedBox(height: 18),
           PrimaryButton(label: t.saveAndExit, onTap: fit.saveAndExit),
         ],
       ),
+    );
+  }
+
+  Widget _bodyweightComparison(GymColors gc, double before, double after) {
+    final delta = after - before;
+    final percent = before == 0 ? 0 : (delta / before) * 100;
+    final color = delta <= 0 ? gc.sage : gc.accent;
+    final sign = delta > 0 ? '+' : '';
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: gc.bgRaised,
+        border: Border.all(color: gc.border),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(t.bodyweightComparison,
+              style: AppTheme.d(12, weight: FontWeight.w600, color: gc.textSecondary, letterSpacing: 2)),
+          const SizedBox(height: 12),
+          Row(children: [
+            Expanded(child: _weightPoint(gc, t.bodyweightBeforeWorkout, before)),
+            Text('→', style: AppTheme.d(20, weight: FontWeight.w700, color: gc.textTertiary)),
+            Expanded(child: _weightPoint(gc, t.bodyweightAfterWorkout, after, alignEnd: true)),
+          ]),
+          const SizedBox(height: 12),
+          Text('$sign${fmt(fit.toDisplayWeight(delta))} ${fit.units} · $sign${fmt(percent)}%',
+              style: AppTheme.s(14, weight: FontWeight.w700, color: color)),
+        ],
+      ),
+    );
+  }
+
+  Widget _weightPoint(GymColors gc, String label, double kg, {bool alignEnd = false}) {
+    return Column(
+      crossAxisAlignment: alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      children: [
+        Text(label, style: AppTheme.s(10, weight: FontWeight.w600, color: gc.textTertiary, letterSpacing: 1)),
+        const SizedBox(height: 3),
+        Text(fit.weightLabel(kg), style: AppTheme.d(20, weight: FontWeight.w700, color: gc.text)),
+      ],
     );
   }
 

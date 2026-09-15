@@ -12,8 +12,8 @@ class RestAlarm {
   static final RestAlarm instance = RestAlarm._();
 
   static const _id = 1001;
-  AndroidNotificationDetails get _android => AndroidNotificationDetails(
-    'rest_timer',
+  AndroidNotificationDetails _android(int scheduledMillis) => AndroidNotificationDetails(
+    'rest_timer_v3',
     t.notifRestChannel,
     channelDescription: t.notifRestChannelWhy,
     importance: Importance.max,
@@ -21,24 +21,64 @@ class RestAlarm {
     category: AndroidNotificationCategory.alarm,
     playSound: true,
     enableVibration: true,
-    audioAttributesUsage: AudioAttributesUsage.alarm,
     fullScreenIntent: true,
+    audioAttributesUsage: AudioAttributesUsage.alarm,
+    showWhen: true,
+    when: scheduledMillis,
+    usesChronometer: true,
+    chronometerCountDown: true,
+    icon: 'ic_notification',
     visibility: NotificationVisibility.public,
   );
 
   AndroidNotificationDetails get _androidAlert => AndroidNotificationDetails(
-    'rest_timer_alert',
+    'rest_timer_alert_v2',
     t.notifAlertChannel,
     channelDescription: t.notifAlertChannelWhy,
     importance: Importance.max,
     priority: Priority.high,
     category: AndroidNotificationCategory.alarm,
-    playSound: false,
-    enableVibration: false,
+    playSound: true,
+    enableVibration: true,
+    fullScreenIntent: true,
+    audioAttributesUsage: AudioAttributesUsage.alarm,
+    showWhen: true,
+    when: DateTime.now().millisecondsSinceEpoch,
+    usesChronometer: true,
+    ongoing: true,
+    autoCancel: false,
+    icon: 'ic_notification',
+    visibility: NotificationVisibility.public,
+  );
+
+  AndroidNotificationDetails get _androidGoal => AndroidNotificationDetails(
+    'goal_channel_v1',
+    t.notifGoalChannel,
+    channelDescription: t.notifGoalChannelWhy,
+    importance: Importance.high,
+    priority: Priority.high,
+    playSound: true,
+    enableVibration: true,
+    icon: 'ic_notification',
     visibility: NotificationVisibility.public,
   );
 
   final _plugin = FlutterLocalNotificationsPlugin();
+
+  Future<void> showGoalReachedNotification({String? title, String? body}) async {
+    if (!_ready) return;
+    try {
+      await ensurePermission();
+      await _plugin.show(
+        id: 3000 + (DateTime.now().millisecondsSinceEpoch % 10000),
+        title: title ?? t.goalReachedTitle,
+        body: body ?? t.goalReachedBody,
+        notificationDetails: NotificationDetails(android: _androidGoal),
+      );
+    } catch (e) {
+      debugPrint('No se pudo mostrar la notificación de meta: $e');
+    }
+  }
 
   AudioPlayer? _player;
   String? customSoundPath;
@@ -59,8 +99,9 @@ class RestAlarm {
       tzdata.initializeTimeZones();
       await _plugin.initialize(
         settings: const InitializationSettings(
-          android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+          android: AndroidInitializationSettings('@drawable/ic_notification'),
         ),
+        onDidReceiveNotificationResponse: (_) => stopSound(),
       );
       _ready = true;
     } catch (e) {
@@ -68,7 +109,7 @@ class RestAlarm {
     }
     try {
       final player = AudioPlayer();
-      await player.setReleaseMode(ReleaseMode.stop);
+      await player.setReleaseMode(ReleaseMode.loop);
       await player.setPlayerMode(PlayerMode.mediaPlayer);
       await player.setAudioContext(
         AudioContext(
@@ -77,7 +118,7 @@ class RestAlarm {
             stayAwake: true,
             contentType: AndroidContentType.sonification,
             usageType: AndroidUsageType.alarm,
-            audioFocus: AndroidAudioFocus.gainTransientMayDuck,
+            audioFocus: AndroidAudioFocus.gain,
           ),
           iOS: AudioContextIOS(category: AVAudioSessionCategory.playback, options: const {}),
         ),
@@ -101,18 +142,42 @@ class RestAlarm {
     }
   }
 
+  Future<bool> exactAlarmsAllowed() async {
+    if (!_ready) return true;
+    try {
+      return await _androidPlugin?.canScheduleExactNotifications() ?? true;
+    } catch (_) {
+      return true;
+    }
+  }
+
   /// Devuelve si quedó concedido. Android solo enseña el diálogo un par de
   /// veces; a partir de ahí hay que mandar al usuario a los ajustes.
   Future<bool> requestPermission() async {
     if (!_ready) return true;
     try {
       final granted = await _androidPlugin?.requestNotificationsPermission() ?? true;
-      await _androidPlugin?.requestExactAlarmsPermission();
+      await requestExactAlarmPermission();
       return granted;
     } catch (e) {
       debugPrint('No se pudo pedir permiso de notificaciones: $e');
       return false;
     }
+  }
+
+  Future<bool> requestExactAlarmPermission() async {
+    if (!_ready) return true;
+    try {
+      return await _androidPlugin?.requestExactAlarmsPermission() ?? true;
+    } catch (e) {
+      debugPrint('Não foi possível solicitar alarmes exatos: $e');
+      return false;
+    }
+  }
+
+  Future<void> ensureExactAlarmPermission() async {
+    if (!_ready || await exactAlarmsAllowed()) return;
+    await requestExactAlarmPermission();
   }
 
   Future<void> ensurePermission() async {
@@ -198,13 +263,14 @@ class RestAlarm {
     if (mine != _generation) return;
     await _clear();
     if (mine != _generation) return;
+    final scheduledDate = tz.TZDateTime.now(tz.local).add(after);
     try {
       await _plugin.zonedSchedule(
         id: _id,
         title: t.restOverTitle,
         body: t.restOverBody,
-        scheduledDate: tz.TZDateTime.now(tz.local).add(after),
-        notificationDetails: NotificationDetails(android: _android),
+        scheduledDate: scheduledDate,
+        notificationDetails: NotificationDetails(android: _android(scheduledDate.millisecondsSinceEpoch)),
         androidScheduleMode: AndroidScheduleMode.alarmClock,
       );
     } catch (e) {

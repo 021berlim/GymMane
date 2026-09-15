@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gymmane/catalog/body_svg.dart';
+import 'package:fitiron/catalog/body_svg.dart';
 import 'package:path_drawing/path_drawing.dart';
 
 void main() {

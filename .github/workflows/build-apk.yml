@@ -59,15 +59,15 @@ jobs:
       - name: Rename APKs
         run: |
           cd build/app/outputs/flutter-apk
-          mv app-arm64-v8a-release.apk     GymMane-arm64-v8a.apk
-          mv app-armeabi-v7a-release.apk   GymMane-armeabi-v7a.apk
-          mv app-x86_64-release.apk        GymMane-x86_64.apk
+          mv app-arm64-v8a-release.apk     FitIron-arm64-v8a.apk
+          mv app-armeabi-v7a-release.apk   FitIron-armeabi-v7a.apk
+          mv app-x86_64-release.apk        FitIron-x86_64.apk
 
       - name: Upload APK artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: gymmane-apks
-          path: build/app/outputs/flutter-apk/GymMane-*.apk
+          name: fitiron-apks
+          path: build/app/outputs/flutter-apk/FitIron-*.apk
           if-no-files-found: error
 
   release:
@@ -79,7 +79,7 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
 
     # Reproducible build: keep the pub cache at a fixed path inside the workspace
-    # (/home/runner/work/GymMane/GymMane/.pub-cache). F-Droid relocates its build
+    # (/home/runner/work/FitIron/FitIron/.pub-cache). F-Droid relocates its build
     # to this exact same path and uses the same PUB_CACHE, so the embedded paths
     # match.
     env:
@@ -120,12 +120,12 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         run: |
-          echo "$KEYSTORE_BASE64" | base64 -d > android/app/gymmane-release.jks
+          echo "$KEYSTORE_BASE64" | base64 -d > android/app/fitiron-release.jks
           cat > android/key.properties <<EOF
           storePassword=$KEYSTORE_PASSWORD
           keyPassword=$KEY_PASSWORD
           keyAlias=$KEY_ALIAS
-          storeFile=gymmane-release.jks
+          storeFile=fitiron-release.jks
           EOF
 
       # Reproducible build: version name AND code come entirely from pubspec.yaml
@@ -139,21 +139,21 @@ jobs:
       - name: Rename APKs
         run: |
           cd build/app/outputs/flutter-apk
-          mv app-arm64-v8a-release.apk     GymMane-arm64-v8a.apk
-          mv app-armeabi-v7a-release.apk   GymMane-armeabi-v7a.apk
-          mv app-x86_64-release.apk        GymMane-x86_64.apk
+          mv app-arm64-v8a-release.apk     FitIron-arm64-v8a.apk
+          mv app-armeabi-v7a-release.apk   FitIron-armeabi-v7a.apk
+          mv app-x86_64-release.apk        FitIron-x86_64.apk
 
       # Clean source archive straight from the git tree (no build artifacts).
       - name: Package source code
-        run: git archive --format=zip --prefix=gymmane-${{ inputs.tag }}/ -o GymMane-source-${{ inputs.tag }}.zip HEAD
+        run: git archive --format=zip --prefix=fitiron-${{ inputs.tag }}/ -o FitIron-source-${{ inputs.tag }}.zip HEAD
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ inputs.tag }}
-          name: GymMane ${{ inputs.tag }}
+          name: FitIron ${{ inputs.tag }}
           files: |
-            build/app/outputs/flutter-apk/GymMane-arm64-v8a.apk
-            build/app/outputs/flutter-apk/GymMane-armeabi-v7a.apk
-            build/app/outputs/flutter-apk/GymMane-x86_64.apk
-            GymMane-source-${{ inputs.tag }}.zip
+            build/app/outputs/flutter-apk/FitIron-arm64-v8a.apk
+            build/app/outputs/flutter-apk/FitIron-armeabi-v7a.apk
+            build/app/outputs/flutter-apk/FitIron-x86_64.apk
+            FitIron-source-${{ inputs.tag }}.zip

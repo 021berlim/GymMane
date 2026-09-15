@@ -1,4 +1,4 @@
-🦁 GymMane 1.0.0 — the first release
+🦁 FitIron 1.0.0 — the first release
 🏋️ Interactive body map: tap a muscle, get the session
 ⏱️ Rest timer with your own alarm sound, and it survives a reboot
 📊 Volume, streak, PRs, strength curves and a GitHub-style heatmap

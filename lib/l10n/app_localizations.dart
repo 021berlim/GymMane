@@ -7,6 +7,7 @@ import 'package:intl/intl.dart' as intl;
 
 import 'app_localizations_en.dart';
 import 'app_localizations_es.dart';
+import 'app_localizations_pt.dart';
 
 // ignore_for_file: type=lint
 
@@ -90,7 +91,7 @@ abstract class AppLocalizations {
   ];
 
   /// A list of this localizations delegate's supported locales.
-  static const List<Locale> supportedLocales = <Locale>[Locale('en'), Locale('es')];
+  static const List<Locale> supportedLocales = <Locale>[Locale('en'), Locale('es'), Locale('pt')];
 
   /// This language, written in itself. Shown in the language picker.
   ///
@@ -221,7 +222,7 @@ abstract class AppLocalizations {
   /// No description provided for @todaysRoutine.
   ///
   /// In en, this message translates to:
-  /// **'TODAY\'S ROUTINE'**
+  /// **'TODAY\'S WORKOUT'**
   String get todaysRoutine;
 
   /// No description provided for @startWorkout.
@@ -233,8 +234,14 @@ abstract class AppLocalizations {
   /// No description provided for @routines.
   ///
   /// In en, this message translates to:
-  /// **'ROUTINES'**
+  /// **'WORKOUT'**
   String get routines;
+
+  /// No description provided for @goToWorkouts.
+  ///
+  /// In en, this message translates to:
+  /// **'MY WORKOUTS'**
+  String get goToWorkouts;
 
   /// No description provided for @tools.
   ///
@@ -295,6 +302,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'TRAIN'**
   String get train;
+
+  /// No description provided for @chooseRoutineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'CHOOSE YOUR WORKOUT'**
+  String get chooseRoutineTitle;
+
+  /// No description provided for @chooseRoutineBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a saved routine or build a personalized workout.'**
+  String get chooseRoutineBody;
+
+  /// No description provided for @customWorkout.
+  ///
+  /// In en, this message translates to:
+  /// **'PERSONALIZED WORKOUT'**
+  String get customWorkout;
+
+  /// No description provided for @logWorkout.
+  ///
+  /// In en, this message translates to:
+  /// **'LOG WORKOUT'**
+  String get logWorkout;
 
   /// No description provided for @step1.
   ///
@@ -632,6 +663,36 @@ abstract class AppLocalizations {
   /// **'Shows a banner the moment your rest is over'**
   String get notifAlertChannelWhy;
 
+  /// No description provided for @notifGoalChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'Goals'**
+  String get notifGoalChannel;
+
+  /// No description provided for @notifGoalChannelWhy.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications when goals are reached'**
+  String get notifGoalChannelWhy;
+
+  /// No description provided for @goalReachedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal reached! 🎯'**
+  String get goalReachedTitle;
+
+  /// No description provided for @goalReachedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Congratulations! You hit your goal.'**
+  String get goalReachedBody;
+
+  /// No description provided for @rateAggressiveWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Faster than recommended pace'**
+  String get rateAggressiveWarning;
+
   /// No description provided for @restOverTitle.
   ///
   /// In en, this message translates to:
@@ -656,6 +717,18 @@ abstract class AppLocalizations {
   /// **'CONSISTENCY'**
   String get consistency;
 
+  /// No description provided for @monthSessionCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{n, plural, =1{{n} session} other{{n} sessions}}'**
+  String monthSessionCount(int n);
+
+  /// No description provided for @monthVolumeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{v} volume'**
+  String monthVolumeLabel(String v);
+
   /// No description provided for @sessionsLogged.
   ///
   /// In en, this message translates to:
@@ -667,6 +740,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{n}-day streak'**
   String streakDays(int n);
+
+  /// No description provided for @ofensivaAtRisk.
+  ///
+  /// In en, this message translates to:
+  /// **'Workout today to keep your streak'**
+  String get ofensivaAtRisk;
 
   /// No description provided for @bodyweight.
   ///
@@ -698,6 +777,42 @@ abstract class AppLocalizations {
   /// **'Track your weight over time'**
   String get trackWeight;
 
+  /// No description provided for @noWeightLoggedYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No weight logged yet'**
+  String get noWeightLoggedYet;
+
+  /// No description provided for @noWeightLoggedYetSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Log your weight to track your evolution here'**
+  String get noWeightLoggedYetSub;
+
+  /// No description provided for @logWeightToTrack.
+  ///
+  /// In en, this message translates to:
+  /// **'Log your weight to track'**
+  String get logWeightToTrack;
+
+  /// No description provided for @bodyweightBeforeWorkout.
+  ///
+  /// In en, this message translates to:
+  /// **'Weight before workout'**
+  String get bodyweightBeforeWorkout;
+
+  /// No description provided for @bodyweightAfterWorkout.
+  ///
+  /// In en, this message translates to:
+  /// **'Weight after workout'**
+  String get bodyweightAfterWorkout;
+
+  /// No description provided for @bodyweightComparison.
+  ///
+  /// In en, this message translates to:
+  /// **'WORKOUT COMPARISON'**
+  String get bodyweightComparison;
+
   /// No description provided for @muscleMap.
   ///
   /// In en, this message translates to:
@@ -715,6 +830,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'30D'**
   String get days30;
+
+  /// No description provided for @days90.
+  ///
+  /// In en, this message translates to:
+  /// **'3M'**
+  String get days90;
+
+  /// No description provided for @days180.
+  ///
+  /// In en, this message translates to:
+  /// **'6M'**
+  String get days180;
+
+  /// No description provided for @days365.
+  ///
+  /// In en, this message translates to:
+  /// **'1Y'**
+  String get days365;
 
   /// No description provided for @heatLow.
   ///
@@ -835,6 +968,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'HISTORY'**
   String get bodyweightHistory;
+
+  /// No description provided for @workoutProgression.
+  ///
+  /// In en, this message translates to:
+  /// **'WORKOUT PROGRESSION'**
+  String get workoutProgression;
+
+  /// No description provided for @avgDiff.
+  ///
+  /// In en, this message translates to:
+  /// **'Average: {diff}'**
+  String avgDiff(String diff);
 
   /// No description provided for @noBodyweightYet.
   ///
@@ -1067,31 +1212,31 @@ abstract class AppLocalizations {
   /// No description provided for @weeklyPlan.
   ///
   /// In en, this message translates to:
-  /// **'WEEKLY PLAN'**
+  /// **'WEEKLY WORKOUT PLAN'**
   String get weeklyPlan;
 
   /// No description provided for @yourRoutines.
   ///
   /// In en, this message translates to:
-  /// **'YOUR ROUTINES'**
+  /// **'YOUR WORKOUTS'**
   String get yourRoutines;
 
   /// No description provided for @noRoutines.
   ///
   /// In en, this message translates to:
-  /// **'No routines yet. Create one and add your exercises.'**
+  /// **'No workouts yet. Create one and add your exercises.'**
   String get noRoutines;
 
   /// No description provided for @newRoutine.
   ///
   /// In en, this message translates to:
-  /// **'NEW ROUTINE'**
+  /// **'NEW WORKOUT'**
   String get newRoutine;
 
   /// No description provided for @routineName.
   ///
   /// In en, this message translates to:
-  /// **'Routine name'**
+  /// **'Workout name'**
   String get routineName;
 
   /// No description provided for @schedule.
@@ -1133,7 +1278,7 @@ abstract class AppLocalizations {
   /// No description provided for @newRoutineName.
   ///
   /// In en, this message translates to:
-  /// **'New routine'**
+  /// **'New workout'**
   String get newRoutineName;
 
   /// No description provided for @dragToReorder.
@@ -1304,6 +1449,18 @@ abstract class AppLocalizations {
   /// **'TURN ON'**
   String get alarmBlockedAction;
 
+  /// No description provided for @alarmXiaomiTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'HyperOS / Xiaomi detected'**
+  String get alarmXiaomiTitle;
+
+  /// No description provided for @alarmXiaomiBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable \'Background autostart\' and set Battery to \'No restrictions\' for the alarm to work reliably.'**
+  String get alarmXiaomiBody;
+
   /// No description provided for @alarmSound.
   ///
   /// In en, this message translates to:
@@ -1363,6 +1520,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Back to the default sound'**
   String get alarmChangedDefault;
+
+  /// No description provided for @enablePhotosLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Progress photos'**
+  String get enablePhotosLabel;
+
+  /// No description provided for @enablePhotosHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Take photos before or after your workout'**
+  String get enablePhotosHint;
+
+  /// No description provided for @photoTimingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'When to take photos'**
+  String get photoTimingLabel;
+
+  /// No description provided for @photoTimingBefore.
+  ///
+  /// In en, this message translates to:
+  /// **'Before'**
+  String get photoTimingBefore;
+
+  /// No description provided for @photoTimingAfter.
+  ///
+  /// In en, this message translates to:
+  /// **'After'**
+  String get photoTimingAfter;
+
+  /// No description provided for @photoTimingBoth.
+  ///
+  /// In en, this message translates to:
+  /// **'Both'**
+  String get photoTimingBoth;
+
+  /// No description provided for @onbPhotosTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Progress photos?'**
+  String get onbPhotosTitle;
+
+  /// No description provided for @onbPhotosWhy.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare your body before and after each workout visually.'**
+  String get onbPhotosWhy;
 
   /// No description provided for @homeWidgets.
   ///
@@ -1439,7 +1644,7 @@ abstract class AppLocalizations {
   /// No description provided for @importHint.
   ///
   /// In en, this message translates to:
-  /// **'Choose a .json backup exported from GymMane. This replaces your current data.'**
+  /// **'Choose a .json backup exported from FIT//IRON. This replaces your current data.'**
   String get importHint;
 
   /// No description provided for @import.
@@ -1508,11 +1713,11 @@ abstract class AppLocalizations {
   /// **'{n, plural, =1{Imported {n} session} other{Imported {n} sessions}}'**
   String importDone(int n);
 
-  /// No description provided for @aboutGymmane.
+  /// No description provided for @aboutFitiron.
   ///
   /// In en, this message translates to:
-  /// **'About GymMane'**
-  String get aboutGymmane;
+  /// **'About FIT//IRON'**
+  String get aboutFitiron;
 
   /// No description provided for @yourProfile.
   ///
@@ -1597,6 +1802,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Take a photo'**
   String get takePhoto;
+
+  /// No description provided for @photoBefore.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo before'**
+  String get photoBefore;
+
+  /// No description provided for @photoAfter.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo after'**
+  String get photoAfter;
+
+  /// No description provided for @photoGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'PHOTO GALLERY'**
+  String get photoGallery;
+
+  /// No description provided for @noPhotosYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No photos recorded yet.'**
+  String get noPhotosYet;
+
+  /// No description provided for @confirmPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Use this photo'**
+  String get confirmPhoto;
+
+  /// No description provided for @retakePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Retake photo'**
+  String get retakePhoto;
 
   /// No description provided for @chooseGallery.
   ///
@@ -1861,6 +2102,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Ramp-up sets'**
   String get toolDescWarmup;
+
+  /// No description provided for @macroProtein.
+  ///
+  /// In en, this message translates to:
+  /// **'PROTEIN'**
+  String get macroProtein;
+
+  /// No description provided for @macroCarbs.
+  ///
+  /// In en, this message translates to:
+  /// **'CARBS'**
+  String get macroCarbs;
+
+  /// No description provided for @macroFat.
+  ///
+  /// In en, this message translates to:
+  /// **'FAT'**
+  String get macroFat;
 
   /// No description provided for @bmiUnderweight.
   ///
@@ -2318,6 +2577,48 @@ abstract class AppLocalizations {
   /// **'Kilos or pounds?'**
   String get onbUnitsTitle;
 
+  /// No description provided for @onbFocusTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What is your main goal?'**
+  String get onbFocusTitle;
+
+  /// No description provided for @onbFocusWhy.
+  ///
+  /// In en, this message translates to:
+  /// **'We\'ll suggest exercises that match what you\'re trying to achieve.'**
+  String get onbFocusWhy;
+
+  /// No description provided for @focusHypertrophy.
+  ///
+  /// In en, this message translates to:
+  /// **'Hypertrophy'**
+  String get focusHypertrophy;
+
+  /// No description provided for @focusStrength.
+  ///
+  /// In en, this message translates to:
+  /// **'Strength'**
+  String get focusStrength;
+
+  /// No description provided for @focusWeightLoss.
+  ///
+  /// In en, this message translates to:
+  /// **'Weight Loss'**
+  String get focusWeightLoss;
+
+  /// No description provided for @focusEndurance.
+  ///
+  /// In en, this message translates to:
+  /// **'Endurance'**
+  String get focusEndurance;
+
+  /// No description provided for @focusHealth.
+  ///
+  /// In en, this message translates to:
+  /// **'General Health'**
+  String get focusHealth;
+
   /// No description provided for @next.
   ///
   /// In en, this message translates to:
@@ -2341,6 +2642,144 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Exercise illustrations by Bryl Lim and Everkinetic'**
   String get artCredit;
+
+  /// No description provided for @muscleWarmup.
+  ///
+  /// In en, this message translates to:
+  /// **'Warm-up / Flexibility'**
+  String get muscleWarmup;
+
+  /// No description provided for @muscleCardio.
+  ///
+  /// In en, this message translates to:
+  /// **'Cardio'**
+  String get muscleCardio;
+
+  /// No description provided for @exploreDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Explore details'**
+  String get exploreDetails;
+
+  /// No description provided for @currentWeekPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Current week'**
+  String get currentWeekPeriod;
+
+  /// No description provided for @muscleDistribution.
+  ///
+  /// In en, this message translates to:
+  /// **'Muscle Distribution'**
+  String get muscleDistribution;
+
+  /// No description provided for @tabWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'WEEK'**
+  String get tabWeek;
+
+  /// No description provided for @tabMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'MONTH'**
+  String get tabMonth;
+
+  /// No description provided for @tabYear.
+  ///
+  /// In en, this message translates to:
+  /// **'YEAR'**
+  String get tabYear;
+
+  /// No description provided for @equivalentSets.
+  ///
+  /// In en, this message translates to:
+  /// **'Equivalent sets'**
+  String get equivalentSets;
+
+  /// No description provided for @equivalentVolume.
+  ///
+  /// In en, this message translates to:
+  /// **'Equivalent volume'**
+  String get equivalentVolume;
+
+  /// No description provided for @previousWeekPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous week'**
+  String get previousWeekPeriod;
+
+  /// No description provided for @currentMonthPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Current month'**
+  String get currentMonthPeriod;
+
+  /// No description provided for @previousMonthPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous month'**
+  String get previousMonthPeriod;
+
+  /// No description provided for @currentYearPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Current year'**
+  String get currentYearPeriod;
+
+  /// No description provided for @previousYearPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous year'**
+  String get previousYearPeriod;
+
+  /// No description provided for @equivalentSetsInfoDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Your muscle distribution is calculated based on total sets completed across all your workouts.\n\nPrimary muscles count as 1 full set per set performed. Secondary muscles count as 0.5 sets as they assist in the movement.\n\nThis helps create a more accurate view of how each muscle group is being trained, allowing comparisons between different periods.'**
+  String get equivalentSetsInfoDesc;
+
+  /// No description provided for @equivalentVolumeInfoDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Your weekly muscle distribution is calculated based on total volume (sets, reps, and load) completed across all your workouts.\n\nPrimary muscles count as 1 full set per set performed. Secondary muscles count as 0.5 sets as they assist in the movement.\n\nThis helps create a more accurate view of how each muscle group is being trained, allowing comparisons between different periods.'**
+  String get equivalentVolumeInfoDesc;
+
+  /// No description provided for @weeklyProgressTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'WEEKLY PROGRESS'**
+  String get weeklyProgressTitle;
+
+  /// No description provided for @weeklyNoData.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to show yet'**
+  String get weeklyNoData;
+
+  /// No description provided for @weeklyNoDataSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Results will appear after your first workout.'**
+  String get weeklyNoDataSub;
+
+  /// No description provided for @tabTime.
+  ///
+  /// In en, this message translates to:
+  /// **'TIME'**
+  String get tabTime;
+
+  /// No description provided for @tabVolume.
+  ///
+  /// In en, this message translates to:
+  /// **'VOLUME'**
+  String get tabVolume;
+
+  /// No description provided for @tabReps.
+  ///
+  /// In en, this message translates to:
+  /// **'REPS'**
+  String get tabReps;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
@@ -2352,7 +2791,7 @@ class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> 
   }
 
   @override
-  bool isSupported(Locale locale) => <String>['en', 'es'].contains(locale.languageCode);
+  bool isSupported(Locale locale) => <String>['en', 'es', 'pt'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
@@ -2365,6 +2804,8 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
       return AppLocalizationsEn();
     case 'es':
       return AppLocalizationsEs();
+    case 'pt':
+      return AppLocalizationsPt();
   }
 
   throw FlutterError(

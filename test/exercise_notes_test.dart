@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gymmane/l10n/l10n.dart';
-import 'package:gymmane/screens/exercise_detail_screen.dart';
-import 'package:gymmane/state/fit_state.dart';
-import 'package:gymmane/theme/app_theme.dart';
+import 'package:fitiron/l10n/l10n.dart';
+import 'package:fitiron/screens/exercise_detail_screen.dart';
+import 'package:fitiron/state/fit_state.dart';
+import 'package:fitiron/theme/app_theme.dart';
 
 Widget _host() => MaterialApp(
       theme: AppTheme.dark,

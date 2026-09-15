@@ -11,7 +11,7 @@ import '../widgets/home_widget_views.dart';
 class HomeWidgetBridge {
   HomeWidgetBridge._();
 
-  static const _pkg = 'com.gymmane.app';
+  static const _pkg = 'com.fitiron.app';
   static const heatmapKey = 'heatmap_img';
   static const statsKey = 'stats_img';
   static bool get _supported => !kIsWeb && Platform.isAndroid;

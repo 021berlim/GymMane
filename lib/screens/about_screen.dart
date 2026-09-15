@@ -22,7 +22,7 @@ class AboutScreen extends StatelessWidget {
     return SafeArea(
       bottom: false,
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+        padding: EdgeInsets.fromLTRB(20, 12, 20, 24 + MediaQuery.of(context).padding.bottom),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -136,7 +136,7 @@ class AboutScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text('GYMMANE',
+                  Text('FIT//IRON',
                       style: AppTheme.d(34, weight: FontWeight.w700, color: gc.text, letterSpacing: 1)),
                   const SizedBox(height: 4),
                   Text(t.version('1.0.0'), style: AppTheme.s(12, color: gc.textSecondary)),

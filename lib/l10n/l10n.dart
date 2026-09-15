@@ -4,11 +4,24 @@ import 'package:intl/intl.dart';
 
 import 'app_localizations.dart';
 import 'catalog_es.dart';
+import 'catalog_it.dart';
+import 'catalog_pt.dart';
+import 'catalog_zh.dart';
 
 export 'app_localizations.dart';
 
-const Map<String, Map<String, String>> _catalogNames = {'es': kExerciseNameEs};
-const Map<String, Map<String, List<String>>> _catalogSteps = {'es': kExerciseStepsEs};
+const Map<String, Map<String, String>> _catalogNames = {
+  'es': kExerciseNameEs,
+  'it': kExerciseNameIt,
+  'pt': kExerciseNamePt,
+  'zh': kExerciseNameZh,
+};
+const Map<String, Map<String, List<String>>> _catalogSteps = {
+  'es': kExerciseStepsEs,
+  'it': kExerciseStepsIt,
+  'pt': kExerciseStepsPt,
+  'zh': kExerciseStepsZh,
+};
 
 String appLanguage = 'en';
 AppLocalizations t = lookupAppLocalizations(const Locale('en'));
@@ -26,8 +39,10 @@ String resolveLanguage(String code) {
 void setAppLanguage(String code) {
   appLanguage = resolveLanguage(code);
   t = lookupAppLocalizations(Locale(appLanguage));
-  Intl.defaultLocale = appLanguage;
+  Intl.defaultLocale = _intlLocale;
 }
+
+String get _intlLocale => appLanguage == 'pt' ? 'pt_BR' : appLanguage;
 
 bool _dateSymbolsReady = false;
 
@@ -36,7 +51,7 @@ DateFormat _dates(DateFormat Function(String locale) build) {
     initializeDateFormatting();
     _dateSymbolsReady = true;
   }
-  return build(appLanguage);
+  return build(_intlLocale);
 }
 
 extension GymL10n on AppLocalizations {
@@ -108,6 +123,8 @@ extension GymL10n on AppLocalizations {
       };
 
   String muscle(String id) => switch (id) {
+        'warmup' => muscleWarmup,
+        'cardio' => muscleCardio,
         'chest' => muscleChest,
         'back' => muscleBack,
         'shoulders' => muscleShoulders,
@@ -143,12 +160,14 @@ extension GymL10n on AppLocalizations {
         'Weighted' => equipWeighted,
         'Band' => equipBand,
         'Kettlebell' => equipKettlebell,
+        'all' || 'All' => appLanguage == 'es' ? 'Todo el material' : (appLanguage == 'pt' ? 'Todos os Equip.' : 'All Equipment'),
         _ => equipOther,
       };
 
   String difficulty(String id) => switch (id) {
         'Beginner' => diffBeginner,
         'Advanced' => diffAdvanced,
+        'all' || 'All' => appLanguage == 'es' ? 'Todos los niveles' : (appLanguage == 'pt' ? 'Todos os Níveis' : 'All Levels'),
         _ => diffIntermediate,
       };
 
@@ -163,6 +182,8 @@ extension GymL10n on AppLocalizations {
   String shortDate(DateTime d) => _dates(DateFormat.MMMd).format(d);
 
   String shortDateYear(DateTime d) => _dates(DateFormat.yMMMd).format(d);
+
+  String monthYear(DateTime d) => _capitalize(_dates(DateFormat.yMMMM).format(d));
 
   String catalogName(String id, String fallback) => _catalogNames[appLanguage]?[id] ?? fallback;
 

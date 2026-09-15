@@ -3,6 +3,9 @@ include: package:flutter_lints/flutter.yaml
 analyzer:
   exclude:
     - lib/l10n/app_localizations*.dart
+    - build/**
+    - android/**
+    - linux/**
 
 formatter:
   page_width: 110

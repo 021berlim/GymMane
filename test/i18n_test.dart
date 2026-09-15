@@ -2,12 +2,13 @@ import 'dart:io';
 import 'dart:ui' show PlatformDispatcher;
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gymmane/catalog/exercise_catalog.dart';
-import 'package:gymmane/l10n/catalog_es.dart';
-import 'package:gymmane/l10n/l10n.dart';
-import 'package:gymmane/models/exercise.dart';
-import 'package:gymmane/services/local_store.dart';
-import 'package:gymmane/state/fit_state.dart';
+import 'package:fitiron/catalog/exercise_catalog.dart';
+import 'package:fitiron/l10n/catalog_es.dart';
+import 'package:fitiron/l10n/catalog_pt.dart';
+import 'package:fitiron/l10n/l10n.dart';
+import 'package:fitiron/models/exercise.dart';
+import 'package:fitiron/services/local_store.dart';
+import 'package:fitiron/state/fit_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -113,6 +114,9 @@ void main() {
     setAppLanguage('es');
     expect(t.longDate(d), 'Jueves, 16 jul');
     expect(t.shortDate(d), '16 jul');
+    setAppLanguage('pt');
+    expect(t.longDate(d), 'Quinta-feira, 16 de jul.');
+    expect(t.shortDate(d), '16 de jul.');
   });
 
   test('the week strip uses Spanish initials, and X for Wednesday', () {
@@ -222,13 +226,31 @@ void main() {
         id: 'c999', name: 'Mío', primary: 'chest', secondary: const [],
         equipment: 'Other', difficulty: 'Beginner', art: '', steps: const ['Mi paso'],
       );
-      setAppLanguage('es');
+    setAppLanguage('es');
       expect(exerciseSteps(mine), const ['Mi paso']);
     });
 
     test('no leftover mojibake in the catalogue', () {
-      final bad = kExercises.where((e) => e.name.contains('Â') || e.name.contains('�'));
+      final bad = kExercises.where((e) => e.name.contains('Â') || e.name.contains('\uFFFD'));
       expect(bad.map((e) => e.name), isEmpty);
+    });
+  });
+
+  group('catálogo em português', () {
+    test('every factory exercise has a Portuguese name', () {
+      final missing = kExercises.where((e) => !kExerciseNamePt.containsKey(e.id)).map((e) => e.name);
+      expect(missing, isEmpty);
+    });
+
+    test('every factory exercise has Portuguese steps', () {
+      final missing = kExercises.where((e) => !kExerciseStepsPt.containsKey(e.id)).map((e) => e.name);
+      expect(missing, isEmpty);
+    });
+
+    test('names follow the active language (pt)', () {
+      final bench = kExercises.firstWhere((e) => e.id == 'EIeI8Vf');
+      setAppLanguage('pt');
+      expect(exerciseName(bench), 'Supino reto com barra');
     });
   });
 
@@ -265,7 +287,28 @@ void main() {
 
     bool looksLikeUi(String t) => RegExp(r'^[A-Z]').hasMatch(t) || t.contains(' ');
 
-    const allowed = {'GymMane', 'GYMMANE', 'GYM · MANE', 'M', 'F', 'kg', 'lb', 'cm', 'EN', 'ES'};
+    const allowed = {
+      'FitIron',
+      'FITIRON',
+      'FIT//IRON',
+      'GYM · MANE',
+      'M',
+      'F',
+      'kg',
+      'lb',
+      'cm',
+      'EN',
+      'ES',
+      'Ofensiva Diária',
+      'Sequência Semanal',
+      'PROGRESSO SEMANAL',
+      'Nada para mostrar ainda',
+      'Os resultados aparecerão após o seu primeiro treino.',
+      'TEMPO',
+      'CALORIAS',
+      'VOLUME',
+      'REPS',
+    };
 
     final offenders = <String>[];
 

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gymmane/models/workout.dart';
-import 'package:gymmane/state/fit_state.dart';
+import 'package:fitiron/models/workout.dart';
+import 'package:fitiron/state/fit_state.dart';
 
 void _reset() {
   fit.saveAndExit();
@@ -34,6 +34,7 @@ void main() {
 
   test('dropping every exercise refuses to start a session', () {
     fit.startWorkout();
+    fit.startCustomWorkout();
     fit.toggleMuscle('chest');
     fit.trainContinue();
     for (final id in fit.sessionPicks.toList()) {
@@ -85,6 +86,7 @@ void main() {
     expect(fit.route, 'exercises');
 
     fit.startWorkout();
+    fit.startCustomWorkout();
     fit.toggleMuscle('chest');
     fit.trainContinue();
     expect(fit.handleBack(), true);

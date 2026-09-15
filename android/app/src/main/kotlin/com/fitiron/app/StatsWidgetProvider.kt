@@ -1,4 +1,4 @@
-package com.gymmane.app
+package com.fitiron.app
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
@@ -9,9 +9,9 @@ import android.graphics.BitmapFactory
 import android.widget.RemoteViews
 import es.antonborri.home_widget.HomeWidgetProvider
 
-/// Widget de heatmap: solo muestra el PNG que renderiza Flutter
-/// (WidgetBridge -> home_widget). Al tocarlo abre la app.
-class HeatmapWidgetProvider : HomeWidgetProvider() {
+/// Widget cuadrado de estadísticas (racha + semana + objetivo). Muestra el PNG
+/// que renderiza Flutter. Al tocarlo abre la app.
+class StatsWidgetProvider : HomeWidgetProvider() {
     override fun onUpdate(
         context: Context,
         appWidgetManager: AppWidgetManager,
@@ -19,8 +19,8 @@ class HeatmapWidgetProvider : HomeWidgetProvider() {
         widgetData: SharedPreferences
     ) {
         appWidgetIds.forEach { widgetId ->
-            val views = RemoteViews(context.packageName, R.layout.widget_heatmap).apply {
-                val path = widgetData.getString("heatmap_img", null)
+            val views = RemoteViews(context.packageName, R.layout.widget_stats).apply {
+                val path = widgetData.getString("stats_img", null)
                 if (path != null) {
                     val bmp = BitmapFactory.decodeFile(path)
                     if (bmp != null) setImageViewBitmap(R.id.widget_image, bmp)

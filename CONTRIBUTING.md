@@ -1,6 +1,6 @@
 <div align="center">
 
-# Contributing to GymMane
+# Contributing to FitIron
 
 </div>
 
@@ -18,7 +18,7 @@
 
 1. **No accounts, no logins, no remote user data.** Ever.
 2. **No network.** The app has no `INTERNET` permission and no analytics, and it
-   stays that way. A feature that needs a server is a feature GymMane won't have.
+   stays that way. A feature that needs a server is a feature FitIron won't have.
 
 Anything that keeps working on a phone in flight mode is fair game.
 

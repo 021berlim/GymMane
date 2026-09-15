@@ -76,13 +76,16 @@ class AppLocalizationsEs extends AppLocalizations {
   String get todaysFocus => 'FOCO DE HOY';
 
   @override
-  String get todaysRoutine => 'RUTINA DE HOY';
+  String get todaysRoutine => 'ENTRENAMIENTO DE HOY';
 
   @override
   String get startWorkout => 'EMPEZAR';
 
   @override
-  String get routines => 'RUTINAS';
+  String get routines => 'ENTRENAMIENTO';
+
+  @override
+  String get goToWorkouts => 'MIS ENTRENAMIENTOS';
 
   @override
   String get tools => 'HERRAMIENTAS';
@@ -116,6 +119,18 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get train => 'ENTRENAR';
+
+  @override
+  String get chooseRoutineTitle => 'ELIGE TU ENTRENAMIENTO';
+
+  @override
+  String get chooseRoutineBody => 'Elige una rutina guardada o crea un entrenamiento personalizado.';
+
+  @override
+  String get customWorkout => 'ENTRENAMIENTO PERSONALIZADO';
+
+  @override
+  String get logWorkout => 'REGISTRAR ENTRENAMIENTO';
 
   @override
   String get step1 => 'PASO 1 DE 2';
@@ -317,6 +332,21 @@ class AppLocalizationsEs extends AppLocalizations {
   String get notifAlertChannelWhy => 'Muestra un aviso en cuanto acaba el descanso';
 
   @override
+  String get notifGoalChannel => 'Objetivos';
+
+  @override
+  String get notifGoalChannelWhy => 'Notificaciones de objetivos cumplidos';
+
+  @override
+  String get goalReachedTitle => '¡Objetivo cumplido! 🎯';
+
+  @override
+  String get goalReachedBody => '¡Enhorabuena! Has alcanzado tu objetivo.';
+
+  @override
+  String get rateAggressiveWarning => 'Ritmo por encima del recomendado';
+
+  @override
   String get restOverTitle => 'Se acabó el descanso';
 
   @override
@@ -327,6 +357,17 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get consistency => 'CONSTANCIA';
+
+  @override
+  String monthSessionCount(int n) {
+    String _temp0 = intl.Intl.pluralLogic(n, locale: localeName, other: '$n sesiones', one: '$n sesión');
+    return '$_temp0';
+  }
+
+  @override
+  String monthVolumeLabel(String v) {
+    return '$v de volumen';
+  }
 
   @override
   String sessionsLogged(int n) {
@@ -346,6 +387,9 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get ofensivaAtRisk => 'Entrena hoy para mantener tu racha';
+
+  @override
   String get bodyweight => 'PESO CORPORAL';
 
   @override
@@ -361,6 +405,24 @@ class AppLocalizationsEs extends AppLocalizations {
   String get trackWeight => 'Sigue tu peso en el tiempo';
 
   @override
+  String get noWeightLoggedYet => 'Ningún peso registrado aún';
+
+  @override
+  String get noWeightLoggedYetSub => 'Registra tu peso para seguir tu evolución aquí';
+
+  @override
+  String get logWeightToTrack => 'Anota tu peso para dar seguimiento';
+
+  @override
+  String get bodyweightBeforeWorkout => 'Peso antes del entrenamiento';
+
+  @override
+  String get bodyweightAfterWorkout => 'Peso después del entrenamiento';
+
+  @override
+  String get bodyweightComparison => 'COMPARACIÓN DEL ENTRENAMIENTO';
+
+  @override
   String get muscleMap => 'MAPA MUSCULAR';
 
   @override
@@ -368,6 +430,15 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get days30 => '30D';
+
+  @override
+  String get days90 => '3M';
+
+  @override
+  String get days180 => '6M';
+
+  @override
+  String get days365 => '1Y';
 
   @override
   String get heatLow => 'Sin tocar';
@@ -436,6 +507,14 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get bodyweightHistory => 'HISTORIAL';
+
+  @override
+  String get workoutProgression => 'WORKOUT PROGRESSION';
+
+  @override
+  String avgDiff(String diff) {
+    return 'Average: $diff';
+  }
 
   @override
   String get noBodyweightYet => 'Nada registrado todavía.';
@@ -570,19 +649,19 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get weeklyPlan => 'PLAN SEMANAL';
+  String get weeklyPlan => 'PLAN SEMANAL DE ENTRENAMIENTO';
 
   @override
-  String get yourRoutines => 'TUS RUTINAS';
+  String get yourRoutines => 'TUS ENTRENAMIENTOS';
 
   @override
-  String get noRoutines => 'Aún no hay rutinas. Crea una y añade tus ejercicios.';
+  String get noRoutines => 'Aún no hay entrenamientos. Crea uno y añade tus ejercicios.';
 
   @override
-  String get newRoutine => 'NUEVA RUTINA';
+  String get newRoutine => 'NUEVO ENTRENAMIENTO';
 
   @override
-  String get routineName => 'Nombre de la rutina';
+  String get routineName => 'Nombre del entrenamiento';
 
   @override
   String get schedule => 'PROGRAMAR';
@@ -607,7 +686,7 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get newRoutineName => 'Rutina nueva';
+  String get newRoutineName => 'Entrenamiento nuevo';
 
   @override
   String get dragToReorder => 'Mantén y arrastra para reordenar — es el orden en que entrenas.';
@@ -699,6 +778,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get alarmBlockedAction => 'ACTIVAR';
 
   @override
+  String get alarmXiaomiTitle => 'HyperOS / Xiaomi detectado';
+
+  @override
+  String get alarmXiaomiBody =>
+      'Activa el \'Inicio automático\' y pon la batería en \'Sin restricciones\' para que la alarma sea fiable.';
+
+  @override
   String get alarmSound => 'Sonido de alarma';
 
   @override
@@ -729,6 +815,30 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get alarmChangedDefault => 'De vuelta al sonido de fábrica';
+
+  @override
+  String get enablePhotosLabel => 'Progress photos';
+
+  @override
+  String get enablePhotosHint => 'Take photos before or after your workout';
+
+  @override
+  String get photoTimingLabel => 'When to take photos';
+
+  @override
+  String get photoTimingBefore => 'Before';
+
+  @override
+  String get photoTimingAfter => 'After';
+
+  @override
+  String get photoTimingBoth => 'Both';
+
+  @override
+  String get onbPhotosTitle => 'Progress photos?';
+
+  @override
+  String get onbPhotosWhy => 'Compare your body before and after each workout visually.';
 
   @override
   String get homeWidgets => 'PANTALLA DE INICIO';
@@ -767,7 +877,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get importBackup => 'Importar copia';
 
   @override
-  String get importHint => 'Elige un archivo .json exportado de GymMane. Reemplazará tus datos actuales.';
+  String get importHint => 'Elige un archivo .json exportado de FIT//IRON. Reemplazará tus datos actuales.';
 
   @override
   String get import => 'Importar';
@@ -819,7 +929,7 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get aboutGymmane => 'Sobre GymMane';
+  String get aboutFitiron => 'Sobre FIT//IRON';
 
   @override
   String get yourProfile => 'TU PERFIL';
@@ -862,6 +972,24 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get takePhoto => 'Hacer una foto';
+
+  @override
+  String get photoBefore => 'Photo before';
+
+  @override
+  String get photoAfter => 'Photo after';
+
+  @override
+  String get photoGallery => 'PHOTO GALLERY';
+
+  @override
+  String get noPhotosYet => 'No photos recorded yet.';
+
+  @override
+  String get confirmPhoto => 'Use this photo';
+
+  @override
+  String get retakePhoto => 'Retake photo';
 
   @override
   String get chooseGallery => 'Elegir de la galería';
@@ -1000,6 +1128,15 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get toolDescWarmup => 'Series de aproximación';
+
+  @override
+  String get macroProtein => 'PROTEÍNA';
+
+  @override
+  String get macroCarbs => 'CARBOHIDRATOS';
+
+  @override
+  String get macroFat => 'GRASA';
 
   @override
   String get bmiUnderweight => 'Bajo peso';
@@ -1251,6 +1388,27 @@ class AppLocalizationsEs extends AppLocalizations {
   String get onbUnitsTitle => '¿Kilos o libras?';
 
   @override
+  String get onbFocusTitle => 'What is your main goal?';
+
+  @override
+  String get onbFocusWhy => 'We\'ll suggest exercises that match what you\'re trying to achieve.';
+
+  @override
+  String get focusHypertrophy => 'Hypertrophy';
+
+  @override
+  String get focusStrength => 'Strength';
+
+  @override
+  String get focusWeightLoss => 'Weight Loss';
+
+  @override
+  String get focusEndurance => 'Endurance';
+
+  @override
+  String get focusHealth => 'General Health';
+
+  @override
   String get next => 'SIGUIENTE';
 
   @override
@@ -1261,4 +1419,75 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get artCredit => 'Ilustraciones de ejercicios de Bryl Lim y Everkinetic';
+
+  @override
+  String get muscleWarmup => 'Flexibilidad / Calentamiento';
+
+  @override
+  String get muscleCardio => 'Cardio';
+
+  @override
+  String get exploreDetails => 'Explorar detalles';
+
+  @override
+  String get currentWeekPeriod => 'Semana actual';
+
+  @override
+  String get muscleDistribution => 'Distribución Muscular';
+
+  @override
+  String get tabWeek => 'SEMANA';
+
+  @override
+  String get tabMonth => 'MES';
+
+  @override
+  String get tabYear => 'AÑO';
+
+  @override
+  String get equivalentSets => 'Series equivalentes';
+
+  @override
+  String get equivalentVolume => 'Volumen equivalente';
+
+  @override
+  String get previousWeekPeriod => 'Semana anterior';
+
+  @override
+  String get currentMonthPeriod => 'Mes actual';
+
+  @override
+  String get previousMonthPeriod => 'Mes anterior';
+
+  @override
+  String get currentYearPeriod => 'Año actual';
+
+  @override
+  String get previousYearPeriod => 'Año anterior';
+
+  @override
+  String get equivalentSetsInfoDesc =>
+      'Tu distribución muscular se calcula en función de las series totales completadas en todos tus entrenamientos.\n\nLos músculos primarios cuentan como 1 serie completa por serie realizada. Los músculos secundarios cuentan como 0.5 series, ya que ayudan en el movimiento.';
+
+  @override
+  String get equivalentVolumeInfoDesc =>
+      'Tu distribución muscular semanal se calcula en función del volumen total (series, repeticiones y carga) completado en todos tus entrenamientos.\n\nLos músculos primarios cuentan como 1 serie completa por serie realizada. Los músculos secundarios cuentan como 0.5 series, ya que ayudan en el movimiento.';
+
+  @override
+  String get weeklyProgressTitle => 'PROGRESO SEMANAL';
+
+  @override
+  String get weeklyNoData => 'Nada que mostrar aún';
+
+  @override
+  String get weeklyNoDataSub => 'Los resultados aparecerán después de tu primer entrenamiento.';
+
+  @override
+  String get tabTime => 'TIEMPO';
+
+  @override
+  String get tabVolume => 'VOLUMEN';
+
+  @override
+  String get tabReps => 'REPS';
 }

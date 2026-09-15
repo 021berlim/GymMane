@@ -2,10 +2,10 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gymmane/services/alarm_store.dart';
-import 'package:gymmane/services/local_store.dart';
-import 'package:gymmane/services/rest_alarm.dart';
-import 'package:gymmane/state/fit_state.dart';
+import 'package:fitiron/services/alarm_store.dart';
+import 'package:fitiron/services/local_store.dart';
+import 'package:fitiron/services/rest_alarm.dart';
+import 'package:fitiron/state/fit_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -14,7 +14,7 @@ void main() {
   late Directory docs;
 
   setUp(() async {
-    docs = await Directory.systemTemp.createTemp('gymmane_alarm');
+    docs = await Directory.systemTemp.createTemp('fitiron_alarm');
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
       const MethodChannel('plugins.flutter.io/path_provider'),
       (call) async => docs.path,

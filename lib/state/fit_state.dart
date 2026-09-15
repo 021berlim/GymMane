@@ -1,15 +1,17 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
-import 'dart:typed_data';
 import 'dart:ui' show PlatformDispatcher;
 
 import 'package:app_settings/app_settings.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../catalog/exercise_catalog.dart';
 import '../l10n/l10n.dart';
 import '../models/exercise.dart';
+import '../models/goal.dart';
 import '../models/live_session.dart';
 import '../models/profile.dart';
 import '../models/workout.dart';
@@ -19,6 +21,11 @@ import '../services/media_store.dart';
 import '../services/rest_alarm.dart';
 import '../services/exercise_match.dart';
 import '../services/workout_import.dart';
+import '../services/recommendation_service.dart';
+import '../services/goal_progress_calculator.dart';
+import '../services/weight_trend_calculator.dart';
+import '../services/ofensiva_calculator.dart';
+import '../models/weight_entry.dart';
 
 part 'fit_core.dart';
 part 'library_state.dart';
@@ -31,61 +38,89 @@ part 'workout_state.dart';
 class FitState extends FitCore
     with ToolsState, SettingsState, LibraryState, StatsState, RoutinesState, WorkoutState {
   void loadFromStore() {
-    final data = Store.instance.load();
     _loading = true;
-    if (data['language'] == null) _adoptDeviceLanguage();
-    if (data.isNotEmpty) {
-      profile = Profile.fromJson((data['profile'] as Map?)?.cast<String, dynamic>() ?? {});
+    try {
+      final data = Store.instance.load();
 
-      if (const {'Athlete', 'Atleta', 'Name'}.contains(profile.name)) profile.name = 'InlitX';
-      dark = data['dark'] as bool? ?? true;
-      units = data['units'] as String? ?? 'kg';
+      if (data['language'] == null) _adoptDeviceLanguage();
+      if (data.isNotEmpty) {
+        profile = Profile.fromJson((data['profile'] as Map?)?.cast<String, dynamic>() ?? {});
 
-      _applyLanguage(data['language'] as String? ?? language);
-      restSeconds = (data['rest'] as num?)?.toInt() ?? 90;
-      alarmSound = data['alarmSound'] as String?;
-      alarmSoundName = data['alarmSoundName'] as String?;
-      RestAlarm.instance.customSoundPath = alarmSoundPath;
+        if (const {'Athlete', 'Atleta', 'Name'}.contains(profile.name)) profile.name = 'InlitX';
+        dark = data['dark'] as bool? ?? true;
+        units = data['units'] as String? ?? 'kg';
 
-      if (alarmSoundPath == null) {
-        alarmSound = null;
-        alarmSoundName = null;
+        _applyLanguage(data['language'] as String? ?? language);
+        restSeconds = (data['rest'] as num?)?.toInt() ?? 90;
+        alarmSound = data['alarmSound'] as String?;
+        alarmSoundName = data['alarmSoundName'] as String?;
+        RestAlarm.instance.customSoundPath = alarmSoundPath;
+
+        if (alarmSoundPath == null) {
+          alarmSound = null;
+          alarmSoundName = null;
+        }
+        bgPattern = data['bg'] as String? ?? 'none';
+        alarmAskedAt = (data['alarmAskedAt'] as num?)?.toInt();
+        onboarded = (data['onboarded'] as bool?) ??
+            (profile.name != 'InlitX' || sessions.isNotEmpty || routines.isNotEmpty || bodyweight.isNotEmpty);
+        enablePhotos = data['enablePhotos'] as bool? ?? true;
+        photoTiming = data['photoTiming'] as String? ?? 'after';
+        favorites
+          ..clear()
+          ..addAll(((data['favorites'] as Map?) ?? {}).map((k, v) => MapEntry(k.toString(), v == true)));
+        _loadNotes(data);
+        checkins
+          ..clear()
+          ..addAll(((data['checkins'] as List?) ?? []).map((e) => e.toString()));
+        routines
+          ..clear()
+          ..addAll(((data['routines'] as List?) ?? [])
+              .whereType<Map>()
+              .map((e) => Routine.fromJson(e.cast<String, dynamic>())));
+        weeklyPlan
+          ..clear()
+          ..addAll(((data['weeklyPlan'] as Map?) ?? {})
+              .map((k, v) => MapEntry(int.tryParse(k.toString()) ?? 0, v.toString())));
+        weeklyPlan.remove(0);
+        customExercises
+          ..clear()
+          ..addAll(((data['custom'] as List?) ?? [])
+              .whereType<Map>()
+              .map((e) => Exercise.fromJson(e.cast<String, dynamic>())));
+        sessions
+          ..clear()
+          ..addAll(((data['sessions'] as List?) ?? [])
+              .whereType<Map>()
+              .map((e) => LoggedSession.fromJson(e.cast<String, dynamic>())));
+        bodyweight
+          ..clear()
+          ..addAll(((data['bodyweight'] as List?) ?? [])
+              .whereType<Map>()
+              .map((e) => BodyweightEntry.fromJson(e.cast<String, dynamic>())));
+        goals
+          ..clear()
+          ..addAll(((data['goals'] as List?) ?? [])
+              .whereType<Map>()
+              .map((e) => Goal.fromJson(e.cast<String, dynamic>())));
+        _celebratedGoalKeys
+          ..clear()
+          ..addAll(((data['celebratedGoalKeys'] as List?) ?? []).cast<String>());
+
+        if (goals.isEmpty) {
+          goals.add(Goal(id: 'default_weekly', type: GoalType.sessionsWeekly, target: profile.weeklyGoal.toDouble(), isPrimary: true));
+        }
+
+        _restoreLiveSession(data);
       }
-      bgPattern = data['bg'] as String? ?? 'none';
-      alarmAskedAt = (data['alarmAskedAt'] as num?)?.toInt();
-      onboarded = data['onboarded'] as bool? ?? false;
-      favorites
-        ..clear()
-        ..addAll(((data['favorites'] as Map?) ?? {}).map((k, v) => MapEntry(k as String, v as bool)));
-      _loadNotes(data);
-      checkins
-        ..clear()
-        ..addAll(((data['checkins'] as List?) ?? []).cast<String>());
-      routines
-        ..clear()
-        ..addAll(((data['routines'] as List?) ?? [])
-            .map((e) => Routine.fromJson((e as Map).cast<String, dynamic>())));
-      weeklyPlan
-        ..clear()
-        ..addAll(((data['weeklyPlan'] as Map?) ?? {})
-            .map((k, v) => MapEntry(int.parse(k as String), v as String)));
-      customExercises
-        ..clear()
-        ..addAll(((data['custom'] as List?) ?? [])
-            .map((e) => Exercise.fromJson((e as Map).cast<String, dynamic>())));
-      sessions
-        ..clear()
-        ..addAll(((data['sessions'] as List?) ?? [])
-            .map((e) => LoggedSession.fromJson((e as Map).cast<String, dynamic>())));
-      bodyweight
-        ..clear()
-        ..addAll(((data['bodyweight'] as List?) ?? [])
-            .map((e) => BodyweightEntry.fromJson((e as Map).cast<String, dynamic>())));
-      _restoreLiveSession(data);
+    } catch (e, stack) {
+      debugPrint('FitState.loadFromStore fallo: $e\n$stack');
+    } finally {
+      _seedCalculatorsFromProfile();
+      _checkManufacturer();
+      _loading = false;
+      notifyListeners();
     }
-    _seedCalculatorsFromProfile();
-    _loading = false;
-    notifyListeners();
   }
 
   void _restoreLiveSession(Map<String, dynamic> data) {
@@ -134,7 +169,9 @@ class FitState extends FitCore
         'bg': bgPattern,
         'alarmAskedAt': alarmAskedAt,
         'onboarded': onboarded,
-        'favorites': favorites,
+        'enablePhotos': enablePhotos,
+        'photoTiming': photoTiming,
+        'favorites': Map<String, bool>.from(favorites),
         'exNotes': exNotes.map((k, v) => MapEntry(k, v.map((n) => n.toJson()).toList())),
         'checkins': checkins.toList(),
         'routines': routines.map((r) => r.toJson()).toList(),
@@ -142,6 +179,8 @@ class FitState extends FitCore
         'custom': customExercises.map((e) => e.toJson()).toList(),
         'sessions': sessions.map((s) => s.toJson()).toList(),
         'bodyweight': bodyweight.map((b) => b.toJson()).toList(),
+        'goals': goals.map((g) => g.toJson()).toList(),
+        'celebratedGoalKeys': _celebratedGoalKeys.toList(),
         if (session != null && !session!.complete) ...{
           'live': session!.toJson(),
           'liveStart': _runningSince?.toIso8601String(),
@@ -171,6 +210,9 @@ class FitState extends FitCore
     selectedMuscles.clear();
     profile = Profile();
     onboarded = false;
+    SharedPreferences.getInstance().then((p) => p.remove('onboarded')).catchError((_) {});
+    enablePhotos = true;
+    photoTiming = 'after';
     strengthExerciseId = null;
     _photoBytes = null;
     _photoCacheKey = null;
@@ -198,6 +240,8 @@ class FitState extends FitCore
     restSeconds = (map['rest'] as num?)?.toInt() ?? restSeconds;
     bgPattern = map['bg'] as String? ?? bgPattern;
     onboarded = map['onboarded'] as bool? ?? onboarded;
+    enablePhotos = map['enablePhotos'] as bool? ?? enablePhotos;
+    photoTiming = map['photoTiming'] as String? ?? photoTiming;
     favorites
       ..clear()
       ..addAll(((map['favorites'] as Map?) ?? {}).map((k, v) => MapEntry(k as String, v as bool)));
@@ -308,9 +352,12 @@ class FitState extends FitCore
         backFromRoutines();
       case 'routine-edit':
         closeRoutineEdit();
+      case 'routine-choice':
+        closeTrain();
       case 'train':
         trainStep == 'review' ? trainBack() : closeTrain();
       case 'progress':
+      case 'gallery':
       case 'exercises':
       case 'settings':
         goHome();

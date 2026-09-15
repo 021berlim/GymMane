@@ -8,7 +8,7 @@ The exercise art in `assets/art/` comes from
 [Everkinetic](https://github.com/everkinetic/data).
 
 Both are licensed under
-[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), and GymMane's
+[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), and FitIron's
 copy stays under that same license — the rest of the app is GPLv3.
 
 **Changes made.** Each Workout Guide frame is a 512 × 512 SVG holding a single

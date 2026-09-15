@@ -27,7 +27,19 @@ abstract class FitCore extends ChangeNotifier {
   final Set<String> checkins = {};
   final List<Routine> routines = [];
   final Map<int, String> weeklyPlan = {};
+
+  Set<int> get scheduledWeekdays {
+    final result = <int>{};
+    for (final entry in weeklyPlan.entries) {
+      if (entry.value.isNotEmpty && routines.any((r) => r.id == entry.value)) {
+        result.add(entry.key);
+      }
+    }
+    return result;
+  }
+
   final List<Exercise> customExercises = [];
+  final List<Goal> goals = [];
   VoidCallback? onWidgetsShouldUpdate;
 
   void _refreshWidgets() {
@@ -43,14 +55,17 @@ abstract class FitCore extends ChangeNotifier {
   void _persist() {
     if (_loading) return;
     _saveDebounce?.cancel();
-    _saveDebounce = Timer(const Duration(milliseconds: 400), persistNow);
+    _saveDebounce = Timer(const Duration(milliseconds: 400), () => unawaited(persistNow()));
   }
 
-  void persistNow() {
+  Future<void> persistNow() async {
     _saveDebounce?.cancel();
     _saveDebounce = null;
     if (_loading) return;
-    Store.instance.save(toJson());
+    final data = toJson();
+    if (data.isNotEmpty) {
+      await Store.instance.save(data);
+    }
   }
 
   void goHome() => _setRoute('home', reset: true);
@@ -61,13 +76,15 @@ abstract class FitCore extends ChangeNotifier {
 
   void goSettings() => _setRoute('settings', reset: true);
 
+  void goGallery() => _setRoute('gallery', reset: true);
+
   void _setRoute(String r, {bool reset = false}) {
     route = r;
     if (reset) prevRoute = r;
     notifyListeners();
   }
 
-  bool get showNav => const ['home', 'progress', 'exercises', 'settings'].contains(route);
+  bool get showNav => const ['home', 'progress', 'gallery', 'exercises', 'settings'].contains(route);
 
   void setUnits(String u) {
     units = u;
@@ -86,7 +103,7 @@ abstract class FitCore extends ChangeNotifier {
 
   String weightValue(double kg) => fmt(_round1(toDisplayWeight(kg)));
 
-  double get weightStep => isLb ? 5 : 2.5;
+  double get weightStep => isLb ? 5 : 1.0;
   String get volumeUnit => isLb ? 'k lb' : 't';
 
   String volumeValue(double kg) => fmt(_round1(toDisplayWeight(kg) / 1000));

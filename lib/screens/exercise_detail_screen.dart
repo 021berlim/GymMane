@@ -64,7 +64,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
     return SafeArea(
       bottom: false,
       child: SingleChildScrollView(
-        padding: const EdgeInsets.only(top: 12, bottom: 32),
+        padding: EdgeInsets.fromLTRB(0, 12, 0, 24 + MediaQuery.of(context).padding.bottom),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -77,9 +77,16 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
                   Row(children: [
                     if (fit.isCustom(ex.id)) ...[
                       GestureDetector(
-                        onTap: () {
-                          fit.closeExerciseDetail();
-                          fit.deleteCustomExercise(ex.id);
+                        onTap: () async {
+                          final ok = await showConfirmDeleteModal(
+                            context: context,
+                            title: t.delete,
+                            message: t.deleteEntryBody(ex.name),
+                          );
+                          if (ok) {
+                            fit.closeExerciseDetail();
+                            fit.deleteCustomExercise(ex.id);
+                          }
                         },
                         child: Container(
                           width: 36,
@@ -126,7 +133,14 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
                       child: Row(
                         children: [
                           if (ex.media.isNotEmpty) ...[
-                            _mediaBtn(gc, PhosphorIconsRegular.trash, () => fit.clearExerciseMedia(ex.id)),
+                            _mediaBtn(gc, PhosphorIconsRegular.trash, () async {
+                              final ok = await showConfirmDeleteModal(
+                                context: context,
+                                title: t.delete,
+                                message: t.deleteEntryBody(ex.name),
+                              );
+                              if (ok) fit.clearExerciseMedia(ex.id);
+                            }),
                             const SizedBox(width: 8),
                           ],
                           _mediaBtn(
@@ -146,6 +160,8 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(exerciseName(ex), style: AppTheme.d(24, weight: FontWeight.w700, color: gc.text)),
+                  const SizedBox(height: 4),
+                  Text('ID: ${ex.id}', style: AppTheme.s(12, color: gc.textTertiary)),
                   const SizedBox(height: 20),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -387,7 +403,13 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
             ),
           ),
           GestureDetector(
-            onTap: () => fit.deleteNote(exId, i),
+            onTap: () async {
+              final ok = await showConfirmDeleteModal(
+                context: context,
+                title: t.delete,
+              );
+              if (ok) fit.deleteNote(exId, i);
+            },
             child: Padding(
               padding: const EdgeInsets.all(6),
               child: SvgPathIcon(Ic.close, size: 14, color: gc.textTertiary),
@@ -418,9 +440,9 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(s.name, style: AppTheme.s(14, weight: FontWeight.w600, color: gc.text)),
+                  Text(exerciseName(s), style: AppTheme.s(14, weight: FontWeight.w600, color: gc.text)),
                   const SizedBox(height: 2),
-                  Text(s.equipment, style: AppTheme.s(12, color: gc.textSecondary)),
+                  Text(t.equipment(s.equipment), style: AppTheme.s(12, color: gc.textSecondary)),
                 ],
               ),
             ),

@@ -1,35 +1,30 @@
 import 'dart:convert';
 
-import 'package:shared_preferences/shared_preferences.dart';
-
 import '../models/workout.dart';
+import 'sqlite_store.dart';
 
 class Store {
   Store._();
   static final Store instance = Store._();
 
-  static const _key = 'gymmane_v1';
-  SharedPreferences? _prefs;
+  Map<String, dynamic> _cachedState = {};
 
-  Future<void> init() async {
-    _prefs ??= await SharedPreferences.getInstance();
-  }
-
-  Map<String, dynamic> load() {
-    final raw = _prefs?.getString(_key);
-    if (raw == null || raw.isEmpty) return {};
+  Future<void> init({String? dbPathOverride}) async {
     try {
-      final decoded = jsonDecode(raw);
-      return decoded is Map<String, dynamic> ? decoded : {};
+      await SqliteStore.instance.init(dbPathOverride: dbPathOverride);
+      _cachedState = await SqliteStore.instance.loadFullState();
     } catch (_) {
-      return {};
+      _cachedState = {};
     }
   }
 
+  Map<String, dynamic> load() {
+    return Map<String, dynamic>.from(_cachedState);
+  }
+
   Future<void> save(Map<String, dynamic> data) async {
-    try {
-      await _prefs?.setString(_key, jsonEncode(data));
-    } catch (_) {}
+    _cachedState = Map<String, dynamic>.from(data);
+    await SqliteStore.instance.saveFullState(data);
   }
 
   String exportJson(Map<String, dynamic> data) =>

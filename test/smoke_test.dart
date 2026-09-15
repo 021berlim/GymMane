@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gymmane/app/gymmane_app.dart';
-import 'package:gymmane/l10n/l10n.dart';
-import 'package:gymmane/models/workout.dart';
-import 'package:gymmane/state/fit_state.dart';
+import 'package:fitiron/app/fitiron_app.dart';
+import 'package:fitiron/l10n/l10n.dart';
+import 'package:fitiron/models/workout.dart';
+import 'package:fitiron/state/fit_state.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -22,7 +22,7 @@ void main() {
 
   Future<void> visit(WidgetTester tester, String route) async {
     fit.route = route;
-    await tester.pumpWidget(const GymManeApp());
+    await tester.pumpWidget(const FitIronApp());
     await tester.pump(const Duration(milliseconds: 400));
     expect(tester.takeException(), isNull, reason: 'la pantalla $route reventó');
   }
@@ -35,6 +35,7 @@ void main() {
     'routines',
     'tools',
     'train',
+    'routine-choice',
     'about',
   ]) {
     testWidgets('$route draws without blowing up', (tester) async {

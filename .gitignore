@@ -67,3 +67,5 @@ site/
 # OS junk
 Thumbs.db
 desktop.ini
+# Widget Preview related
+.widget_preview/

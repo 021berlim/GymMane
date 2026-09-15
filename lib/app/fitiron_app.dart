@@ -6,15 +6,15 @@ import '../state/fit_state.dart';
 import '../theme/app_theme.dart';
 import 'app_shell.dart';
 
-class GymManeApp extends StatelessWidget {
-  const GymManeApp({super.key});
+class FitIronApp extends StatelessWidget {
+  const FitIronApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: fit,
       builder: (context, _) => MaterialApp(
-        title: 'GymMane',
+        title: 'FIT//IRON',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
         darkTheme: AppTheme.dark,

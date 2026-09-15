@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gymmane/state/fit_state.dart';
+import 'package:fitiron/state/fit_state.dart';
 
 void main() {
   test('full workout loop populates real stats', () {
@@ -7,12 +7,15 @@ void main() {
     fit.sessions.clear();
     fit.selectedMuscles.clear();
     fit.route = 'home';
+    final rId = fit.createRoutine('Test Routine');
+    fit.assignRoutineToDay(DateTime.now().weekday, rId);
 
     expect(fit.hasData, false);
     expect(fit.currentStreak, 0);
     expect(fit.weekMask[fit.todayIndex], false);
 
     fit.startWorkout();
+    fit.startCustomWorkout();
     fit.toggleMuscle('chest');
     expect(fit.selectedMuscles, ['chest']);
 

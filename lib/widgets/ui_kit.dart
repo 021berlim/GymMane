@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import 'svg_icon.dart';
@@ -124,7 +125,10 @@ class StepperControl extends StatelessWidget {
     Widget label = Container(
       constraints: BoxConstraints(minWidth: minWidth),
       alignment: Alignment.center,
-      child: Text(value, style: AppTheme.d(fontSize, weight: FontWeight.w700, color: gc.text)),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(value, maxLines: 1, style: AppTheme.d(fontSize, weight: FontWeight.w700, color: gc.text)),
+      ),
     );
     if (onEdit != null) {
       label = GestureDetector(behavior: HitTestBehavior.opaque, onTap: onEdit, child: label);
@@ -134,7 +138,7 @@ class StepperControl extends StatelessWidget {
       children: [
         btn('–', onDec),
         SizedBox(width: gap),
-        label,
+        Flexible(child: label),
         SizedBox(width: gap),
         btn('+', onInc),
       ],
@@ -155,8 +159,17 @@ class ToolRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Flexible(child: Text(label, style: AppTheme.s(13, weight: FontWeight.w600, color: gc.textSecondary))),
-          control,
+          Expanded(
+            child: Text(label, style: AppTheme.s(13, weight: FontWeight.w600, color: gc.textSecondary)),
+          ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: control,
+            ),
+          ),
         ],
       ),
     );
@@ -276,3 +289,81 @@ class PrimaryButton extends StatelessWidget {
     );
   }
 }
+
+Future<bool> showConfirmDeleteModal({
+  required BuildContext context,
+  required String title,
+  String? message,
+  String? confirmLabel,
+  String? cancelLabel,
+}) async {
+  final gc = context.gc;
+  final result = await showDialog<bool>(
+    context: context,
+    builder: (dctx) => AlertDialog(
+      backgroundColor: gc.bgRaised,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: Text(title, style: AppTheme.d(18, weight: FontWeight.w700, color: gc.text)),
+      content: message != null && message.isNotEmpty
+          ? Text(message, style: AppTheme.s(13, color: gc.textSecondary))
+          : null,
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(dctx).pop(false),
+          child: Text(cancelLabel ?? t.cancel, style: AppTheme.s(14, color: gc.textSecondary)),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(dctx).pop(true),
+          child: Text(confirmLabel ?? t.delete, style: AppTheme.s(14, weight: FontWeight.w700, color: gc.accent)),
+        ),
+      ],
+    ),
+  );
+  return result ?? false;
+}
+
+class EmptyStateView extends StatelessWidget {
+  const EmptyStateView({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    this.padding = const EdgeInsets.symmetric(vertical: 40, horizontal: 16),
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final EdgeInsets padding;
+
+  @override
+  Widget build(BuildContext context) {
+    final gc = context.gc;
+    return Padding(
+      padding: padding,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Center(
+            child: Icon(icon, size: 48, color: gc.textTertiary),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: AppTheme.d(16, weight: FontWeight.w700, color: gc.text),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            style: AppTheme.s(13, color: gc.textSecondary),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+

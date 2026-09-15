@@ -15,6 +15,20 @@ mixin SettingsState on FitCore, ToolsState {
   int? alarmAskedAt;
   String language = 'en';
 
+  bool enablePhotos = true;
+  String photoTiming = 'after'; // 'before', 'after', 'both'
+
+  bool isXiaomi = false;
+
+  Future<void> _checkManufacturer() async {
+    try {
+      final platform = MethodChannel('com.fitiron.app/device');
+      final String? man = await platform.invokeMethod('getManufacturer');
+      isXiaomi = (man ?? '').toLowerCase().contains('xiaomi');
+      if (isXiaomi) notifyListeners();
+    } catch (_) {}
+  }
+
   Locale get locale => Locale(language);
 
   void _adoptDeviceLanguage() =>
@@ -61,6 +75,7 @@ mixin SettingsState on FitCore, ToolsState {
     double? weightDelta,
     double? activity,
     int? weeklyGoalDelta,
+    String? trainingFocus,
   }) {
     if (name != null) profile.name = name.trim().isEmpty ? 'InlitX' : name.trim();
     if (sex != null) profile.sex = sex;
@@ -69,6 +84,7 @@ mixin SettingsState on FitCore, ToolsState {
     if (weightDelta != null) profile.weightKg = _clamp(profile.weightKg + weightDelta, 30, 250);
     if (activity != null) profile.activity = activity;
     if (weeklyGoalDelta != null) profile.weeklyGoal = (profile.weeklyGoal + weeklyGoalDelta).clamp(1, 14);
+    if (trainingFocus != null) profile.trainingFocus = trainingFocus;
     _seedCalculatorsFromProfile();
     _persist();
     notifyListeners();
@@ -139,8 +155,21 @@ mixin SettingsState on FitCore, ToolsState {
     notifyListeners();
   }
 
+  void setEnablePhotos(bool v) {
+    enablePhotos = v;
+    _persist();
+    notifyListeners();
+  }
+
+  void setPhotoTiming(String v) {
+    if (!['before', 'after', 'both'].contains(v)) return;
+    photoTiming = v;
+    _persist();
+    notifyListeners();
+  }
+
   /// Si dice que no, no se insiste en el momento: se vuelve a preguntar en
-  /// otra sesión, pasados unos días. Mientras tanto se avisa en Ajustes.
+  /// otra sesión, pasados unos días. Enquanto isso, avisa em Ajustes.
   static const _askAgainAfter = Duration(days: 3);
 
   Future<void> refreshAlarmPermission() async {

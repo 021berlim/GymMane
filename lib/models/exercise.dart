@@ -70,6 +70,8 @@ class ToolMeta {
 }
 
 const List<Muscle> kMuscles = [
+  Muscle('warmup', 'Warm-up / Flexibility', 'front'),
+  Muscle('cardio', 'Cardio', 'front'),
   Muscle('chest', 'Chest', 'front'),
   Muscle('shoulders', 'Shoulders', 'front'),
   Muscle('biceps', 'Biceps', 'front'),
@@ -93,6 +95,10 @@ List<String> exerciseSteps(Exercise e) => t.catalogSteps(e.id, e.steps);
 
 String muscleGroup(String muscleId) {
   switch (muscleId) {
+    case 'warmup':
+      return 'Flexibility';
+    case 'cardio':
+      return 'Cardio';
     case 'chest':
       return 'Chest';
     case 'back':
@@ -119,6 +125,9 @@ String muscleGroup(String muscleId) {
 
 String muscleFamily(String muscleId) {
   switch (muscleId) {
+    case 'warmup':
+    case 'cardio':
+      return 'core';
     case 'chest':
     case 'shoulders':
     case 'triceps':

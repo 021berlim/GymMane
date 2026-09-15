@@ -20,17 +20,17 @@ String? muscleAt(Offset p) {
 Color idleMuscle(GymColors gc) => Color.lerp(gc.bgRaised2, gc.textSecondary, 0.32)!;
 
 const List<Color> _heatDark = [
-  Color(0xFF7A4028),
-  Color(0xFFB4632C),
-  Color(0xFFE38B3A),
-  Color(0xFFFFC168),
+  Color(0xFF365314),
+  Color(0xFF4D7C0F),
+  Color(0xFF84CC16),
+  Color(0xFFA3E635),
 ];
 
 const List<Color> _heatLight = [
-  Color(0xFFD9B48A),
-  Color(0xFFC07A3C),
-  Color(0xFF9E4A24),
-  Color(0xFF6E2A16),
+  Color(0xFFD9F99D),
+  Color(0xFFBEF264),
+  Color(0xFF84CC16),
+  Color(0xFF4D7C0F),
 ];
 
 const int heatLevels = 4;

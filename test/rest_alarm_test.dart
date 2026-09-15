@@ -1,7 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gymmane/services/rest_alarm.dart';
+import 'package:fitiron/services/rest_alarm.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -22,6 +22,8 @@ void main() {
           return platformSaysEnabled;
         case 'requestNotificationsPermission':
           return platformSaysEnabled;
+        case 'canScheduleExactNotifications':
+          return true;
         case 'initialize':
           return true;
         default:
@@ -97,13 +99,21 @@ void main() {
     expect(specifics['importance'], Importance.max.value);
     expect(specifics['playSound'], true);
     expect(specifics['fullScreenIntent'], true);
-    expect(specifics['channelId'], 'rest_timer');
+    expect(specifics['usesChronometer'], true);
+    expect(specifics['chronometerCountDown'], true);
+    expect(specifics['channelId'], 'rest_timer_v3');
   });
 
   test('cancel reaches the platform', () async {
     await ready();
     await RestAlarm.instance.cancel();
     expect(methods(), contains('cancel'));
+  });
+
+  test('finishing the rest shows the alert notification', () async {
+    await ready();
+    await RestAlarm.instance.fireNow();
+    expect(methods(), contains('show'), reason: 'o aviso final precisa ser criado no Android');
   });
 
   test('skipping the rest wins the race against a pending schedule', () async {

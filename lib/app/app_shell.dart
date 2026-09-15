@@ -144,6 +144,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     switch (fit.route) {
       case 'progress':
         return ProgressScreen();
+      case 'routine-choice':
       case 'train':
         return TrainScreen();
       case 'session':
@@ -188,7 +189,7 @@ class _NavBar extends StatelessWidget {
     final gc = context.gc;
 
     return Container(
-      height: 74,
+      height: 64,
       decoration: BoxDecoration(
         color: gc.bgRaised,
         border: Border.all(color: gc.border),
@@ -222,8 +223,8 @@ class _NavBar extends StatelessWidget {
                   duration: const Duration(milliseconds: 340),
                   curve: Curves.easeOutCubic,
                   left: slotX(_selectedIndex),
-                  top: 10,
-                  bottom: 10,
+                  top: 8,
+                  bottom: 8,
                   width: _iw,
                   child: DecoratedBox(
                     decoration: BoxDecoration(
@@ -253,41 +254,30 @@ class _NavBar extends StatelessWidget {
   Widget _item(BuildContext context, int index, IconData icon, IconData iconFill, String label, VoidCallback onTap) {
     final gc = context.gc;
     final selected = _selectedIndex == index;
-    final color = selected ? gc.text : gc.textTertiary;
     const dur = Duration(milliseconds: 300);
 
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: SizedBox(
-        width: _iw,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TweenAnimationBuilder<double>(
+    return Semantics(
+      label: label,
+      selected: selected,
+      button: true,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: SizedBox(
+          width: _iw,
+          height: double.infinity,
+          child: Center(
+            child: TweenAnimationBuilder<double>(
               tween: Tween(begin: selected ? 1 : 0, end: selected ? 1 : 0),
               duration: dur,
               curve: Curves.easeOut,
               builder: (context, t, _) => Icon(
                 selected ? iconFill : icon,
-                size: 22,
+                size: 24,
                 color: Color.lerp(gc.textTertiary, gc.text, t),
               ),
             ),
-            const SizedBox(height: 3),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6),
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: AnimatedDefaultTextStyle(
-                  duration: dur,
-                  curve: Curves.easeOut,
-                  style: AppTheme.s(9.5, weight: FontWeight.w600, color: color, letterSpacing: 0.2),
-                  child: Text(label, maxLines: 1, softWrap: false),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

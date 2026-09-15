@@ -1,12 +1,12 @@
 <div align="center">
 
-<img src="docs/screenshots/banner-es.png" alt="GymMane — Levanta. Anota. Mejora." width="860" />
+<img src="docs/screenshots/banner-es.png" alt="FitIron — Levanta. Anota. Mejora." width="860" />
 
 <br/>
 
-<img src="docs/screenshots/icon.png" width="94" alt="GymMane" />
+<img src="docs/screenshots/icon.png" width="94" alt="FitIron" />
 
-# GymMane
+# FitIron
 
 ### Un diario de gimnasio oscuro y sin conexión, para Android
 
@@ -22,11 +22,11 @@ y mira cómo se mueven tus números.
   <img alt="Licencia GPLv3" src="https://img.shields.io/badge/C%C3%B3digo-GPLv3-C2410C?style=flat&logo=gnu&logoColor=white" />
   <img alt="Arte CC BY-SA 4.0" src="https://img.shields.io/badge/Arte-CC%20BY--SA%204.0-8A6B41?style=flat&logo=creativecommons&logoColor=white" />
   <img alt="Sin anuncios, sin rastreo" src="https://img.shields.io/badge/Sin%20anuncios%20%C2%B7%20Sin%20rastreo-22C55E?style=flat&logo=shield&logoColor=white" />
-  <a href="https://github.com/InlitX/GymMane/stargazers"><img alt="Estrellas" src="https://img.shields.io/github/stars/InlitX/GymMane?style=flat&color=D9A184&labelColor=181717&logo=github" /></a>
+  <a href="https://github.com/InlitX/FitIron/stargazers"><img alt="Estrellas" src="https://img.shields.io/github/stars/InlitX/FitIron?style=flat&color=D9A184&labelColor=181717&logo=github" /></a>
 </p>
 
 <p>
-  <a href="https://trendshift.io/repositories/107197?utm_source=trendshift-badge&amp;utm_medium=badge&amp;utm_campaign=badge-trendshift-107197" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/107197/daily?language=Dart" alt="InlitX%2FGymMane | Trendshift" width="250" height="55"/></a>
+  <a href="https://trendshift.io/repositories/107197?utm_source=trendshift-badge&amp;utm_medium=badge&amp;utm_campaign=badge-trendshift-107197" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/107197/daily?language=Dart" alt="InlitX%2FFitIron | Trendshift" width="250" height="55"/></a>
 </p>
 
 <sub>
@@ -89,7 +89,7 @@ y mira cómo se mueven tus números.
 
 ## 👋 Qué es
 
-GymMane es un diario de fuerza de código abierto hecho para el suelo del
+FitIron es un diario de fuerza de código abierto hecho para el suelo del
 gimnasio. Tocas en un cuerpo interactivo los músculos que quieres trabajar,
 anotas repeticiones y peso serie a serie, descansas con una alarma que de
 verdad se hace oír, y lees un progreso que sale de **tus** propias series:
@@ -161,7 +161,7 @@ volumen, récords, racha y reparto muscular. Nada decorativo.
 
 ## 📦 ¿Vienes de otra app?
 
-Tráete tu historial. GymMane lee los export de entrenos y de medidas de
+Tráete tu historial. FitIron lee los export de entrenos y de medidas de
 **Hevy** y **Strong** —el CSV o el zip de medidas— y la copia entera de
 **FitNotes**, que es una base de datos SQLite. Cada ejercicio se cruza con su
 propia biblioteca y se salta lo que ya tengas anotado.
@@ -179,7 +179,7 @@ propia biblioteca y se salta lo que ya tengas anotado.
 ## 🔒 Privacidad
 
 > [!IMPORTANT]
-> GymMane **no tiene analíticas, ni SDK de anuncios, ni código de red**. La app
+> FitIron **no tiene analíticas, ni SDK de anuncios, ni código de red**. La app
 > ni siquiera pide el permiso `INTERNET` de Android, así que no puede mandar tus
 > entrenamientos a ninguna parte. Lo único que sale fuera son los enlaces que
 > tocas tú.
@@ -197,7 +197,7 @@ Y lo que sí pide, con su porqué:
 
 ## 🌍 Traducciones
 
-Hoy GymMane habla español e inglés, y cualquier otro idioma es más que
+Hoy FitIron habla español e inglés, y cualquier otro idioma es más que
 bienvenido. Las traducciones viven en [ficheros ARB](lib/l10n) de texto
 plano — uno por idioma, sin nada que compilar. Todavía no hay Weblate ni
 Crowdin, así que se hace por GitHub: editas el fichero y abres un pull request.
@@ -209,8 +209,8 @@ La guía entera está en **TRANSLATING.md**.
 ## 🛠️ Compilar
 
 ```bash
-git clone https://github.com/InlitX/GymMane.git
-cd GymMane
+git clone https://github.com/InlitX/FitIron.git
+cd FitIron
 flutter pub get
 flutter test
 flutter build apk --release
@@ -230,7 +230,7 @@ abre antes una issue y lo hablamos.
 
 <div align="center">
 
-GymMane es gratis, de código abierto y sin anuncios, y así se queda.
+FitIron es gratis, de código abierto y sin anuncios, y así se queda.
 
 Si te ayuda a pisar más el gimnasio, con eso ya me vale. Y si además te apetece
 devolver algo, una estrella, una traducción o un informe de fallo bien contado
@@ -275,14 +275,14 @@ Las ilustraciones vienen de
 [Workout Guide](https://github.com/bryllim/workout-guide), de Bryl Lim, que
 parte del trabajo de [Everkinetic](https://github.com/everkinetic/data). El
 *código* de Workout Guide es MIT, pero su arte es CC BY-SA 4.0 — así que la
-copia de GymMane sigue siendo CC BY-SA 4.0, con su crédito. La app las dibuja
+copia de FitIron sigue siendo CC BY-SA 4.0, con su crédito. La app las dibuja
 como vectores y las tiñe con el tema; los detalles están en **CREDITS.md**.
 
 ---
 
 <div align="center">
 
-<a href="https://github.com/InlitX/GymMane"><img src="https://img.shields.io/badge/Dale%20una%20estrella-181717?style=for-the-badge&logo=github&logoColor=white" alt="Dale una estrella en GitHub" height="38" /></a>
+<a href="https://github.com/InlitX/FitIron"><img src="https://img.shields.io/badge/Dale%20una%20estrella-181717?style=for-the-badge&logo=github&logoColor=white" alt="Dale una estrella en GitHub" height="38" /></a>
 
 <br/>
 <br/>

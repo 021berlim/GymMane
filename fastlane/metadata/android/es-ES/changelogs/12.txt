@@ -1,4 +1,4 @@
-🦁 GymMane 1.0.0 — la primera versión
+🦁 FitIron 1.0.0 — la primera versión
 🏋️ Mapa corporal interactivo: toca un músculo y tienes la sesión
 ⏱️ Descanso con tu propio sonido de alarma, y sobrevive a un reinicio
 📊 Volumen, racha, récords, curvas de fuerza y mapa de actividad

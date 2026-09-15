@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
+import '../catalog/exercise_catalog.dart';
 import '../l10n/l10n.dart';
 import '../models/exercise.dart';
 import '../state/fit_state.dart';
@@ -22,10 +23,21 @@ class TrainScreen extends StatefulWidget {
 class _TrainScreenState extends State<TrainScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
   String _q = '';
+  String? _muscleFilter;
+  String? _difficultyFilter;
+  bool _favouritesOnly = false;
+
+  bool get _hasActiveFilters =>
+      _q.isNotEmpty || _muscleFilter != null || _difficultyFilter != null || _favouritesOnly;
 
   void _clearSearch() {
     _searchCtrl.clear();
-    setState(() => _q = '');
+    setState(() {
+      _q = '';
+      _muscleFilter = null;
+      _difficultyFilter = null;
+      _favouritesOnly = false;
+    });
   }
 
   @override
@@ -38,6 +50,7 @@ class _TrainScreenState extends State<TrainScreen> {
   Widget build(BuildContext context) {
     final gc = context.gc;
     final review = fit.trainStep == 'review';
+    final choosingRoutine = fit.route == 'routine-choice';
     return SafeArea(
       bottom: false,
       child: Column(
@@ -48,7 +61,8 @@ class _TrainScreenState extends State<TrainScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 RoundBtn(icon: Ic.closeThin, onTap: fit.closeTrain),
-                Text(t.train, style: AppTheme.d(16, weight: FontWeight.w700, color: gc.text, letterSpacing: 2)),
+                Text(choosingRoutine ? t.chooseRoutineTitle : t.train,
+                  style: AppTheme.d(16, weight: FontWeight.w700, color: gc.text, letterSpacing: 2)),
                 const SizedBox(width: 36),
               ],
             ),
@@ -56,12 +70,74 @@ class _TrainScreenState extends State<TrainScreen> {
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-              child: review ? _review(context, gc) : _select(context, gc),
+              child: choosingRoutine ? _routineChoice(gc) : review ? _review(context, gc) : _select(context, gc),
             ),
           ),
           if (review) _startBar(context, gc),
         ],
       ),
+    );
+  }
+
+  Widget _routineChoice(GymColors gc) {
+    final routines = fit.routines.where((routine) => routine.exerciseIds.isNotEmpty).toList();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(t.chooseRoutineTitle, style: AppTheme.d(26, weight: FontWeight.w700, color: gc.text, letterSpacing: 1)),
+        const SizedBox(height: 8),
+        Text(t.chooseRoutineBody, style: AppTheme.s(14, color: gc.textSecondary, height: 1.4)),
+        const SizedBox(height: 20),
+        for (final routine in routines) ...[
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => fit.startRoutine(routine),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: gc.bgRaised,
+                border: Border.all(color: gc.border),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(fit.routineTitle(routine), style: AppTheme.s(15, weight: FontWeight.w600, color: gc.text)),
+                        const SizedBox(height: 3),
+                        Text(
+                          fit.todayRoutine?.id == routine.id
+                              ? '${t.todaysRoutine} · ${t.exerciseCount(routine.exerciseIds.length)}'
+                              : t.exerciseCount(routine.exerciseIds.length),
+                          style: AppTheme.s(12, color: gc.textSecondary),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SvgPathIcon(Ic.chevronRight, size: 18, color: gc.textSecondary),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+        ],
+        const SizedBox(height: 8),
+        PrimaryButton(
+          label: t.logWorkout,
+          bg: gc.accent,
+          fg: gc.onEmber,
+          onTap: () => fit.openRoutine(fit.createRoutine()),
+        ),
+        const SizedBox(height: 12),
+        PrimaryButton(
+          label: t.customWorkout,
+          bg: gc.bgRaised2,
+          fg: gc.text,
+          onTap: fit.startCustomWorkout,
+        ),
+      ],
     );
   }
 
@@ -119,6 +195,16 @@ class _TrainScreenState extends State<TrainScreen> {
               : Text(t.noMusclesYet,
                   style: AppTheme.s(13, color: gc.textTertiary)),
         ),
+        if (!hasSel && fit.focusRecommendations.isNotEmpty) ...[
+          const SizedBox(height: 24),
+          Text(t.recommended,
+              style: AppTheme.d(12, weight: FontWeight.w600, color: gc.textSecondary, letterSpacing: 3)),
+          const SizedBox(height: 12),
+          for (final ex in fit.focusRecommendations.take(3)) ...[
+            _pickRow(gc, ex),
+            const SizedBox(height: 10),
+          ],
+        ],
         const SizedBox(height: 18),
         PrimaryButton(
           label: t.continueBtn,
@@ -145,10 +231,34 @@ class _TrainScreenState extends State<TrainScreen> {
     );
   }
 
-  Widget _review(BuildContext context, GymColors gc) {
-    final searching = _q.trim().isNotEmpty;
+  List<Exercise> get _reviewFilteredExercises {
+    final q = _q.trim().toLowerCase();
+    List<Exercise> base;
+    if (_hasActiveFilters) {
+      base = fit.allExercises;
+    } else {
+      base = fit.reviewExercises();
+    }
+    return base.where((ex) {
+      if (_favouritesOnly && fit.favorites[ex.id] != true) return false;
+      if (q.isNotEmpty &&
+          !ex.name.toLowerCase().contains(q) &&
+          !exerciseName(ex).toLowerCase().contains(q)) {
+        return false;
+      }
+      if (_muscleFilter != null &&
+          ex.primary != _muscleFilter &&
+          !ex.secondary.contains(_muscleFilter)) {
+        return false;
+      }
+      if (_difficultyFilter != null && ex.difficulty != _difficultyFilter) return false;
+      return true;
+    }).toList();
+  }
 
-    final exercises = searching ? fit.trainSearchResults(_q) : fit.reviewExercises();
+  Widget _review(BuildContext context, GymColors gc) {
+    final activeFilters = _hasActiveFilters;
+    final exercises = _reviewFilteredExercises;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -170,14 +280,84 @@ class _TrainScreenState extends State<TrainScreen> {
         ),
         const SizedBox(height: 14),
         _searchRow(context, gc),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => setState(() => _favouritesOnly = !_favouritesOnly),
+                child: Container(
+                  height: 38,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: _favouritesOnly ? gc.accentSoft : Colors.transparent,
+                    border: Border.all(color: _favouritesOnly ? gc.accent : gc.border),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _star(gc, _favouritesOnly),
+                      const SizedBox(width: 6),
+                      Text(
+                        fit.favouriteCount > 0
+                            ? '${t.favouritesOnly.toUpperCase()} (${fit.favouriteCount})'
+                            : t.favouritesOnly.toUpperCase(),
+                        style: AppTheme.d(11,
+                            weight: FontWeight.w600,
+                            color: _favouritesOnly ? gc.accent : gc.text,
+                            letterSpacing: 1),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            if (activeFilters) ...[
+              const SizedBox(width: 10),
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: _clearSearch,
+                child: Container(
+                  height: 38,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: gc.border),
+                  ),
+                  child: Text(t.clearFilters,
+                      style: AppTheme.s(12, weight: FontWeight.w600, color: gc.accent)),
+                ),
+              ),
+            ],
+          ],
+        ),
+        const SizedBox(height: 10),
+        _filterLabel(gc, t.muscleFilter),
+        const SizedBox(height: 6),
+        _chipRow([
+          for (final id in kFilterMuscles)
+            _FilterChipData(muscleLabel(id), _muscleFilter == id,
+                () => setState(() => _muscleFilter = _muscleFilter == id ? null : id)),
+        ], gc, hPad: 12, vPad: 6, fontSize: 12),
+        const SizedBox(height: 10),
+        _filterLabel(gc, t.levelFilter),
+        const SizedBox(height: 6),
+        _chipRow([
+          for (final d in kDifficulties)
+            _FilterChipData(t.difficulty(d), _difficultyFilter == d,
+                () => setState(() => _difficultyFilter = _difficultyFilter == d ? null : d)),
+        ], gc, hPad: 10, vPad: 5, fontSize: 11),
         const SizedBox(height: 14),
-        if (!searching && exercises.isNotEmpty) ...[
+        if (!activeFilters && exercises.isNotEmpty) ...[
           Text(t.pickedHint(exercises.length),
               style: AppTheme.s(12, color: gc.textTertiary)),
           const SizedBox(height: 12),
         ],
         if (exercises.isEmpty)
-          _emptyReview(context, gc, searching)
+          _emptyReview(context, gc, activeFilters)
         else
           for (final ex in exercises) ...[
             _pickRow(gc, ex),
@@ -333,4 +513,46 @@ class _TrainScreenState extends State<TrainScreen> {
       ),
     );
   }
+
+  Widget _star(GymColors gc, bool fav) {
+    return SizedBox(
+      width: 16,
+      height: 16,
+      child: Stack(children: [
+        if (fav) SvgPathIcon(const [IconPath('M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01z', fill: true)], size: 16, color: gc.accent),
+        SvgPathIcon(Ic.star, size: 16, color: fav ? gc.accent : gc.textTertiary),
+      ]),
+    );
+  }
+
+  Widget _filterLabel(GymColors gc, String text) =>
+      Text(text, style: AppTheme.s(10, weight: FontWeight.w700, color: gc.textTertiary, letterSpacing: 1.5));
+
+  Widget _chipRow(List<_FilterChipData> chips, GymColors gc,
+      {required double hPad, required double vPad, required double fontSize}) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(children: [
+        for (int i = 0; i < chips.length; i++) ...[
+          Pill(
+            label: chips[i].label,
+            bg: chips[i].active ? gc.ember : gc.bgRaised2,
+            fg: chips[i].active ? gc.onEmber : gc.textSecondary,
+            onTap: chips[i].onTap,
+            hPad: hPad,
+            vPad: vPad,
+            fontSize: fontSize,
+          ),
+          if (i < chips.length - 1) const SizedBox(width: 6),
+        ],
+      ]),
+    );
+  }
+}
+
+class _FilterChipData {
+  _FilterChipData(this.label, this.active, this.onTap);
+  final String label;
+  final bool active;
+  final VoidCallback onTap;
 }

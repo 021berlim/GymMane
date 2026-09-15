@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gymmane/services/local_store.dart';
-import 'package:gymmane/state/fit_state.dart';
+import 'package:fitiron/services/local_store.dart';
+import 'package:fitiron/state/fit_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -56,6 +56,18 @@ void main() {
       await pumpEventQueue();
       fit.loadFromStore();
       expect(fit.routines.single.exerciseIds, [b, c, a]);
+    });
+
+    test('configuring sets and weight in a routine applies to the session', () {
+      final r = routineWithThree();
+      fit.setRoutineExerciseSets(r, a, 5);
+      fit.setRoutineExerciseWeight(r, a, 45.0);
+
+      fit.startRoutine(fit.routines.single);
+      final exA = fit.session!.exercises.firstWhere((e) => e.id == a);
+      expect(exA.sets.length, 5);
+      expect(exA.sets.first.weight, 45.0);
+      fit.saveAndExit();
     });
 
     test('nonsense indices are ignored instead of crashing', () {

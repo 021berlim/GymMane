@@ -7,14 +7,41 @@ mixin WorkoutState on FitCore, SettingsState, LibraryState, StatsState, Routines
   WorkoutSession? session;
   Timer? _sessionTimer;
   Timer? _restTimer;
+  bool bodyweightStartPromptShown = false;
+  bool bodyweightFinishPromptShown = false;
   DateTime? _runningSince;
   int _elapsedBefore = 0;
   bool sessionPaused = false;
 
   void startWorkout() {
-    if (route != 'train') prevRoute = route;
+    if (route != 'train' && route != 'routine-choice') prevRoute = route;
+    route = 'routine-choice';
+    notifyListeners();
+  }
+
+  void startCustomWorkout() {
+    _startCustomWorkout();
+  }
+
+  void startLogWorkout() {
+    route = 'train';
+    trainStep = 'review';
+    selectedMuscles.clear();
+    sessionPicks.clear();
+    notifyListeners();
+  }
+
+  void chooseWorkoutFromRoutines({String returnRoute = 'routines'}) {
+    prevRoute = returnRoute;
+    route = 'routine-choice';
+    notifyListeners();
+  }
+
+  void _startCustomWorkout() {
     route = 'train';
     trainStep = 'select';
+    selectedMuscles.clear();
+    sessionPicks.clear();
     notifyListeners();
   }
 
@@ -109,8 +136,11 @@ mixin WorkoutState on FitCore, SettingsState, LibraryState, StatsState, Routines
 
   void startRoutine(Routine r) {
     final exs = routineExercises(r);
-    if (exs.isEmpty) return;
-    _beginSession(exs);
+    if (exs.isEmpty) {
+      _startCustomWorkout();
+      return;
+    }
+    _beginSession(exs, routine: r);
   }
 
   void startSession() {
@@ -118,13 +148,76 @@ mixin WorkoutState on FitCore, SettingsState, LibraryState, StatsState, Routines
     if (exs.isNotEmpty) _beginSession(exs);
   }
 
-  void _beginSession(List<Exercise> exs) {
+  void recordSessionBodyweight(double kg, {required bool before}) {
+    final current = session;
+    if (current == null) return;
+    if (before) {
+      current.bodyweightBeforeKg = kg;
+    } else {
+      current.bodyweightAfterKg = kg;
+    }
+
+    // Sync with history if finished
+    if (current.complete && sessions.isNotEmpty) {
+      final last = sessions.last;
+      if (before) {
+        last.bwBefore = kg;
+      } else {
+        last.bwAfter = kg;
+      }
+    }
+
+    persistNow();
+    notifyListeners();
+  }
+
+  void recordSessionPhoto(String base64, {required bool before}) {
+    final current = session;
+    if (current == null) return;
+    if (before) {
+      current.photoBefore = base64;
+    } else {
+      current.photoAfter = base64;
+    }
+
+    // Sync with history if finished
+    if (current.complete && sessions.isNotEmpty) {
+      final last = sessions.last;
+      if (before) {
+        last.photoBefore = base64;
+      } else {
+        last.photoAfter = base64;
+      }
+    }
+
+    persistNow();
+    notifyListeners();
+  }
+
+  void _beginSession(List<Exercise> exs, {Routine? routine}) {
     final s = WorkoutSession();
+    bodyweightStartPromptShown = false;
+    bodyweightFinishPromptShown = false;
     s.exercises = exs.map((ex) {
+      final cfg = routine?.configs[ex.id];
       final last = lastSetsFor(ex.id);
-      final sets = last.isNotEmpty
-          ? last.map((l) => SessionSet(l.reps, l.weight, false)).toList()
-          : [SessionSet(10, 20, false), SessionSet(10, 20, false), SessionSet(10, 20, false)];
+      final hasConfiguredWeight = cfg != null && cfg.targetWeight > 0.0;
+      final targetSetsCount = cfg?.targetSets ?? (last.isNotEmpty ? last.length : 3);
+      final targetReps = (cfg?.targetReps ?? 10) > 0 ? (cfg?.targetReps ?? 10) : 10;
+      final defaultWeight = hasConfiguredWeight
+          ? cfg.targetWeight
+          : (last.isNotEmpty ? last.first.weight : 20.0);
+
+      final sets = List.generate(
+        targetSetsCount,
+        (i) {
+          final w = hasConfiguredWeight
+              ? cfg.targetWeight
+              : (i < last.length ? last[i].weight : defaultWeight);
+          final r = i < last.length ? last[i].reps : targetReps;
+          return SessionSet(r, w, false);
+        },
+      );
       return SessionExercise(ex.id, ex.name, ex.primary, sets);
     }).toList();
     _restTimer?.cancel();
@@ -185,7 +278,28 @@ mixin WorkoutState on FitCore, SettingsState, LibraryState, StatsState, Routines
     st.done = !st.done;
     _persist();
     notifyListeners();
-    if (st.done) startRest();
+    if (st.done) {
+      startRest();
+      final allDone = session!.exercises[exIdx].sets.every((s) => s.done);
+      if (allDone) {
+        if (exIdx < session!.exercises.length - 1) {
+          Future.delayed(const Duration(milliseconds: 800), () {
+            if (session != null && session!.currentIndex == exIdx) {
+              HapticFeedback.lightImpact();
+              nextExercise();
+            }
+          });
+        } else {
+          // Automatic finish on last set of last exercise
+          Future.delayed(const Duration(milliseconds: 1000), () {
+            if (session != null && session!.currentIndex == exIdx) {
+              HapticFeedback.mediumImpact();
+              finishSession();
+            }
+          });
+        }
+      }
+    }
   }
 
   void startRest() {
@@ -244,8 +358,8 @@ mixin WorkoutState on FitCore, SettingsState, LibraryState, StatsState, Routines
 
   void bumpSessionWeight(int exIdx, int setIdx, int dir) {
     final current = toDisplayWeight(session!.exercises[exIdx].sets[setIdx].weight);
-    final next = _roundTo(current, weightStep) + dir * weightStep;
-    setSessionWeight(exIdx, setIdx, fromDisplayWeight(math.max(0, next)));
+    final next = _round1(math.max(0.0, current + dir * weightStep));
+    setSessionWeight(exIdx, setIdx, fromDisplayWeight(next));
   }
 
   void setSessionReps(int exIdx, int setIdx, int reps) {
@@ -294,19 +408,17 @@ mixin WorkoutState on FitCore, SettingsState, LibraryState, StatsState, Routines
     notifyListeners();
   }
 
-  void nextExercise() {
-    final s = session!;
-    s.currentIndex = math.min(s.currentIndex + 1, s.exercises.length - 1);
+  void goToExercise(int index) {
+    final s = session;
+    if (s == null) return;
+    s.currentIndex = index.clamp(0, s.exercises.length - 1);
     _persist();
     notifyListeners();
   }
 
-  void prevExercise() {
-    final s = session!;
-    s.currentIndex = math.max(s.currentIndex - 1, 0);
-    _persist();
-    notifyListeners();
-  }
+  void nextExercise() => goToExercise((session?.currentIndex ?? 0) + 1);
+
+  void prevExercise() => goToExercise((session?.currentIndex ?? 0) - 1);
 
   void finishSession() {
     _sessionTimer?.cancel();
@@ -325,7 +437,10 @@ mixin WorkoutState on FitCore, SettingsState, LibraryState, StatsState, Routines
     s.complete = true;
     s.restRemaining = null;
 
-    if (done.isNotEmpty) {
+    final hasPhotos = (s.photoBefore != null && s.photoBefore!.isNotEmpty) ||
+        (s.photoAfter != null && s.photoAfter!.isNotEmpty);
+
+    if (done.isNotEmpty || hasPhotos) {
       final logged = <LoggedExercise>[];
       for (final e in s.exercises) {
         final doneSets = e.sets.where((st) => st.done).map((st) => LoggedSet(st.reps, st.weight)).toList();
@@ -333,12 +448,21 @@ mixin WorkoutState on FitCore, SettingsState, LibraryState, StatsState, Routines
           logged.add(LoggedExercise(e.id, e.name, e.primary, doneSets));
         }
       }
-      sessions.add(LoggedSession(DateTime.now(), s.summaryDuration ?? 0, logged));
+      sessions.add(LoggedSession(
+        DateTime.now(),
+        s.summaryDuration ?? 0,
+        logged,
+        bwBefore: s.bodyweightBeforeKg,
+        bwAfter: s.bodyweightAfterKg,
+        photoBefore: s.photoBefore,
+        photoAfter: s.photoAfter,
+      ));
       _computeSummaryHighlights(logged);
     } else {
       summaryPrs = 0;
       summaryVsLast = null;
     }
+    _checkCelebration();
     persistNow();
     _refreshWidgets();
     notifyListeners();

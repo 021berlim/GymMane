@@ -19,7 +19,7 @@ class ToolDetailScreen extends StatelessWidget {
     return SafeArea(
       bottom: false,
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+        padding: EdgeInsets.fromLTRB(20, 12, 20, 24 + MediaQuery.of(context).padding.bottom),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -230,11 +230,11 @@ class ToolDetailScreen extends StatelessWidget {
           ),
         );
     return Row(children: [
-      card('PROTEIN', '${fit.calProtein}g'),
+      card(t.macroProtein, '${fit.calProtein}g'),
       const SizedBox(width: 10),
-      card('CARBS', '${fit.calCarbs}g'),
+      card(t.macroCarbs, '${fit.calCarbs}g'),
       const SizedBox(width: 10),
-      card('FAT', '${fit.calFat}g'),
+      card(t.macroFat, '${fit.calFat}g'),
     ]);
   }
 

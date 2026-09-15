@@ -18,7 +18,7 @@ class RoutinesScreen extends StatelessWidget {
     return SafeArea(
       bottom: false,
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
+        padding: EdgeInsets.fromLTRB(20, 12, 20, 32 + MediaQuery.of(context).padding.bottom),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -121,7 +121,7 @@ class RoutinesScreen extends StatelessWidget {
             ),
             if (n > 0)
               GestureDetector(
-                onTap: () => fit.startRoutine(r),
+                onTap: fit.chooseWorkoutFromRoutines,
                 child: Container(
                   width: 40,
                   height: 40,

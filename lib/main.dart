@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
-import 'app/gymmane_app.dart';
+import 'app/fitiron_app.dart';
 import 'services/alarm_store.dart';
 import 'services/home_widget_bridge.dart';
 import 'services/local_store.dart';
@@ -12,19 +13,33 @@ import 'state/fit_state.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  timeDilation = 1.0;
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
   ));
 
-  await initializeDateFormatting();
-  await Store.instance.init();
-  await MediaStore.init();
-  await AlarmStore.init();
-  fit.loadFromStore();
-  await RestAlarm.instance.init();
+  try {
+    await initializeDateFormatting();
+    await Store.instance.init();
+    await MediaStore.init();
+    await AlarmStore.init();
+    fit.loadFromStore();
+    await RestAlarm.instance.init();
+  } catch (e, stack) {
+    debugPrint('Erro no carregamento dos dados de inicialização: $e\n$stack');
+  }
 
   fit.onWidgetsShouldUpdate = HomeWidgetBridge.update;
-  runApp(const GymManeApp());
+  runApp(const FitIronApp());
 
-  WidgetsBinding.instance.addPostFrameCallback((_) => HomeWidgetBridge.update());
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    try {
+      await RestAlarm.instance.ensurePermission();
+      await RestAlarm.instance.ensureExactAlarmPermission();
+      await fit.refreshAlarmPermission();
+      await HomeWidgetBridge.update();
+    } catch (e) {
+      debugPrint('Erro nas callbacks pós-frame: $e');
+    }
+  });
 }

@@ -8,6 +8,7 @@ class Profile {
     this.activity = 1.55,
     this.weeklyGoal = 4,
     this.photo = '',
+    this.trainingFocus = 'health',
   });
 
   String name;
@@ -18,6 +19,7 @@ class Profile {
   double activity;
   int weeklyGoal;
   String photo;
+  String trainingFocus;
 
   Map<String, dynamic> toJson() => {
         'name': name,
@@ -27,6 +29,7 @@ class Profile {
         'w': weightKg,
         'act': activity,
         'goal': weeklyGoal,
+        'focus': trainingFocus,
         if (photo.isNotEmpty) 'photo': photo,
       };
   factory Profile.fromJson(Map<String, dynamic> j) => Profile(
@@ -37,6 +40,7 @@ class Profile {
         weightKg: (j['w'] as num?)?.toDouble() ?? 75,
         activity: (j['act'] as num?)?.toDouble() ?? 1.55,
         weeklyGoal: (j['goal'] as num?)?.toInt() ?? 4,
+        trainingFocus: (j['focus'] as String?) ?? 'health',
         photo: (j['photo'] as String?) ?? '',
       );
 }

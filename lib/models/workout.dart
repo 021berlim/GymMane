@@ -1,4 +1,7 @@
+export 'weight_entry.dart';
+
 class LoggedSet {
+
   LoggedSet(this.reps, this.weight);
   final int reps;
   final double weight;
@@ -37,10 +40,14 @@ class LoggedExercise {
 }
 
 class LoggedSession {
-  LoggedSession(this.date, this.durationSec, this.exercises);
+  LoggedSession(this.date, this.durationSec, this.exercises, {this.bwBefore, this.bwAfter, this.photoBefore, this.photoAfter});
   final DateTime date;
   final int durationSec;
   final List<LoggedExercise> exercises;
+  double? bwBefore;
+  double? bwAfter;
+  String? photoBefore;
+  String? photoAfter;
 
   double get volume => exercises.fold(0.0, (s, e) => s + e.volume);
   int get setCount => exercises.fold(0, (s, e) => s + e.sets.length);
@@ -49,23 +56,23 @@ class LoggedSession {
         'd': date.toIso8601String(),
         'dur': durationSec,
         'ex': exercises.map((e) => e.toJson()).toList(),
+        'bwb': bwBefore,
+        'bwa': bwAfter,
+        'pb': photoBefore,
+        'pa': photoAfter,
       };
   factory LoggedSession.fromJson(Map<String, dynamic> j) => LoggedSession(
         DateTime.parse(j['d'] as String),
         (j['dur'] as num?)?.toInt() ?? 0,
         (j['ex'] as List).map((e) => LoggedExercise.fromJson(e as Map<String, dynamic>)).toList(),
+        bwBefore: (j['bwb'] as num?)?.toDouble(),
+        bwAfter: (j['bwa'] as num?)?.toDouble(),
+        photoBefore: j['pb'] as String?,
+        photoAfter: j['pa'] as String?,
       );
 }
 
-class BodyweightEntry {
-  BodyweightEntry(this.date, this.kg);
-  final DateTime date;
-  final double kg;
 
-  Map<String, dynamic> toJson() => {'d': date.toIso8601String(), 'kg': kg};
-  factory BodyweightEntry.fromJson(Map<String, dynamic> j) =>
-      BodyweightEntry(DateTime.parse(j['d'] as String), (j['kg'] as num).toDouble());
-}
 
 class ExerciseNote {
   ExerciseNote(this.date, this.text);
@@ -77,16 +84,72 @@ class ExerciseNote {
       ExerciseNote(DateTime.parse(j['d'] as String), j['t'] as String);
 }
 
+class RoutineExerciseConfig {
+  RoutineExerciseConfig({
+    required this.exerciseId,
+    this.targetSets = 3,
+    this.targetWeight = 0.0,
+    this.targetReps = 10,
+  });
+
+  final String exerciseId;
+  int targetSets;
+  double targetWeight;
+  int targetReps;
+
+  Map<String, dynamic> toJson() => {
+        'id': exerciseId,
+        's': targetSets,
+        'w': targetWeight,
+        'r': targetReps,
+      };
+
+  factory RoutineExerciseConfig.fromJson(Map<String, dynamic> j) => RoutineExerciseConfig(
+        exerciseId: j['id'] as String,
+        targetSets: (j['s'] as num?)?.toInt() ?? 3,
+        targetWeight: (j['w'] as num?)?.toDouble() ?? 0.0,
+        targetReps: (j['r'] as num?)?.toInt() ?? 10,
+      );
+}
+
 class Routine {
-  Routine(this.id, this.name, this.exerciseIds);
+  Routine(this.id, this.name, this.exerciseIds, {Map<String, RoutineExerciseConfig>? configs})
+      : configs = configs ?? {};
+
   final String id;
   String name;
   final List<String> exerciseIds;
+  final Map<String, RoutineExerciseConfig> configs;
 
-  Map<String, dynamic> toJson() => {'id': id, 'n': name, 'ex': exerciseIds};
-  factory Routine.fromJson(Map<String, dynamic> j) => Routine(
-        j['id'] as String,
-        j['n'] as String,
-        ((j['ex'] as List?) ?? []).cast<String>(),
-      );
+  RoutineExerciseConfig configFor(String exId) {
+    return configs.putIfAbsent(
+      exId,
+      () => RoutineExerciseConfig(exerciseId: exId, targetSets: 3, targetWeight: 0.0, targetReps: 10),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'n': name,
+        'ex': exerciseIds,
+        'cfg': configs.map((k, v) => MapEntry(k, v.toJson())),
+      };
+
+  factory Routine.fromJson(Map<String, dynamic> j) {
+    final cfgMap = <String, RoutineExerciseConfig>{};
+    if (j['cfg'] != null) {
+      final rawCfg = j['cfg'] as Map<String, dynamic>;
+      rawCfg.forEach((k, v) {
+        if (v is Map<String, dynamic>) {
+          cfgMap[k] = RoutineExerciseConfig.fromJson(v);
+        }
+      });
+    }
+    return Routine(
+      j['id'] as String,
+      j['n'] as String,
+      ((j['ex'] as List?) ?? []).cast<String>(),
+      configs: cfgMap,
+    );
+  }
 }

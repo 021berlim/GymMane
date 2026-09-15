@@ -1,6 +1,6 @@
 <div align="center">
 
-# Translating GymMane
+# Translating FitIron
 
 Every word in the app lives in one small file per language.
 No Dart, no build tools — just text.
@@ -37,7 +37,7 @@ That's it. The exercise catalogue is separate and optional — see below.
 - **Shorter wins.** Most of these strings sit on buttons, chips and tabs on a
   phone. If yours runs much longer than the English, find a tighter wording.
 - **CAPS stay CAPS.** Strings written in capitals are section headers in the UI.
-- **"GymMane" stays "GymMane".** The app name isn't translated.
+- **"FitIron" stays "FitIron".** The app name isn't translated.
 - **Address the user informally** — "du" rather than "Sie", "tú" rather than
   "usted".
 - **You don't have to finish.** Anything you leave out simply shows in English,
@@ -69,7 +69,7 @@ const Map<String, Map<String, String>> _catalogNames = {'es': kExerciseNameEs, '
 If you have Flutter installed:
 
 ```bash
-cd gymmane
+cd fitiron
 flutter gen-l10n
 flutter test
 ```
@@ -80,7 +80,7 @@ for you.
 ## Questions
 
 Not sure where a string appears? Open an
-[issue](https://github.com/InlitX/GymMane/issues) — a screenshot of the screen
+[issue](https://github.com/InlitX/FitIron/issues) — a screenshot of the screen
 you're unsure about is the fastest way to get an answer.
 
 ---

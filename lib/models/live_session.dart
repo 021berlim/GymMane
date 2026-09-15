@@ -43,6 +43,10 @@ class WorkoutSession {
   int? summaryVolume;
   int? summarySets;
   int? summaryDuration;
+  double? bodyweightBeforeKg;
+  double? bodyweightAfterKg;
+  String? photoBefore;
+  String? photoAfter;
 
   Map<String, dynamic> toJson() => {
         'ex': exercises.map((e) => e.toJson()).toList(),
@@ -51,6 +55,10 @@ class WorkoutSession {
         'sv': summaryVolume,
         'ss': summarySets,
         'sd': summaryDuration,
+        'bwBefore': bodyweightBeforeKg,
+        'bwAfter': bodyweightAfterKg,
+        'pb': photoBefore,
+        'pa': photoAfter,
       };
 
   factory WorkoutSession.fromJson(Map<String, dynamic> j) => WorkoutSession()
@@ -60,5 +68,9 @@ class WorkoutSession {
     ..complete = j['c'] as bool? ?? false
     ..summaryVolume = (j['sv'] as num?)?.toInt()
     ..summarySets = (j['ss'] as num?)?.toInt()
-    ..summaryDuration = (j['sd'] as num?)?.toInt();
+    ..summaryDuration = (j['sd'] as num?)?.toInt()
+    ..bodyweightBeforeKg = (j['bwBefore'] as num?)?.toDouble()
+    ..bodyweightAfterKg = (j['bwAfter'] as num?)?.toDouble()
+    ..photoBefore = j['pb'] as String?
+    ..photoAfter = j['pa'] as String?;
 }

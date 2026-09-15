@@ -24,7 +24,7 @@ import '../theme/app_theme.dart';
 import '../widgets/profile_avatar.dart';
 import '../widgets/ui_kit.dart';
 
-const _kRepoUrl = 'https://github.com/InlitX/GymMane';
+const _kRepoUrl = 'https://github.com/InlitX/FitIron';
 const _kBugUrl = '$_kRepoUrl/issues/new?labels=bug';
 const _kFeatureUrl = '$_kRepoUrl/issues/new?labels=enhancement';
 const _kKofiUrl = 'https://ko-fi.com/inlitx';
@@ -38,7 +38,7 @@ class SettingsScreen extends StatelessWidget {
     return SafeArea(
       bottom: false,
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 110),
+        padding: EdgeInsets.fromLTRB(20, 12, 20, 110 + MediaQuery.of(context).padding.bottom),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -145,12 +145,40 @@ class SettingsScreen extends StatelessWidget {
                     const SizedBox(height: 14),
                     _alarmWarning(context, gc),
                   ],
+                  if (fit.isXiaomi) ...[
+                    const SizedBox(height: 14),
+                    _xiaomiWarning(context, gc),
+                  ],
                   const SizedBox(height: 16),
                   _prefRow(gc, PhosphorIconsRegular.gridFour, t.background, SegToggle([
                     SegOption(t.bgNone, fit.bgPattern == 'none', () => fit.setBgPattern('none')),
                     SegOption(t.bgDots, fit.bgPattern == 'dots', () => fit.setBgPattern('dots')),
                     SegOption(t.bgGrid, fit.bgPattern == 'grid', () => fit.setBgPattern('grid')),
                   ], hPad: 11)),
+                  const SizedBox(height: 16),
+                  _prefRow(
+                    gc,
+                    PhosphorIconsRegular.camera,
+                    t.enablePhotosLabel,
+                    Switch(
+                      value: fit.enablePhotos,
+                      onChanged: fit.setEnablePhotos,
+                      activeThumbColor: gc.accent,
+                    ),
+                  ),
+                  if (fit.enablePhotos) ...[
+                    const SizedBox(height: 16),
+                    _prefRow(
+                      gc,
+                      PhosphorIconsRegular.clock,
+                      t.photoTimingLabel,
+                      SegToggle([
+                        SegOption(t.photoTimingBefore, fit.photoTiming == 'before', () => fit.setPhotoTiming('before')),
+                        SegOption(t.photoTimingAfter, fit.photoTiming == 'after', () => fit.setPhotoTiming('after')),
+                        SegOption(t.photoTimingBoth, fit.photoTiming == 'both', () => fit.setPhotoTiming('both')),
+                      ], hPad: 10, fontSize: 11),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -192,7 +220,7 @@ class SettingsScreen extends StatelessWidget {
                   children: [
                     Icon(PhosphorIconsRegular.info, size: 20, color: gc.textSecondary),
                     const SizedBox(width: 14),
-                    Expanded(child: Text(t.aboutGymmane, style: AppTheme.s(14, weight: FontWeight.w600, color: gc.text))),
+                    Expanded(child: Text(t.aboutFitiron, style: AppTheme.s(14, weight: FontWeight.w600, color: gc.text))),
                     Icon(PhosphorIconsRegular.caretRight, size: 16, color: gc.textSecondary),
                   ],
                 ),
@@ -259,11 +287,11 @@ class SettingsScreen extends StatelessWidget {
     }
     final dir = await getTemporaryDirectory();
     final stamp = DateTime.now().toIso8601String().split('T').first;
-    final file = File('${dir.path}/gymmane-workouts-$stamp.csv');
+    final file = File('${dir.path}/fitiron-workouts-$stamp.csv');
     await file.writeAsString(fit.exportCsv());
     if (!context.mounted) return;
     await SharePlus.instance.share(
-      ShareParams(files: [XFile(file.path)], subject: 'GymMane workouts'),
+          ShareParams(files: [XFile(file.path)], subject: 'FIT//IRON workouts'),
     );
   }
 
@@ -296,11 +324,11 @@ class SettingsScreen extends StatelessWidget {
   Future<void> _exportBackup(BuildContext context) async {
     final dir = await getTemporaryDirectory();
     final stamp = DateTime.now().toIso8601String().split('T').first;
-    final file = File('${dir.path}/gymmane-backup-$stamp.json');
+    final file = File('${dir.path}/fitiron-backup-$stamp.json');
     await file.writeAsString(fit.exportJson());
     if (!context.mounted) return;
     await SharePlus.instance.share(
-      ShareParams(files: [XFile(file.path)], subject: 'GymMane backup'),
+          ShareParams(files: [XFile(file.path)], subject: 'FIT//IRON backup'),
     );
   }
 
@@ -386,6 +414,32 @@ class SettingsScreen extends StatelessWidget {
               style: AppTheme.d(12, weight: FontWeight.w700, color: gc.accent, letterSpacing: 1)),
         ]),
       ),
+    );
+  }
+
+  Widget _xiaomiWarning(BuildContext context, GymColors gc) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+      decoration: BoxDecoration(
+        color: gc.bgRaised,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: gc.textSecondary.withValues(alpha: .1)),
+      ),
+      child: Row(children: [
+        Icon(PhosphorIconsRegular.info, size: 18, color: gc.textSecondary),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(t.alarmXiaomiTitle,
+                  style: AppTheme.s(13, weight: FontWeight.w600, color: gc.text)),
+              const SizedBox(height: 2),
+              Text(t.alarmXiaomiBody, style: AppTheme.s(11.5, color: gc.textSecondary)),
+            ],
+          ),
+        ),
+      ]),
     );
   }
 
@@ -509,7 +563,7 @@ class SettingsScreen extends StatelessWidget {
         return;
       }
       await HomeWidget.requestPinWidget(
-          qualifiedAndroidName: 'com.gymmane.app.$provider');
+          qualifiedAndroidName: 'com.fitiron.app.$provider');
     } catch (_) {
       if (context.mounted) _snack(context, t.pinUnsupported);
     }
@@ -913,7 +967,15 @@ class _ProfileSheetState extends State<_ProfileSheet> {
         ),
         const SizedBox(height: 8),
         GestureDetector(
-          onTap: has ? () => _up(fit.clearProfilePhoto) : _pickPhoto,
+          onTap: has
+              ? () async {
+                  final ok = await showConfirmDeleteModal(
+                    context: context,
+                    title: t.removePhoto,
+                  );
+                  if (ok) _up(fit.clearProfilePhoto);
+                }
+              : _pickPhoto,
           child: Text(
             has ? t.removePhoto : t.addPhoto,
             style: AppTheme.s(12, weight: FontWeight.w600, color: gc.textSecondary),

@@ -64,7 +64,36 @@ mixin RoutinesState on FitCore, LibraryState {
   void toggleRoutineExercise(String routineId, String exId) {
     final r = _routine(routineId);
     if (r == null) return;
-    if (!r.exerciseIds.remove(exId)) r.exerciseIds.add(exId);
+    if (!r.exerciseIds.remove(exId)) {
+      r.exerciseIds.add(exId);
+      r.configFor(exId);
+    } else {
+      r.configs.remove(exId);
+    }
+    _persist();
+    notifyListeners();
+  }
+
+  void setRoutineExerciseSets(String routineId, String exId, int sets) {
+    final r = _routine(routineId);
+    if (r == null) return;
+    r.configFor(exId).targetSets = sets.clamp(1, 20);
+    _persist();
+    notifyListeners();
+  }
+
+  void setRoutineExerciseWeight(String routineId, String exId, double weightKg) {
+    final r = _routine(routineId);
+    if (r == null) return;
+    r.configFor(exId).targetWeight = weightKg.clamp(0.0, 1000.0);
+    _persist();
+    notifyListeners();
+  }
+
+  void setRoutineExerciseReps(String routineId, String exId, int reps) {
+    final r = _routine(routineId);
+    if (r == null) return;
+    r.configFor(exId).targetReps = reps.clamp(1, 999);
     _persist();
     notifyListeners();
   }

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gymmane/state/fit_state.dart';
+import 'package:fitiron/state/fit_state.dart';
 
 void main() {
   setUp(() {
@@ -11,6 +11,7 @@ void main() {
 
   void startSession() {
     fit.startWorkout();
+    fit.startCustomWorkout();
     fit.toggleMuscle('chest');
     fit.trainContinue();
     fit.startSession();
@@ -21,7 +22,7 @@ void main() {
     expect(fit.toDisplayWeight(100), 100);
     expect(fit.fromDisplayWeight(100), 100);
     expect(fit.weightLabel(60), '60 kg');
-    expect(fit.weightStep, 2.5);
+    expect(fit.weightStep, 1.0);
   });
 
   test('lb only changes what is shown', () {
@@ -78,7 +79,7 @@ void main() {
     fit.setUnits('kg');
     fit.setSessionWeightShown(0, 0, 60);
     fit.bumpSessionWeight(0, 0, 1);
-    expect(fit.weightValue(fit.session!.exercises[0].sets[0].weight), '62.5');
+    expect(fit.weightValue(fit.session!.exercises[0].sets[0].weight), '61');
     fit.saveAndExit();
   });
 
