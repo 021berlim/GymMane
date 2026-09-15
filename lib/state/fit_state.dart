@@ -23,7 +23,6 @@ import '../services/exercise_match.dart';
 import '../services/workout_import.dart';
 import '../services/recommendation_service.dart';
 import '../services/goal_progress_calculator.dart';
-import '../services/weight_trend_calculator.dart';
 import '../services/ofensiva_calculator.dart';
 import '../models/weight_entry.dart';
 
@@ -210,7 +209,7 @@ class FitState extends FitCore
     selectedMuscles.clear();
     profile = Profile();
     onboarded = false;
-    SharedPreferences.getInstance().then((p) => p.remove('onboarded')).catchError((_) {});
+    SharedPreferences.getInstance().then((p) => p.remove('onboarded')).catchError((_) => false);
     enablePhotos = true;
     photoTiming = 'after';
     strengthExerciseId = null;
