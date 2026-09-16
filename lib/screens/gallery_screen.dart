@@ -44,7 +44,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
       if (s.photoBefore != null && s.photoBefore!.isNotEmpty) {
         list.add(_GalleryItem(
           date: s.date,
-          label: 'Antes do treino',
+          label: t.photoBefore,
           data: s.photoBefore!,
           session: s,
           isBefore: true,
@@ -53,7 +53,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
       if (s.photoAfter != null && s.photoAfter!.isNotEmpty) {
         list.add(_GalleryItem(
           date: s.date,
-          label: 'Depois do treino',
+          label: t.photoAfter,
           data: s.photoAfter!,
           session: s,
           isBefore: false,
@@ -112,7 +112,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
             const SizedBox(height: 16),
             ListTile(
               leading: Icon(Icons.camera_alt, color: gc.accent),
-              title: Text('Tirar foto com a câmera', style: AppTheme.s(14, color: gc.text)),
+              title: Text(t.takePhoto, style: AppTheme.s(14, color: gc.text)),
               onTap: () {
                 Navigator.pop(context);
                 _addNewPhoto(ImageSource.camera);
@@ -120,7 +120,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
             ),
             ListTile(
               leading: Icon(Icons.photo_library, color: gc.accent),
-              title: Text('Escolher da galeria', style: AppTheme.s(14, color: gc.text)),
+              title: Text(t.chooseGallery, style: AppTheme.s(14, color: gc.text)),
               onTap: () {
                 Navigator.pop(context);
                 _addNewPhoto(ImageSource.gallery);
@@ -154,7 +154,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'GALERIA DE FOTOS',
+                      t.photoGallery,
                       style: AppTheme.d(18, weight: FontWeight.w700, color: gc.text, letterSpacing: 2),
                     ),
                   ),
@@ -210,7 +210,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Nenhuma foto registrada ainda',
+              t.noPhotosYet,
               style: AppTheme.d(16, weight: FontWeight.w700, color: gc.text),
               textAlign: TextAlign.center,
             ),
@@ -222,7 +222,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
             ),
             const SizedBox(height: 24),
             PrimaryButton(
-              label: 'ADICIONAR FOTO',
+              label: t.addPhoto.toUpperCase(),
               onTap: _showAddPhotoOptions,
             ),
           ],

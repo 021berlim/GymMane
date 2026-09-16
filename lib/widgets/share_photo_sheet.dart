@@ -288,7 +288,7 @@ class _SharePhotoSheetState extends State<SharePhotoSheet> {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      'ESTILO DA MARCA D\'ÁGUA',
+                      "ESTILO DA MARCA D'ÁGUA",
                       style: AppTheme.d(10, weight: FontWeight.w700, color: gc.textTertiary, letterSpacing: 1.5),
                     ),
                   ),
