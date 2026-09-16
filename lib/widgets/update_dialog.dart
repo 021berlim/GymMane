@@ -6,26 +6,30 @@ import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import 'ui_kit.dart';
 
-/// Shows an in-app update dialog with patch notes and download progress.
+/// Shows an in-app update bottom sheet with clean patch notes and download progress.
 ///
-/// If [info.isForced], the dismiss button is hidden.
+/// Designed after Samsung OneUI, Xiaomi HyperOS, and Discord update sheets while
+/// preserving FIT//IRON's signature dark neon design system.
 void showUpdateDialog(BuildContext context, UpdateInfo info) {
-  showDialog(
+  showModalBottomSheet(
     context: context,
-    barrierDismissible: !info.isForced,
-    builder: (_) => _UpdateDialog(info: info),
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    enableDrag: !info.isForced,
+    isDismissible: !info.isForced,
+    builder: (_) => _UpdateSheet(info: info),
   );
 }
 
-class _UpdateDialog extends StatefulWidget {
+class _UpdateSheet extends StatefulWidget {
   final UpdateInfo info;
-  const _UpdateDialog({required this.info});
+  const _UpdateSheet({required this.info});
 
   @override
-  State<_UpdateDialog> createState() => _UpdateDialogState();
+  State<_UpdateSheet> createState() => _UpdateSheetState();
 }
 
-class _UpdateDialogState extends State<_UpdateDialog> {
+class _UpdateSheetState extends State<_UpdateSheet> {
   bool _downloading = false;
   double _progress = 0;
   String? _error;
@@ -44,7 +48,7 @@ class _UpdateDialogState extends State<_UpdateDialog> {
         },
       );
       if (mounted) {
-        // Automatically close modal on completion
+        // Automatically close bottom sheet on completion
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -70,154 +74,173 @@ class _UpdateDialogState extends State<_UpdateDialog> {
   @override
   Widget build(BuildContext context) {
     final gc = context.gc;
+    final screenHeight = MediaQuery.of(context).size.height;
 
     return PopScope(
       canPop: !widget.info.isForced && !_downloading,
-      child: Dialog(
-        backgroundColor: gc.bgRaised,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        child: Container(
-          padding: const EdgeInsets.all(22),
-          constraints: const BoxConstraints(maxWidth: 400),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Header Badge & Title
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: gc.accentSoft,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(PhosphorIconsRegular.sparkle, size: 22, color: gc.accent),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'PATCH NOTES',
-                          style: AppTheme.d(11, weight: FontWeight.w700, color: gc.accent, letterSpacing: 2),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Nova Versão Disposta',
-                          style: AppTheme.d(18, weight: FontWeight.w700, color: gc.text),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: gc.accentSoft,
-                      borderRadius: BorderRadius.circular(100),
-                      border: Border.all(color: gc.accent.withValues(alpha: 0.3)),
-                    ),
-                    child: Text(
-                      'v${widget.info.version}',
-                      style: AppTheme.d(13, weight: FontWeight.w700, color: gc.accent),
-                    ),
-                  ),
-                ],
+      child: Container(
+        constraints: BoxConstraints(maxHeight: screenHeight * 0.85),
+        decoration: BoxDecoration(
+          color: gc.pageBg,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          border: Border.all(color: gc.border),
+          boxShadow: const [
+            BoxShadow(color: Colors.black54, blurRadius: 24, offset: Offset(0, -6)),
+          ],
+        ),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Drag handle
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: gc.border,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
+            ),
+            const SizedBox(height: 16),
 
-              const SizedBox(height: 18),
+            // Header Section: Icon + Title + Version Chip
+            Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: gc.accentSoft,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: gc.accent.withValues(alpha: 0.3)),
+                  ),
+                  child: Icon(PhosphorIconsRegular.sparkle, size: 24, color: gc.accent),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'NOVA ATUALIZAÇÃO DISPONÍVEL',
+                        style: AppTheme.d(10, weight: FontWeight.w700, color: gc.accent, letterSpacing: 1.8),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'FIT//IRON v${widget.info.version}',
+                        style: AppTheme.d(20, weight: FontWeight.w700, color: gc.text),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: gc.accentSoft,
+                    borderRadius: BorderRadius.circular(100),
+                    border: Border.all(color: gc.accent.withValues(alpha: 0.4)),
+                  ),
+                  child: Text(
+                    'v${widget.info.version}',
+                    style: AppTheme.d(12, weight: FontWeight.w700, color: gc.accent),
+                  ),
+                ),
+              ],
+            ),
 
-              // Patch Notes Container Box
-              Container(
-                constraints: const BoxConstraints(maxHeight: 240),
+            const SizedBox(height: 20),
+
+            // Patch Notes Subtitle Label
+            Text(
+              'O QUE MUDOU NESTA VERSÃO',
+              style: AppTheme.d(11, weight: FontWeight.w700, color: gc.textTertiary, letterSpacing: 1.5),
+            ),
+            const SizedBox(height: 8),
+
+            // Patch Notes Card Container
+            Flexible(
+              child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF141712),
-                  borderRadius: BorderRadius.circular(16),
+                  color: gc.bgRaised,
+                  borderRadius: BorderRadius.circular(18),
                   border: Border.all(color: gc.border),
                 ),
                 child: SingleChildScrollView(
                   child: _buildPatchNotesContent(gc),
                 ),
               ),
+            ),
 
-              const SizedBox(height: 18),
+            const SizedBox(height: 20),
 
-              // Progress Bar while downloading
-              if (_downloading) ...[
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Baixando atualização...',
-                          style: AppTheme.s(12, color: gc.textSecondary),
-                        ),
-                        Text(
-                          '${(_progress * 100).toInt()}%',
-                          style: AppTheme.d(13, weight: FontWeight.w700, color: gc.accent),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(6),
-                      child: LinearProgressIndicator(
-                        value: _progress,
-                        minHeight: 8,
-                        backgroundColor: gc.bgRaised2,
-                        valueColor: AlwaysStoppedAnimation<Color>(gc.accent),
+            // Progress Bar while downloading
+            if (_downloading) ...[
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Baixando atualização...',
+                        style: AppTheme.s(12, weight: FontWeight.w500, color: gc.textSecondary),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-              ],
-
-              // Error display
-              if (_error != null) ...[
-                Text(
-                  _error!,
-                  style: AppTheme.s(12, color: Colors.redAccent),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 12),
-              ],
-
-              // Action buttons
-              if (!_downloading)
-                Row(
-                  children: [
-                    if (!widget.info.isForced)
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: gc.border),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                          ),
-                          child: Text(
-                            'AGORA NÃO',
-                            style: AppTheme.s(13, weight: FontWeight.w600, color: gc.textSecondary),
-                          ),
-                        ),
+                      Text(
+                        '${(_progress * 100).toInt()}%',
+                        style: AppTheme.d(13, weight: FontWeight.w700, color: gc.accent),
                       ),
-                    if (!widget.info.isForced) const SizedBox(width: 10),
-                    Expanded(
-                      flex: 2,
-                      child: PrimaryButton(
-                        label: 'ATUALIZAR AGORA',
-                        onTap: _startDownload,
-                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: LinearProgressIndicator(
+                      value: _progress,
+                      minHeight: 8,
+                      backgroundColor: gc.bgRaised2,
+                      valueColor: AlwaysStoppedAnimation<Color>(gc.accent),
                     ),
-                  ],
-                ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
             ],
-          ),
+
+            // Error display
+            if (_error != null) ...[
+              Text(
+                _error!,
+                style: AppTheme.s(12, color: Colors.redAccent),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 14),
+            ],
+
+            // Action Buttons
+            if (!_downloading)
+              Column(
+                children: [
+                  PrimaryButton(
+                    label: 'ATUALIZAR AGORA',
+                    onTap: _startDownload,
+                  ),
+                  if (!widget.info.isForced) ...[
+                    const SizedBox(height: 8),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: Text(
+                        'Agora não',
+                        style: AppTheme.s(13, weight: FontWeight.w600, color: gc.textSecondary),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+          ],
         ),
       ),
     );
@@ -225,53 +248,65 @@ class _UpdateDialogState extends State<_UpdateDialog> {
 
   Widget _buildPatchNotesContent(GymColors gc) {
     final raw = widget.info.changelog.trim();
-    if (raw.isEmpty) {
-      return Text(
-        'Melhorias de desempenho, correções de bugs e otimizações gerais do FIT//IRON.',
-        style: AppTheme.s(13, color: gc.textSecondary, height: 1.4),
-      );
-    }
+    final cleanLines = _parseCleanChangelog(raw);
 
-    final lines = raw.split('\n');
-    final items = <Widget>[];
-
-    for (final line in lines) {
-      final trimmed = line.trim();
-      if (trimmed.isEmpty) continue;
-      if (trimmed.contains('Full Changelog:') || trimmed.startsWith('**Full Changelog**')) continue;
-
-      items.add(_buildPatchNotesRow(gc, trimmed));
-    }
-
-    if (items.isEmpty) {
-      return Text(
-        raw,
-        style: AppTheme.s(13, color: gc.textSecondary, height: 1.4),
-      );
+    if (cleanLines.isEmpty) {
+      return _buildDefaultHighlights(gc);
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: items,
+      children: cleanLines.map((line) => _buildPatchNotesRow(gc, line)).toList(),
     );
   }
 
-  Widget _buildPatchNotesRow(GymColors gc, String line) {
-    if (line.startsWith('#')) {
-      final headerText = line.replaceAll(RegExp(r'^#+\s*'), '').trim();
-      return Padding(
-        padding: const EdgeInsets.only(top: 8, bottom: 6),
-        child: Text(
-          headerText.toUpperCase(),
-          style: AppTheme.d(11, weight: FontWeight.w700, color: gc.accent, letterSpacing: 1.5),
-        ),
-      );
+  List<String> _parseCleanChangelog(String raw) {
+    if (raw.isEmpty) return [];
+
+    final lines = raw.split('\n');
+    final result = <String>[];
+
+    for (final line in lines) {
+      final trimmed = line.trim();
+      if (trimmed.isEmpty) continue;
+
+      // Filter out GitHub automated link junk / commit compare URLs
+      final lower = trimmed.toLowerCase();
+      if (lower.contains('full changelog') ||
+          lower.contains('github.com/') ||
+          lower.contains('compare/') ||
+          lower.contains('@github-actions')) {
+        continue;
+      }
+
+      // Clean up markdown formatting symbols (*, -, #)
+      var clean = trimmed
+          .replaceAll(RegExp(r'\*\*'), '')
+          .replaceFirst(RegExp(r'^[-*•#]+\s*'), '')
+          .trim();
+
+      if (clean.isNotEmpty) {
+        result.add(clean);
+      }
     }
 
-    final cleanText = line.replaceFirst(RegExp(r'^[-*•]\s*'), '').trim();
+    return result;
+  }
 
+  Widget _buildDefaultHighlights(GymColors gc) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildPatchNotesRow(gc, 'Melhorias de estabilidade e desempenho do sistema'),
+        _buildPatchNotesRow(gc, 'Otimizações no controle de treinos e sincronização'),
+        _buildPatchNotesRow(gc, 'Aprimoramentos visuais e na experiência do usuário'),
+      ],
+    );
+  }
+
+  Widget _buildPatchNotesRow(GymColors gc, String text) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -286,7 +321,7 @@ class _UpdateDialogState extends State<_UpdateDialog> {
           ),
           Expanded(
             child: Text(
-              cleanText,
+              text,
               style: AppTheme.s(13, color: gc.textSecondary, height: 1.4),
             ),
           ),
