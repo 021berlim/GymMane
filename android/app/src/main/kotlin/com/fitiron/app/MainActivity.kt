@@ -5,6 +5,8 @@ import android.os.Bundle
 import android.view.WindowManager
 import android.os.Build
 import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import androidx.core.content.FileProvider
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -45,6 +47,15 @@ class MainActivity : FlutterActivity() {
                         return@setMethodCallHandler
                     }
                     try {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            if (!packageManager.canRequestPackageInstalls()) {
+                                val manageIntent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
+                                    data = Uri.parse("package:$packageName")
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                }
+                                startActivity(manageIntent)
+                            }
+                        }
                         val file = File(path)
                         val uri = FileProvider.getUriForFile(
                             this,
@@ -55,6 +66,7 @@ class MainActivity : FlutterActivity() {
                             setDataAndType(uri, "application/vnd.android.package-archive")
                             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
                         }
                         startActivity(intent)
                         result.success(true)

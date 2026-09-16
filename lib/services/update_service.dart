@@ -30,7 +30,6 @@ class UpdateInfo {
 class UpdateService {
   UpdateService._();
 
-  // Extracted from: git remote get-url origin → git@github.com:021berlim/GymMane.git
   static const _owner = '021berlim';
   static const _repo = 'GymMane';
 
@@ -52,6 +51,8 @@ class UpdateService {
           }
         },
       );
+      final androidPlugin = _notifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      await androidPlugin?.requestNotificationsPermission();
       _notificationsInitialized = true;
     } catch (_) {}
   }
@@ -127,33 +128,23 @@ class UpdateService {
   /// offline, rate-limited, or any other error occurs (fail-silent).
   static Future<UpdateInfo?> checkForUpdate() async {
     try {
-      final url = Uri.parse(
-        'https://api.github.com/repos/$_owner/$_repo/releases/latest',
-      );
-      final response = await http.get(url, headers: {
-        'Accept': 'application/vnd.github.v3+json',
-        'User-Agent': 'FitIron-App',
-      }).timeout(const Duration(seconds: 10));
+      Map<String, dynamic>? data = await _fetchLatestReleaseData();
+      if (data == null) return null;
 
-      if (response.statusCode != 200) return null;
-
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
       final tagName = data['tag_name'] as String? ?? '';
       final remoteVersion = tagName.replaceFirst(RegExp(r'^v'), '');
 
       final info = await PackageInfo.fromPlatform();
-      final currentVersion = info.version; // e.g. "1.0.0"
+      final currentVersion = '${info.version}+${info.buildNumber}';
 
       if (!_isNewer(remoteVersion, currentVersion)) return null;
 
-      // Find the right APK asset for this device's ABI.
       final abi = await _deviceAbi();
       final assets = (data['assets'] as List?) ?? [];
       String? apkUrl;
       for (final asset in assets) {
         final name = (asset['name'] as String?) ?? '';
         if (!name.endsWith('.apk')) continue;
-        // Prefer ABI-specific APK; fall back to any .apk.
         if (name.contains(abi)) {
           apkUrl = asset['browser_download_url'] as String?;
           break;
@@ -173,14 +164,41 @@ class UpdateService {
         isForced: isForced,
       );
     } catch (_) {
-      // Network error, JSON parse error, timeout — fail silently.
       return null;
     }
   }
 
+  static Future<Map<String, dynamic>?> _fetchLatestReleaseData() async {
+    const headers = {
+      'Accept': 'application/vnd.github.v3+json',
+      'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36 FitIron-App/1.0',
+    };
+
+    // Primary endpoint: latest release
+    try {
+      final url = Uri.parse('https://api.github.com/repos/$_owner/$_repo/releases/latest');
+      final response = await http.get(url, headers: headers).timeout(const Duration(seconds: 8));
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+    } catch (_) {}
+
+    // Secondary fallback endpoint: releases list
+    try {
+      final url = Uri.parse('https://api.github.com/repos/$_owner/$_repo/releases');
+      final response = await http.get(url, headers: headers).timeout(const Duration(seconds: 8));
+      if (response.statusCode == 200) {
+        final list = jsonDecode(response.body) as List;
+        if (list.isNotEmpty) {
+          return list.first as Map<String, dynamic>;
+        }
+      }
+    } catch (_) {}
+
+    return null;
+  }
+
   /// Downloads the APK and triggers the Android package installer.
-  ///
-  /// [onProgress] receives values from 0.0 to 1.0.
   static Future<void> downloadAndInstall(
     UpdateInfo info,
     void Function(double progress) onProgress,
@@ -190,6 +208,7 @@ class UpdateService {
       _showProgressNotification(info.version, 0);
 
       final request = http.Request('GET', Uri.parse(info.apkUrl));
+      request.headers['User-Agent'] = 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36 FitIron-App/1.0';
       final streamedResponse = await request.send();
 
       final contentLength = streamedResponse.contentLength ?? 0;
@@ -225,7 +244,6 @@ class UpdateService {
     }
   }
 
-  /// Returns the primary ABI of the device (e.g. "arm64-v8a").
   static Future<String> _deviceAbi() async {
     try {
       final abi = await _installChannel.invokeMethod<String>('getAbi');
@@ -235,25 +253,28 @@ class UpdateService {
     }
   }
 
-  /// True when [remote] is a strictly newer semver than [current].
   static bool _isNewer(String remote, String current) {
     final r = _parseSemver(remote);
     final c = _parseSemver(current);
     if (r == null || c == null) return false;
     if (r.$1 != c.$1) return r.$1 > c.$1;
     if (r.$2 != c.$2) return r.$2 > c.$2;
-    return r.$3 > c.$3;
+    if (r.$3 != c.$3) return r.$3 > c.$3;
+    return r.$4 > c.$4;
   }
 
-  static (int, int, int)? _parseSemver(String v) {
+  static (int, int, int, int)? _parseSemver(String v) {
     final clean = v.trim().replaceFirst(RegExp(r'^[vV]'), '');
-    final core = clean.split(RegExp(r'[-+]'))[0];
-    final parts = core.split('.');
-    if (parts.length < 2) return null;
-    final major = int.tryParse(parts[0]);
-    final minor = int.tryParse(parts[1]);
-    final patch = parts.length > 2 ? int.tryParse(parts[2]) : 0;
+    final parts = clean.split('+');
+    final core = parts[0];
+    final build = parts.length > 1 ? (int.tryParse(parts[1]) ?? 0) : 0;
+
+    final versionParts = core.split('.');
+    if (versionParts.length < 2) return null;
+    final major = int.tryParse(versionParts[0]);
+    final minor = int.tryParse(versionParts[1]);
+    final patch = versionParts.length > 2 ? int.tryParse(versionParts[2]) : 0;
     if (major == null || minor == null || patch == null) return null;
-    return (major, minor, patch);
+    return (major, minor, patch, build);
   }
 }

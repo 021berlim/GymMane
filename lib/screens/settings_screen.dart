@@ -16,12 +16,14 @@ import '../services/fitnotes_backup.dart';
 import '../services/home_widget_bridge.dart';
 import '../services/rest_alarm.dart';
 import '../services/sqlite_reader.dart';
+import '../services/update_service.dart';
 import '../services/workout_import.dart';
 import '../state/fit_state.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/profile_avatar.dart';
 import '../widgets/ui_kit.dart';
+import '../widgets/update_dialog.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -196,6 +198,27 @@ class SettingsScreen extends StatelessWidget {
               (PhosphorIconsRegular.trash, t.resetData, () => _resetAll(context)),
             ]),
             const SizedBox(height: 22),
+            GestureDetector(
+              onTap: () => _manualCheckForUpdate(context),
+              child: SoftCard(
+                radius: 18,
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Icon(PhosphorIconsRegular.arrowClockwise, size: 20, color: gc.accent),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Text(
+                        'Verificar atualizações',
+                        style: AppTheme.s(14, weight: FontWeight.w600, color: gc.text),
+                      ),
+                    ),
+                    Icon(PhosphorIconsRegular.caretRight, size: 16, color: gc.textSecondary),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
             GestureDetector(
               onTap: fit.goAbout,
               child: SoftCard(
@@ -530,6 +553,42 @@ class SettingsScreen extends StatelessWidget {
   }
 
 
+
+  Future<void> _manualCheckForUpdate(BuildContext context) async {
+    final gc = context.gc;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Verificando atualizações...', style: AppTheme.s(13, color: Colors.white)),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+
+    try {
+      final info = await UpdateService.checkForUpdate();
+      if (!context.mounted) return;
+      if (info != null) {
+        showUpdateDialog(context, info);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Você já está com a versão mais recente instalada.',
+                style: AppTheme.s(13, color: Colors.white)),
+            backgroundColor: gc.bgRaised,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Não foi possível verificar atualizações no momento.',
+              style: AppTheme.s(13, color: Colors.white)),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
+  }
 
   Future<void> _addWidget(BuildContext context, String provider) async {
     await HomeWidgetBridge.update();
