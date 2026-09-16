@@ -1,4 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <!-- Network permission required for update checking and downloads in release build. -->
+  <uses-permission android:name="android.permission.INTERNET"/>
   <!-- Aviso de fin de descanso con la pantalla apagada. USE_EXACT_ALARM es
          legítimo aquí: un temporizador de descanso ES un temporizador, y un
          aviso inexacto que llega dos minutos tarde no sirve de nada. -->
