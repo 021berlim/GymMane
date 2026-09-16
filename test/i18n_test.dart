@@ -345,6 +345,13 @@ void main() {
       'Verificando atualizações...',
       'Você já está com a versão mais recente instalada.',
       'Não foi possível verificar atualizações no momento.',
+      'Download concluído! Abrindo instalador...',
+      'PATCH NOTES',
+      'Nova Versão Disposta',
+      'Baixando atualização...',
+      'AGORA NÃO',
+      'ATUALIZAR AGORA',
+      'Melhorias de desempenho, correções de bugs e otimizações gerais do FIT//IRON.',
     };
 
     final offenders = <String>[];
