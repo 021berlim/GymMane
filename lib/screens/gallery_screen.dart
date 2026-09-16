@@ -65,6 +65,11 @@ class _GalleryScreenState extends State<GalleryScreen> {
   }
 
   Future<void> _addNewPhoto(ImageSource source) async {
+    if (fit.sessions.isEmpty) {
+      _showNoSessionsWarning();
+      return;
+    }
+
     try {
       final picked = await _picker.pickImage(
         source: source,
@@ -75,9 +80,9 @@ class _GalleryScreenState extends State<GalleryScreen> {
       if (picked != null) {
         final bytes = await File(picked.path).readAsBytes();
         final base64Str = base64Encode(bytes);
-        setState(() {
-          fit.recordSessionPhoto(base64Str, before: false);
-        });
+        if (mounted) {
+          _showLinkToSessionSheet(context, base64Str);
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -86,6 +91,220 @@ class _GalleryScreenState extends State<GalleryScreen> {
         );
       }
     }
+  }
+
+  void _showNoSessionsWarning() {
+    final gc = context.gc;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: gc.bgRaised,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.warning_amber_rounded, size: 44, color: gc.accent),
+            const SizedBox(height: 12),
+            Text(
+              'Nenhum Treino Encontrado',
+              style: AppTheme.d(16, weight: FontWeight.w700, color: gc.text),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Para salvar fotos de progresso na galeria, é necessário ter pelo menos 1 treino concluído no seu histórico.',
+              style: AppTheme.s(13, color: gc.textSecondary),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            PrimaryButton(
+              label: 'ENTENDI',
+              onTap: () => Navigator.pop(context),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showLinkToSessionSheet(BuildContext context, String base64Str) {
+    final gc = context.gc;
+    final sessions = fit.sessions.reversed.toList(); // Newest first
+    LoggedSession selectedSession = sessions.first;
+    bool isBefore = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: gc.pageBg,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          return Container(
+            height: MediaQuery.of(context).size.height * 0.75,
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: gc.border,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'VINCULAR FOTO AO TREINO',
+                  style: AppTheme.d(16, weight: FontWeight.w700, color: gc.text, letterSpacing: 1.5),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Selecione a qual treino do seu histórico esta foto pertence:',
+                  style: AppTheme.s(12, color: gc.textSecondary),
+                ),
+                const SizedBox(height: 16),
+
+                // Timing selector (Antes / Depois)
+                Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setSheetState(() => isBefore = true),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          decoration: BoxDecoration(
+                            color: isBefore ? gc.accentSoft : gc.bgRaised,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: isBefore ? gc.accent : gc.border),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            t.photoBefore,
+                            style: AppTheme.s(12, weight: isBefore ? FontWeight.w700 : FontWeight.w500, color: isBefore ? gc.accent : gc.textSecondary),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setSheetState(() => isBefore = false),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          decoration: BoxDecoration(
+                            color: !isBefore ? gc.accentSoft : gc.bgRaised,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: !isBefore ? gc.accent : gc.border),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            t.photoAfter,
+                            style: AppTheme.s(12, weight: !isBefore ? FontWeight.w700 : FontWeight.w500, color: !isBefore ? gc.accent : gc.textSecondary),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+                Text(
+                  'TREINOS REGISTRADOS:',
+                  style: AppTheme.d(11, weight: FontWeight.w700, color: gc.textTertiary, letterSpacing: 1.5),
+                ),
+                const SizedBox(height: 8),
+
+                // List of finished sessions
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: sessions.length,
+                    itemBuilder: (ctx, i) {
+                      final s = sessions[i];
+                      final isSelected = selectedSession == s;
+                      final exercisesSummary = s.exercises.map((e) => e.name).join(', ');
+
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: GestureDetector(
+                          onTap: () => setSheetState(() => selectedSession = s),
+                          child: Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: isSelected ? gc.accentSoft : gc.bgRaised,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: isSelected ? gc.accent : gc.border),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
+                                  color: isSelected ? gc.accent : gc.textTertiary,
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        t.longDate(s.date),
+                                        style: AppTheme.d(14, weight: FontWeight.w700, color: gc.text),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        '${s.exercises.length} exercícios · ${fit.volumeLabel(s.volume)}',
+                                        style: AppTheme.s(11, color: gc.textSecondary),
+                                      ),
+                                      if (exercisesSummary.isNotEmpty) ...[
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          exercisesSummary,
+                                          style: AppTheme.s(10, color: gc.textTertiary),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                PrimaryButton(
+                  label: 'VINCULAR E SALVAR FOTO',
+                  onTap: () {
+                    fit.attachPhotoToSession(selectedSession, base64Str, before: isBefore);
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Foto vinculada com sucesso!', style: AppTheme.s(13, color: Colors.white)),
+                        backgroundColor: gc.bgRaised,
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
   }
 
   void _showAddPhotoOptions() {
@@ -135,59 +354,65 @@ class _GalleryScreenState extends State<GalleryScreen> {
   @override
   Widget build(BuildContext context) {
     final gc = context.gc;
-    final photos = _getPhotos();
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Top Navigation Bar
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.arrow_back, color: gc.text),
-                    onPressed: fit.goHome,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      t.photoGallery,
-                      style: AppTheme.d(18, weight: FontWeight.w700, color: gc.text, letterSpacing: 2),
-                    ),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.add_a_photo, color: gc.accent),
-                    onPressed: _showAddPhotoOptions,
-                  ),
-                ],
-              ),
-            ),
+    return AnimatedBuilder(
+      animation: fit,
+      builder: (context, _) {
+        final photos = _getPhotos();
 
-            // Photos Grid
-            Expanded(
-              child: photos.isEmpty
-                  ? _buildEmptyState(gc)
-                  : GridView.builder(
-                      padding: const EdgeInsets.all(16),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                        childAspectRatio: 0.8,
+        return Scaffold(
+          backgroundColor: Colors.transparent,
+          body: SafeArea(
+            child: Column(
+              children: [
+                // Top Navigation Bar
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.arrow_back, color: gc.text),
+                        onPressed: fit.goHome,
                       ),
-                      itemCount: photos.length,
-                      itemBuilder: (context, index) {
-                        final item = photos[index];
-                        return _buildPhotoTile(gc, item);
-                      },
-                    ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          t.photoGallery,
+                          style: AppTheme.d(18, weight: FontWeight.w700, color: gc.text, letterSpacing: 2),
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.add_a_photo, color: gc.accent),
+                        onPressed: _showAddPhotoOptions,
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Photos Grid
+                Expanded(
+                  child: photos.isEmpty
+                      ? _buildEmptyState(gc)
+                      : GridView.builder(
+                          padding: const EdgeInsets.all(16),
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                            childAspectRatio: 0.8,
+                          ),
+                          itemCount: photos.length,
+                          itemBuilder: (context, index) {
+                            final item = photos[index];
+                            return _buildPhotoTile(gc, item);
+                          },
+                        ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -249,7 +474,6 @@ class _GalleryScreenState extends State<GalleryScreen> {
         child: Stack(
           children: [
             Positioned.fill(child: imageWidget),
-            // Gradient Overlay at bottom for readable badge text
             Positioned(
               left: 0,
               right: 0,
@@ -317,7 +541,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => Container(
-        height: MediaQuery.of(context).size.height * 0.85,
+        height: MediaQuery.of(context).size.height * 0.88,
         decoration: BoxDecoration(
           color: gc.pageBg,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
@@ -351,23 +575,43 @@ class _GalleryScreenState extends State<GalleryScreen> {
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-              child: Row(
+              child: Column(
                 children: [
-                  Expanded(
-                    child: PrimaryButton(
-                      label: 'COMPARTILHAR FOTO',
-                      onTap: () {
-                        Navigator.pop(context);
-                        final durMins = item.session.durationSec > 0 ? (item.session.durationSec / 60).round() : 30;
-                        showSharePhotoSheet(
-                          context,
-                          durationStr: '$durMins MIN',
-                          prCount: 0,
-                          volumeKg: item.session.volume,
-                          calories: (durMins * 5 + item.session.volume * 0.02).round().clamp(20, 2000),
-                          muscleGroupsStr: 'Treino ${t.shortDate(item.date)}',
-                        );
-                      },
+                  PrimaryButton(
+                    label: 'COMPARTILHAR FOTO',
+                    onTap: () {
+                      Navigator.pop(context);
+                      final durMins = item.session.durationSec > 0 ? (item.session.durationSec / 60).round() : 30;
+                      showSharePhotoSheet(
+                        context,
+                        durationStr: '$durMins MIN',
+                        prCount: 0,
+                        volumeKg: item.session.volume,
+                        calories: (durMins * 5 + item.session.volume * 0.02).round().clamp(20, 2000),
+                        muscleGroupsStr: 'Treino ${t.shortDate(item.date)}',
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      fit.deleteSessionPhoto(item.session, before: item.isBefore);
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Foto removida da galeria.', style: AppTheme.s(13, color: Colors.white)),
+                          backgroundColor: gc.bgRaised,
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.delete_outline, size: 18, color: Colors.redAccent),
+                    label: Text('Excluir Foto', style: AppTheme.s(13, weight: FontWeight.w600, color: Colors.redAccent)),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Colors.redAccent),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      minimumSize: const Size(double.infinity, 48),
                     ),
                   ),
                 ],

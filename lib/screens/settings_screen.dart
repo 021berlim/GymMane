@@ -554,39 +554,55 @@ class SettingsScreen extends StatelessWidget {
 
 
 
-  Future<void> _manualCheckForUpdate(BuildContext context) async {
-    final gc = context.gc;
+  void _showStyledSnack(BuildContext context, GymColors gc, String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Verificando atualizações...', style: AppTheme.s(13, color: Colors.white)),
-        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: gc.bgRaised,
+        margin: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: isError ? Colors.redAccent : gc.accent),
+        ),
+        content: Row(
+          children: [
+            Icon(
+              isError ? Icons.error_outline : PhosphorIconsRegular.arrowClockwise,
+              size: 20,
+              color: isError ? Colors.redAccent : gc.accent,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: AppTheme.s(13, weight: FontWeight.w600, color: gc.text),
+              ),
+            ),
+          ],
+        ),
+        duration: const Duration(seconds: 3),
       ),
     );
+  }
+
+  Future<void> _manualCheckForUpdate(BuildContext context) async {
+    final gc = context.gc;
+    _showStyledSnack(context, gc, 'Verificando atualizações...');
 
     try {
       final info = await UpdateService.checkForUpdate();
       if (!context.mounted) return;
       if (info != null) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
         showUpdateDialog(context, info);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Você já está com a versão mais recente instalada.',
-                style: AppTheme.s(13, color: Colors.white)),
-            backgroundColor: gc.bgRaised,
-            duration: const Duration(seconds: 3),
-          ),
-        );
+        _showStyledSnack(context, gc, 'Você já está com a versão mais recente instalada.');
       }
     } catch (_) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Não foi possível verificar atualizações no momento.',
-              style: AppTheme.s(13, color: Colors.white)),
-          duration: const Duration(seconds: 3),
-        ),
-      );
+      _showStyledSnack(context, gc, 'Não foi possível verificar atualizações no momento.', isError: true);
     }
   }
 

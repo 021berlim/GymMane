@@ -352,6 +352,16 @@ void main() {
       'AGORA NÃO',
       'ATUALIZAR AGORA',
       'Melhorias de desempenho, correções de bugs e otimizações gerais do FIT//IRON.',
+      'Nenhum Treino Encontrado',
+      'Para salvar fotos de progresso na galeria, é necessário ter pelo menos 1 treino concluído no seu histórico.',
+      'ENTENDI',
+      'VINCULAR FOTO AO TREINO',
+      'Selecione a qual treino do seu histórico esta foto pertence:',
+      'TREINOS REGISTRADOS:',
+      'VINCULAR E SALVAR FOTO',
+      'Foto vinculada com sucesso!',
+      'Foto removida da galeria.',
+      'Excluir Foto',
     };
 
     final offenders = <String>[];

@@ -194,6 +194,26 @@ mixin WorkoutState on FitCore, SettingsState, LibraryState, StatsState, Routines
     notifyListeners();
   }
 
+  void attachPhotoToSession(LoggedSession targetSession, String base64, {required bool before}) {
+    if (before) {
+      targetSession.photoBefore = base64;
+    } else {
+      targetSession.photoAfter = base64;
+    }
+    persistNow();
+    notifyListeners();
+  }
+
+  void deleteSessionPhoto(LoggedSession targetSession, {required bool before}) {
+    if (before) {
+      targetSession.photoBefore = null;
+    } else {
+      targetSession.photoAfter = null;
+    }
+    persistNow();
+    notifyListeners();
+  }
+
   void _beginSession(List<Exercise> exs, {Routine? routine}) {
     final s = WorkoutSession();
     bodyweightStartPromptShown = false;
