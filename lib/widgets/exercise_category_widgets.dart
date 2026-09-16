@@ -408,29 +408,32 @@ void showFilterSelectorBottomSheet<T>({
   final gc = context.gc;
   showModalBottomSheet<void>(
     context: context,
-    backgroundColor: gc.bgRaised,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-    ),
-    builder: (sheetCtx) => SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+    backgroundColor: Colors.transparent,
+    builder: (sheetCtx) => Container(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: gc.bgRaised,
+        border: Border.all(color: gc.border),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      child: SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  title.toUpperCase(),
-                  style: AppTheme.d(15, weight: FontWeight.w700, color: gc.text, letterSpacing: 1.5),
-                ),
-                GestureDetector(
-                  onTap: () => Navigator.pop(sheetCtx),
-                  child: Icon(PhosphorIconsRegular.x, size: 18, color: gc.textSecondary),
-                ),
-              ],
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(color: gc.bgRaised2, borderRadius: BorderRadius.circular(2)),
+              ),
+            ),
+            const SizedBox(height: 18),
+            Text(
+              title.toUpperCase(),
+              style: AppTheme.d(14, weight: FontWeight.w600, color: gc.text, letterSpacing: 2),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
             Flexible(

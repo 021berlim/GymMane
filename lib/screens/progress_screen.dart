@@ -15,7 +15,6 @@ import '../widgets/body_map.dart';
 import '../widgets/bodyweight_sheet.dart';
 import '../widgets/charts.dart';
 import '../widgets/goal_progress_widgets.dart';
-import '../widgets/share_photo_sheet.dart';
 import '../widgets/svg_icon.dart';
 import '../widgets/ui_kit.dart';
 import 'muscle_distribution_screen.dart';
@@ -49,7 +48,7 @@ class ProgressScreen extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(t.consistency,
+                          Text(t.consistency.toUpperCase(),
                               style: AppTheme.d(14, weight: FontWeight.w600, color: gc.text, letterSpacing: 1)),
                           Text(t.sessionsLogged(fit.totalSessions),
                               style: AppTheme.s(12, color: gc.textSecondary)),
@@ -136,7 +135,7 @@ class _MuscleMapCardState extends State<_MuscleMapCard> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(t.muscleMap,
+              Text(t.muscleMap.toUpperCase(),
                   style: AppTheme.d(14, weight: FontWeight.w600, color: gc.text, letterSpacing: 1)),
               SegToggle(
                 [
@@ -227,6 +226,7 @@ class _DaySheet extends StatelessWidget {
     final s = fit.daySummary(date);
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: gc.bgRaised,
         border: Border.all(color: gc.border),
@@ -262,35 +262,7 @@ class _DaySheet extends StatelessWidget {
               ],
             ]),
             const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(t.tapToDelete, style: AppTheme.s(11, color: gc.textTertiary)),
-                OutlinedButton.icon(
-                  onPressed: () {
-                    final durMins = s.durationSec > 0 ? (s.durationSec / 60).round() : 30;
-                    final durStr = s.durationSec > 0 ? '$durMins MIN' : '30 MIN';
-                    final volKg = s.volume;
-                    final calories = (durMins * 5 + volKg * 0.02).round().clamp(20, 2000);
-                    showSharePhotoSheet(
-                      context,
-                      durationStr: durStr,
-                      prCount: 0,
-                      volumeKg: volKg,
-                      calories: calories,
-                      muscleGroupsStr: 'Treino ${t.shortDate(date)}',
-                    );
-                  },
-                  icon: Icon(Icons.camera_alt, size: 14, color: gc.accent),
-                  label: Text('Compartilhar Foto', style: AppTheme.s(12, weight: FontWeight.w600, color: gc.text)),
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: gc.border),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  ),
-                ),
-              ],
-            ),
+            Text(t.tapToDelete, style: AppTheme.s(11, color: gc.textTertiary)),
             const SizedBox(height: 8),
             for (final logged in fit.sessionsOn(date))
               for (final ex in [...logged.exercises])
@@ -302,9 +274,10 @@ class _DaySheet extends StatelessWidget {
   }
 
   Widget _loggedRow(BuildContext context, GymColors gc, LoggedSession s, LoggedExercise e) {
-    final detail = e.sets.map((x) => '${fit.weightValue(x.weight)}×${x.reps}').join(' · ');
+    final name = t.catalogName(e.id, e.name);
+    final detail = '${e.sets.length}×${e.sets.isEmpty ? 0 : e.sets.map((x) => x.reps).reduce((a, b) => a > b ? a : b)}';
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -321,7 +294,7 @@ class _DaySheet extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(e.name, style: AppTheme.s(13, weight: FontWeight.w600, color: gc.text)),
+                Text(name, style: AppTheme.s(13, weight: FontWeight.w600, color: gc.text)),
                 const SizedBox(height: 2),
                 Text(detail, style: AppTheme.s(11, color: gc.textSecondary)),
               ],
@@ -329,7 +302,7 @@ class _DaySheet extends StatelessWidget {
           ),
           Semantics(
             button: true,
-            label: '${t.deleteCaps} ${e.name}',
+            label: '${t.deleteCaps} $name',
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: () => _confirmDelete(context, s, e),
@@ -347,13 +320,14 @@ class _DaySheet extends StatelessWidget {
 
   Future<void> _confirmDelete(BuildContext context, LoggedSession s, LoggedExercise e) async {
     final gc = context.gc;
+    final name = t.catalogName(e.id, e.name);
     final ok = await showDialog<bool>(
       context: context,
       builder: (dctx) => AlertDialog(
         backgroundColor: gc.bgRaised,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(t.deleteEntry, style: AppTheme.d(18, weight: FontWeight.w700, color: gc.text)),
-        content: Text(t.deleteEntryBody(e.name), style: AppTheme.s(13, color: gc.textSecondary)),
+        content: Text(t.deleteEntryBody(name), style: AppTheme.s(13, color: gc.textSecondary)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dctx).pop(false),
@@ -522,7 +496,7 @@ class _BodyweightCardState extends State<_BodyweightCard> {
             children: [
               Expanded(
                 child: Text(
-                  t.trackWeight,
+                  t.trackWeight.toUpperCase(),
                   style: AppTheme.d(14, weight: FontWeight.w600, color: gc.text, letterSpacing: 1),
                 ),
               ),
@@ -966,77 +940,74 @@ class _WeeklyProgressCardWidgetState extends State<WeeklyProgressCardWidget> {
         break;
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'PROGRESSO SEMANAL',
-              style: AppTheme.d(12, weight: FontWeight.w700, color: gc.textSecondary, letterSpacing: 2.5),
-            ),
-            if (widget.showExploreDetails)
-              GestureDetector(
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const WeeklyProgressDetailScreen()),
-                  );
-                },
-                child: Row(
+    return SoftCard(
+      radius: 24,
+      padding: const EdgeInsets.fromLTRB(20, 22, 20, 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'PROGRESSO SEMANAL',
+                style: AppTheme.d(14, weight: FontWeight.w600, color: gc.text, letterSpacing: 1),
+              ),
+              if (widget.showExploreDetails)
+                GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const WeeklyProgressDetailScreen()),
+                    );
+                  },
+                  child: Row(
+                    children: [
+                      Text(
+                        'Explorar detalhes',
+                        style: AppTheme.s(12, color: gc.textSecondary, weight: FontWeight.w500),
+                      ),
+                      const SizedBox(width: 4),
+                      SvgPathIcon(Ic.chevronRight, size: 14, color: gc.textSecondary),
+                    ],
+                  ),
+                )
+              else
+                Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: canGoBack ? () => setState(() => _weekOffset--) : null,
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: SvgPathIcon(
+                          Ic.chevronLeft,
+                          size: 14,
+                          color: canGoBack ? gc.textSecondary : gc.textTertiary.withValues(alpha: 0.25),
+                        ),
+                      ),
+                    ),
                     Text(
-                      'Explorar detalhes',
+                      dateRangeStr,
                       style: AppTheme.s(12, color: gc.textSecondary, weight: FontWeight.w500),
                     ),
-                    const SizedBox(width: 4),
-                    SvgPathIcon(Ic.chevronRight, size: 14, color: gc.textSecondary),
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: canGoForward ? () => setState(() => _weekOffset++) : null,
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: SvgPathIcon(
+                          Ic.chevronRight,
+                          size: 14,
+                          color: canGoForward ? gc.textSecondary : gc.textTertiary.withValues(alpha: 0.25),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
-              )
-            else
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: canGoBack ? () => setState(() => _weekOffset--) : null,
-                    child: Padding(
-                      padding: const EdgeInsets.all(4),
-                      child: SvgPathIcon(
-                        Ic.chevronLeft,
-                        size: 14,
-                        color: canGoBack ? gc.textSecondary : gc.textTertiary.withValues(alpha: 0.25),
-                      ),
-                    ),
-                  ),
-                  Text(
-                    dateRangeStr,
-                    style: AppTheme.s(12, color: gc.textSecondary, weight: FontWeight.w500),
-                  ),
-                  GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: canGoForward ? () => setState(() => _weekOffset++) : null,
-                    child: Padding(
-                      padding: const EdgeInsets.all(4),
-                      child: SvgPathIcon(
-                        Ic.chevronRight,
-                        size: 14,
-                        color: canGoForward ? gc.textSecondary : gc.textTertiary.withValues(alpha: 0.25),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        SoftCard(
-          radius: 24,
-          padding: const EdgeInsets.fromLTRB(20, 22, 20, 18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+            ],
+          ),
+          const SizedBox(height: 14),
               if (!hasData) ...[
                 const SizedBox(height: 36),
                 Center(child: _BarChartEmptyIcon(gc: gc)),
@@ -1143,9 +1114,7 @@ class _WeeklyProgressCardWidgetState extends State<WeeklyProgressCardWidget> {
               ),
             ],
           ),
-        ),
-      ],
-    );
+        );
   }
 
   Widget _tabButton(GymColors gc, String label) {
@@ -1336,7 +1305,7 @@ class _GoalsCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    t.notifGoalChannel,
+                    t.notifGoalChannel.toUpperCase(),
                     style: AppTheme.d(14, weight: FontWeight.w600, color: gc.text, letterSpacing: 1),
                   ),
                   _buildCardPlusButton(

@@ -50,16 +50,7 @@ class _UpdateSheetState extends State<_UpdateSheet> {
       if (mounted) {
         // Automatically close bottom sheet on completion
         Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Download concluído! Abrindo instalador...',
-              style: AppTheme.s(13, color: Colors.white),
-            ),
-            backgroundColor: const Color(0xFF1F241C),
-            duration: const Duration(seconds: 4),
-          ),
-        );
+        AppToast.showDownload(context, 'Download concluído! Abrindo instalador...');
       }
     } catch (e) {
       if (mounted) {
@@ -80,8 +71,9 @@ class _UpdateSheetState extends State<_UpdateSheet> {
       canPop: !widget.info.isForced && !_downloading,
       child: Container(
         constraints: BoxConstraints(maxHeight: screenHeight * 0.85),
+        clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
-          color: gc.pageBg,
+          color: gc.bgRaised,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
           border: Border.all(color: gc.border),
           boxShadow: const [
@@ -96,10 +88,10 @@ class _UpdateSheetState extends State<_UpdateSheet> {
             // Drag handle
             Center(
               child: Container(
-                width: 36,
+                width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: gc.border,
+                  color: gc.bgRaised2,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),

@@ -303,7 +303,7 @@ class RadarMuscleChart extends StatelessWidget {
                   t.muscleDistribution.toUpperCase(),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTheme.d(13, weight: FontWeight.w700, color: gc.text, letterSpacing: 1.2),
+                  style: AppTheme.d(14, weight: FontWeight.w600, color: gc.text, letterSpacing: 1),
                 ),
               ),
               const SizedBox(width: 8),
@@ -326,32 +326,32 @@ class RadarMuscleChart extends StatelessWidget {
           const SizedBox(height: 20),
           SizedBox(
             height: 260,
-            child: CustomPaint(
-              painter: _RadarChartPainter(
-                gc: gc,
-                labels: [for (final g in groups) g.groupName],
-                values: values,
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(width: 16, height: 2.5, color: gc.accent),
-                const SizedBox(width: 8),
-                Text(
-                  t.currentWeekPeriod,
-                  style: AppTheme.s(12, color: gc.textSecondary),
+                child: CustomPaint(
+                  painter: _RadarChartPainter(
+                    gc: gc,
+                    labels: [for (final g in groups) g.groupName],
+                    values: values,
+                  ),
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 16),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(width: 16, height: 2.5, color: gc.accent),
+                    const SizedBox(width: 8),
+                    Text(
+                      t.currentWeekPeriod,
+                      style: AppTheme.s(12, color: gc.textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
+        );
   }
 
   double _getGroupVal(String key, Map<String, double> map) {

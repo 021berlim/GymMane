@@ -181,6 +181,8 @@ extension GymL10n on AppLocalizations {
 
   String shortDate(DateTime d) => _dates(DateFormat.MMMd).format(d);
 
+  String fullDate(DateTime d) => '${weekday(d.weekday)}, ${_dates(DateFormat.MMMMd).format(d)}';
+
   String shortDateYear(DateTime d) => _dates(DateFormat.yMMMd).format(d);
 
   String monthYear(DateTime d) => _capitalize(_dates(DateFormat.yMMMM).format(d));

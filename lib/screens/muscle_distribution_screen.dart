@@ -300,6 +300,7 @@ class _DistributionCard extends StatelessWidget {
       isScrollControlled: true,
       builder: (bctx) {
         return Container(
+          clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
             color: gc.bgRaised,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
@@ -315,6 +316,14 @@ class _DistributionCard extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(color: gc.bgRaised2, borderRadius: BorderRadius.circular(2)),
+                ),
+              ),
+              const SizedBox(height: 18),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [

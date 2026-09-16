@@ -29,19 +29,10 @@ class HomeScreen extends StatelessWidget {
         if (celebrationMsg != null) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Row(
-                    children: [
-                      Icon(PhosphorIconsRegular.trophy, size: 18, color: gc.onEmber),
-                      const SizedBox(width: 8),
-                      Text(celebrationMsg, style: AppTheme.s(14, color: gc.onEmber, weight: FontWeight.w600)),
-                    ],
-                  ),
-                  backgroundColor: gc.ember,
-                  behavior: SnackBarBehavior.floating,
-                  duration: const Duration(seconds: 3),
-                ),
+              AppToast.show(
+                context,
+                message: celebrationMsg,
+                type: AppToastType.celebration,
               );
             }
           });

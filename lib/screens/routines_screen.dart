@@ -139,18 +139,32 @@ class RoutinesScreen extends StatelessWidget {
     final gc = context.gc;
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: gc.bgRaised,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (_) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+      backgroundColor: Colors.transparent,
+      builder: (_) => Container(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          color: gc.bgRaised,
+          border: Border.all(color: gc.border),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(color: gc.bgRaised2, borderRadius: BorderRadius.circular(2)),
+                ),
+              ),
+              const SizedBox(height: 18),
               Text(t.setDay(t.weekday(weekday).toUpperCase()),
-                  style: AppTheme.d(14, weight: FontWeight.w700, color: gc.text, letterSpacing: 2)),
-              const SizedBox(height: 14),
+                  style: AppTheme.d(14, weight: FontWeight.w600, color: gc.text, letterSpacing: 2),
+                  textAlign: TextAlign.center),
+              const SizedBox(height: 16),
               _sheetItem(context, gc, t.restDayShort, fit.weeklyPlan[weekday] == null, () {
                 fit.assignRoutineToDay(weekday, null);
                 Navigator.pop(context);

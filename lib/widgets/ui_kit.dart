@@ -4,6 +4,7 @@ import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import 'svg_icon.dart';
+export 'app_toast.dart';
 
 class SoftCard extends StatelessWidget {
   const SoftCard({

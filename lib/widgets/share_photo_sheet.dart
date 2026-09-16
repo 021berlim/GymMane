@@ -1,10 +1,11 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../state/fit_state.dart';
@@ -21,6 +22,7 @@ void showSharePhotoSheet(
   required int calories,
   required String muscleGroupsStr,
   String? initialImagePath,
+  String? initialImageBase64,
 }) {
   showModalBottomSheet(
     context: context,
@@ -33,6 +35,7 @@ void showSharePhotoSheet(
       calories: calories,
       muscleGroupsStr: muscleGroupsStr,
       initialImagePath: initialImagePath,
+      initialImageBase64: initialImageBase64,
     ),
   );
 }
@@ -44,6 +47,7 @@ class SharePhotoSheet extends StatefulWidget {
   final int calories;
   final String muscleGroupsStr;
   final String? initialImagePath;
+  final String? initialImageBase64;
 
   const SharePhotoSheet({
     super.key,
@@ -53,6 +57,7 @@ class SharePhotoSheet extends StatefulWidget {
     required this.calories,
     required this.muscleGroupsStr,
     this.initialImagePath,
+    this.initialImageBase64,
   });
 
   @override
@@ -74,7 +79,6 @@ enum _PresetPosition {
 class _SharePhotoSheetState extends State<SharePhotoSheet> {
   final GlobalKey _boundaryKey = GlobalKey();
   File? _photoFile;
-  final ImagePicker _picker = ImagePicker();
 
   Alignment _alignment = Alignment.bottomLeft;
   Offset? _customOffset;
@@ -82,6 +86,7 @@ class _SharePhotoSheetState extends State<SharePhotoSheet> {
 
   int _styleIndex = 0; // 0: Full Stats Card, 1: Compact Card, 2: Minimal
   bool _isSharing = false;
+  double _watermarkScale = 1.0;
 
   @override
   void initState() {
@@ -89,44 +94,44 @@ class _SharePhotoSheetState extends State<SharePhotoSheet> {
     if (widget.initialImagePath != null) {
       _photoFile = File(widget.initialImagePath!);
     }
+    if (widget.initialImageBase64 != null && widget.initialImageBase64!.isNotEmpty) {
+      _loadBase64Image(widget.initialImageBase64!);
+    }
   }
 
-  Future<void> _pickPhoto(ImageSource source) async {
+  Future<void> _loadBase64Image(String base64Str) async {
     try {
-      final picked = await _picker.pickImage(
-        source: source,
-        maxWidth: 1920,
-        maxHeight: 1920,
-        imageQuality: 90,
-      );
-      if (picked != null) {
+      final bytes = base64Decode(base64Str);
+      final tempDir = await getTemporaryDirectory();
+      final file = File('${tempDir.path}/fitiron_gallery_${DateTime.now().millisecondsSinceEpoch}.png');
+      await file.writeAsBytes(bytes, flush: true);
+      if (mounted) {
         setState(() {
-          _photoFile = File(picked.path);
+          _photoFile = file;
         });
       }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error selecting photo: $e')),
-        );
-      }
-    }
+    } catch (_) {}
   }
 
   Future<void> _shareImage() async {
     if (_photoFile == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor, selecione ou tire uma foto primeiro.')),
-      );
+      AppToast.showError(context, 'Por favor, selecione ou tire uma foto primeiro.');
       return;
     }
 
     setState(() => _isSharing = true);
     try {
-      await Future.delayed(const Duration(milliseconds: 100));
+      // Wait for the render pipeline to complete
+      await Future.delayed(const Duration(milliseconds: 500));
+      await WidgetsBinding.instance.endOfFrame;
 
       final boundary = _boundaryKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
       if (boundary == null) throw Exception('Boundary rendering failed');
+
+      // Ensure the boundary has been painted
+      if (boundary.debugNeedsPaint) {
+        await Future.delayed(const Duration(milliseconds: 300));
+      }
 
       final image = await boundary.toImage(pixelRatio: 3.0);
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
@@ -137,19 +142,20 @@ class _SharePhotoSheetState extends State<SharePhotoSheet> {
       final file = File('${tempDir.path}/fitiron_workout_share_${DateTime.now().millisecondsSinceEpoch}.png');
       await file.writeAsBytes(pngBytes, flush: true);
 
-      if (mounted) {
-        await SharePlus.instance.share(
-          ShareParams(
-            files: [XFile(file.path)],
-            subject: 'FIT//IRON Workout',
-          ),
-        );
-      }
+      if (!mounted) return;
+      
+      // Close the bottom sheet first to avoid context issues
+      Navigator.of(context).pop();
+      
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(file.path)],
+          subject: 'FIT//IRON Workout',
+        ),
+      );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao compartilhar foto: $e')),
-        );
+        AppToast.showError(context, 'Erro ao compartilhar foto: $e');
       }
     } finally {
       if (mounted) setState(() => _isSharing = false);
@@ -163,8 +169,10 @@ class _SharePhotoSheetState extends State<SharePhotoSheet> {
 
     return Container(
       height: screenHeight * 0.92,
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: gc.pageBg,
+        color: gc.bgRaised,
+        border: Border.all(color: gc.border),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: Column(
@@ -175,10 +183,10 @@ class _SharePhotoSheetState extends State<SharePhotoSheet> {
             child: Column(
               children: [
                 Container(
-                  width: 36,
+                  width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: gc.border,
+                    color: gc.bgRaised2,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -207,39 +215,6 @@ class _SharePhotoSheetState extends State<SharePhotoSheet> {
                 children: [
                   // Photo preview + draggable watermark container
                   _buildPreviewCanvas(gc),
-
-                  const SizedBox(height: 16),
-
-                  // Action buttons to choose photo
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () => _pickPhoto(ImageSource.gallery),
-                          icon: Icon(Icons.photo_library, size: 18, color: gc.accent),
-                          label: Text('Galeria', style: AppTheme.s(13, weight: FontWeight.w600, color: gc.text)),
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: gc.border),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () => _pickPhoto(ImageSource.camera),
-                          icon: Icon(Icons.camera_alt, size: 18, color: gc.accent),
-                          label: Text('Câmera', style: AppTheme.s(13, weight: FontWeight.w600, color: gc.text)),
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: gc.border),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
 
                   const SizedBox(height: 16),
 
@@ -300,6 +275,42 @@ class _SharePhotoSheetState extends State<SharePhotoSheet> {
                       _styleChip(gc, 1, 'Compacto'),
                       const SizedBox(width: 8),
                       _styleChip(gc, 2, 'Mínimo'),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Watermark size slider
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      "TAMANHO DA MARCA D'ÁGUA",
+                      style: AppTheme.d(10, weight: FontWeight.w700, color: gc.textTertiary, letterSpacing: 1.5),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(PhosphorIcons.textAa(PhosphorIconsStyle.bold), size: 16, color: gc.textTertiary),
+                      Expanded(
+                        child: SliderTheme(
+                          data: SliderThemeData(
+                            activeTrackColor: gc.accent,
+                            inactiveTrackColor: gc.border,
+                            thumbColor: gc.accent,
+                            overlayColor: gc.accent.withValues(alpha: 0.2),
+                            trackHeight: 3,
+                            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7),
+                          ),
+                          child: Slider(
+                            value: _watermarkScale,
+                            min: 0.5,
+                            max: 1.5,
+                            onChanged: (v) => setState(() => _watermarkScale = v),
+                          ),
+                        ),
+                      ),
+                      Icon(PhosphorIcons.textAa(PhosphorIconsStyle.fill), size: 22, color: gc.textSecondary),
                     ],
                   ),
 
@@ -417,6 +428,19 @@ class _SharePhotoSheetState extends State<SharePhotoSheet> {
   }
 
   Widget _buildDraggableWatermark(GymColors gc, double canvasW, double canvasH) {
+    final card = _buildWatermarkCard(gc);
+    // Use FittedBox so the layout bounds shrink/grow with the scale
+    final scaledCard = _watermarkScale == 1.0
+        ? card
+        : SizedBox(
+            width: 250 * _watermarkScale,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.topLeft,
+              child: card,
+            ),
+          );
+
     return GestureDetector(
       onPanUpdate: (details) {
         setState(() {
@@ -428,7 +452,7 @@ class _SharePhotoSheetState extends State<SharePhotoSheet> {
           _customOffset = Offset(newDx, newDy);
         });
       },
-      child: _buildWatermarkCard(gc),
+      child: scaledCard,
     );
   }
 
@@ -459,14 +483,6 @@ class _SharePhotoSheetState extends State<SharePhotoSheet> {
       // Minimal Emblem Badge
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: const Color(0xDD090B08),
-          borderRadius: BorderRadius.circular(100),
-          border: Border.all(color: const Color(0x44A3E635)),
-          boxShadow: const [
-            BoxShadow(color: Colors.black45, blurRadius: 12, offset: Offset(0, 4)),
-          ],
-        ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -495,14 +511,6 @@ class _SharePhotoSheetState extends State<SharePhotoSheet> {
       // Compact Card
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: const Color(0xEE090B08),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0x44A3E635)),
-          boxShadow: const [
-            BoxShadow(color: Colors.black54, blurRadius: 16, offset: Offset(0, 6)),
-          ],
-        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -533,13 +541,6 @@ class _SharePhotoSheetState extends State<SharePhotoSheet> {
               '${widget.durationStr} · ${fit.volumeLabel(widget.volumeKg)}',
               style: AppTheme.d(14, weight: FontWeight.w700, color: Colors.white),
             ),
-            if (widget.muscleGroupsStr.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Text(
-                widget.muscleGroupsStr,
-                style: AppTheme.s(11, weight: FontWeight.w600, color: const Color(0xB3FFFFFF)),
-              ),
-            ],
           ],
         ),
       );
@@ -550,12 +551,7 @@ class _SharePhotoSheetState extends State<SharePhotoSheet> {
       width: 250,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xEE090B08),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0x44A3E635), width: 1.5),
-        boxShadow: const [
-          BoxShadow(color: Color(0xCC000000), blurRadius: 20, offset: Offset(0, 8)),
-        ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -595,9 +591,10 @@ class _SharePhotoSheetState extends State<SharePhotoSheet> {
                 ),
               ),
               Expanded(
-                child: _buildMetricItem(
+                child: _buildMetricItemWithIcon(
                   'Recordes',
-                  '${widget.prCount} 🏆',
+                  '${widget.prCount}',
+                  PhosphorIcons.trophy(PhosphorIconsStyle.fill),
                 ),
               ),
             ],
@@ -622,23 +619,6 @@ class _SharePhotoSheetState extends State<SharePhotoSheet> {
               ),
             ],
           ),
-
-          if (widget.muscleGroupsStr.isNotEmpty) ...[
-            const SizedBox(height: 14),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.only(top: 10),
-              decoration: const BoxDecoration(
-                border: Border(top: BorderSide(color: Color(0x22FFFFFF))),
-              ),
-              child: Text(
-                widget.muscleGroupsStr,
-                style: AppTheme.s(12, weight: FontWeight.w600, color: Colors.white70),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
         ],
       ),
     );
@@ -656,6 +636,30 @@ class _SharePhotoSheetState extends State<SharePhotoSheet> {
         Text(
           value,
           style: AppTheme.d(16, weight: FontWeight.w700, color: Colors.white),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMetricItemWithIcon(String label, String value, IconData icon) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: AppTheme.s(11, weight: FontWeight.w500, color: const Color(0x99FFFFFF)),
+        ),
+        const SizedBox(height: 2),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              value,
+              style: AppTheme.d(16, weight: FontWeight.w700, color: Colors.white),
+            ),
+            const SizedBox(width: 4),
+            Icon(icon, size: 16, color: const Color(0xFFA3E635)),
+          ],
         ),
       ],
     );

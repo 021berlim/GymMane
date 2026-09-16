@@ -555,72 +555,15 @@ class SettingsScreen extends StatelessWidget {
 
 
   void _showLoadingSnack(BuildContext context, GymColors gc, String message) {
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: gc.bgRaised,
-        margin: const EdgeInsets.all(16),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: gc.accent),
-        ),
-        content: Row(
-          children: [
-            SizedBox(
-              width: 18,
-              height: 18,
-              child: CircularProgressIndicator(
-                strokeWidth: 2.5,
-                valueColor: AlwaysStoppedAnimation<Color>(gc.accent),
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Text(
-                message,
-                style: AppTheme.s(13, weight: FontWeight.w600, color: gc.text),
-              ),
-            ),
-          ],
-        ),
-        duration: const Duration(minutes: 1),
-      ),
-    );
+    AppToast.showLoading(context, message);
   }
 
   void _showStyledSnack(BuildContext context, GymColors gc, String message, {bool isError = false}) {
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: gc.bgRaised,
-        margin: const EdgeInsets.all(16),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: isError ? Colors.redAccent : gc.accent),
-        ),
-        content: Row(
-          children: [
-            Icon(
-              isError ? Icons.error_outline : PhosphorIconsRegular.arrowClockwise,
-              size: 20,
-              color: isError ? Colors.redAccent : gc.accent,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                message,
-                style: AppTheme.s(13, weight: FontWeight.w600, color: gc.text),
-              ),
-            ),
-          ],
-        ),
-        duration: const Duration(seconds: 4),
-      ),
-    );
+    if (isError) {
+      AppToast.showError(context, message);
+    } else {
+      AppToast.showSuccess(context, message);
+    }
   }
 
   Future<void> _manualCheckForUpdate(BuildContext context) async {
@@ -751,15 +694,7 @@ class SettingsScreen extends StatelessWidget {
   }
 
   void _snack(BuildContext context, String msg) {
-    final gc = context.gc;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg, style: AppTheme.s(13, weight: FontWeight.w600, color: gc.onEmber)),
-      backgroundColor: gc.ember,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      margin: const EdgeInsets.fromLTRB(20, 0, 20, 100),
-      duration: const Duration(seconds: 2),
-    ));
+    AppToast.showSuccess(context, msg);
   }
 }
 
@@ -769,6 +704,7 @@ class _SourceSheet extends StatelessWidget {
     final gc = context.gc;
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: gc.bgRaised,
         border: Border.all(color: gc.border),
@@ -815,6 +751,7 @@ class _LanguageSheet extends StatelessWidget {
     final gc = context.gc;
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: gc.bgRaised,
         border: Border.all(color: gc.border),
@@ -854,17 +791,24 @@ class _LanguageSheet extends StatelessWidget {
         fit.setLanguage(code);
         Navigator.of(context).pop();
       },
-      child: SoftCard(
-        radius: 16,
-        padding: const EdgeInsets.all(16),
-        child: Row(children: [
-          Expanded(
-            child: Text(languageNameOf(code),
-                style: AppTheme.s(14,
-                    weight: FontWeight.w600, color: active ? gc.ember : gc.text)),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        decoration: BoxDecoration(
+          color: active ? gc.accentSoft : gc.bgRaised2,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: active ? gc.accent : gc.border,
+            width: active ? 1.5 : 1.0,
           ),
-          if (active) Icon(PhosphorIconsFill.check, size: 16, color: gc.ember),
-        ]),
+        ),
+        child: Text(
+          languageNameOf(code),
+          style: AppTheme.s(
+            14,
+            weight: active ? FontWeight.w700 : FontWeight.w500,
+            color: active ? gc.accent : gc.text,
+          ),
+        ),
       ),
     );
   }
@@ -883,6 +827,7 @@ class _AlarmSoundSheet extends StatelessWidget {
     final current = fit.alarmSoundName ?? t.alarmDefaultName;
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: gc.bgRaised,
         border: Border.all(color: gc.border),
@@ -958,6 +903,7 @@ class _ProfileSheetState extends State<_ProfileSheet> {
     final p = fit.profile;
     return Container(
       padding: EdgeInsets.fromLTRB(20, 12, 20, 20 + MediaQuery.of(context).viewInsets.bottom),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: gc.bgRaised,
         border: Border.all(color: gc.border),

@@ -551,30 +551,43 @@ void showCreateExerciseSheet(BuildContext context, {void Function(String id)? on
   showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: gc.bgRaised,
-    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-    builder: (sheetCtx) => Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(sheetCtx).viewInsets.bottom),
-      child: StatefulBuilder(
-        builder: (sheetCtx, setSheet) {
-          final mediaIsVideo = mediaPath != null && MediaStore.isVideo(mediaPath!);
-          Future<void> pickMedia() async {
-            try {
-              final res = await FilePicker.platform.pickFiles(type: FileType.media);
-              final path = res?.files.single.path;
-              if (path != null) setSheet(() => mediaPath = path);
-            } catch (_) {}
-          }
+    backgroundColor: Colors.transparent,
+    builder: (sheetCtx) => StatefulBuilder(
+      builder: (sheetCtx, setSheet) {
+        final mediaIsVideo = mediaPath != null && MediaStore.isVideo(mediaPath!);
+        Future<void> pickMedia() async {
+          try {
+            final res = await FilePicker.platform.pickFiles(type: FileType.media);
+            final path = res?.files.single.path;
+            if (path != null) setSheet(() => mediaPath = path);
+          } catch (_) {}
+        }
 
-          return SafeArea(
+        return Container(
+          padding: EdgeInsets.fromLTRB(20, 12, 20, 20 + MediaQuery.of(sheetCtx).viewInsets.bottom),
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: gc.bgRaised,
+            border: Border.all(color: gc.border),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(t.newExercise,
-                      style: AppTheme.d(15, weight: FontWeight.w700, color: gc.text, letterSpacing: 2)),
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(color: gc.bgRaised2, borderRadius: BorderRadius.circular(2)),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Text(t.newExercise.toUpperCase(),
+                      style: AppTheme.d(14, weight: FontWeight.w600, color: gc.text, letterSpacing: 2),
+                      textAlign: TextAlign.center),
                   const SizedBox(height: 16),
                   TextField(
                     controller: nameCtrl,
@@ -748,9 +761,9 @@ void showCreateExerciseSheet(BuildContext context, {void Function(String id)? on
                 ],
               ),
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     ),
   );
 }

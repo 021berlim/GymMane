@@ -1,8 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../l10n/l10n.dart';
 import '../models/workout.dart';
@@ -11,6 +14,28 @@ import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/share_photo_sheet.dart';
 import '../widgets/ui_kit.dart';
+
+String _getWorkoutTitle(LoggedSession session) {
+  final sessionExIds = session.exercises.map((e) => e.id).toSet();
+  if (sessionExIds.isNotEmpty) {
+    for (final r in fit.routines) {
+      final rExIds = r.exerciseIds.toSet();
+      if (rExIds.isNotEmpty && sessionExIds.every((id) => rExIds.contains(id))) {
+        return r.name;
+      }
+    }
+  }
+
+  final translatedNames = session.exercises
+      .map((e) => t.catalogName(e.id, e.name))
+      .where((name) => name.isNotEmpty)
+      .toSet();
+
+  if (translatedNames.isNotEmpty) {
+    return translatedNames.take(3).join(', ');
+  }
+  return '';
+}
 
 class GalleryScreen extends StatefulWidget {
   const GalleryScreen({super.key});
@@ -86,9 +111,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao selecionar foto: $e')),
-        );
+        AppToast.showError(context, 'Erro ao selecionar foto: $e');
       }
     }
   }
@@ -97,22 +120,31 @@ class _GalleryScreenState extends State<GalleryScreen> {
     final gc = context.gc;
     showModalBottomSheet(
       context: context,
-      backgroundColor: gc.bgRaised,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.all(24),
+      backgroundColor: Colors.transparent,
+      builder: (_) => Container(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          color: gc.bgRaised,
+          border: Border.all(color: gc.border),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.warning_amber_rounded, size: 44, color: gc.accent),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(color: gc.bgRaised2, borderRadius: BorderRadius.circular(2)),
+            ),
+            const SizedBox(height: 18),
+            Icon(PhosphorIcons.warning(PhosphorIconsStyle.regular), size: 44, color: gc.accent),
             const SizedBox(height: 12),
             Text(
-              'Nenhum Treino Encontrado',
-              style: AppTheme.d(16, weight: FontWeight.w700, color: gc.text),
+              'NENHUM TREINO ENCONTRADO',
+              style: AppTheme.d(14, weight: FontWeight.w600, color: gc.text, letterSpacing: 2),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               'Para salvar fotos de progresso na galeria, é necessário ter pelo menos 1 treino concluído no seu histórico.',
               style: AppTheme.s(13, color: gc.textSecondary),
@@ -138,39 +170,44 @@ class _GalleryScreenState extends State<GalleryScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: gc.pageBg,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setSheetState) {
           return Container(
-            height: MediaQuery.of(context).size.height * 0.75,
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            height: MediaQuery.of(context).size.height * 0.78,
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              color: gc.bgRaised,
+              border: Border.all(color: gc.border),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            ),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Center(
                   child: Container(
-                    width: 36,
+                    width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: gc.border,
+                      color: gc.bgRaised2,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 18),
                 Text(
                   'VINCULAR FOTO AO TREINO',
-                  style: AppTheme.d(16, weight: FontWeight.w700, color: gc.text, letterSpacing: 1.5),
+                  style: AppTheme.d(14, weight: FontWeight.w600, color: gc.text, letterSpacing: 2),
+                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Selecione a qual treino do seu histórico esta foto pertence:',
-                  style: AppTheme.s(12, color: gc.textSecondary),
+                  style: AppTheme.s(13, color: gc.textSecondary),
+                  textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 18),
 
                 // Timing selector (Antes / Depois)
                 Row(
@@ -181,8 +218,8 @@ class _GalleryScreenState extends State<GalleryScreen> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           decoration: BoxDecoration(
-                            color: isBefore ? gc.accentSoft : gc.bgRaised,
-                            borderRadius: BorderRadius.circular(12),
+                            color: isBefore ? gc.accentSoft : gc.bgRaised2,
+                            borderRadius: BorderRadius.circular(14),
                             border: Border.all(color: isBefore ? gc.accent : gc.border),
                           ),
                           alignment: Alignment.center,
@@ -200,8 +237,8 @@ class _GalleryScreenState extends State<GalleryScreen> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           decoration: BoxDecoration(
-                            color: !isBefore ? gc.accentSoft : gc.bgRaised,
-                            borderRadius: BorderRadius.circular(12),
+                            color: !isBefore ? gc.accentSoft : gc.bgRaised2,
+                            borderRadius: BorderRadius.circular(14),
                             border: Border.all(color: !isBefore ? gc.accent : gc.border),
                           ),
                           alignment: Alignment.center,
@@ -229,7 +266,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
                     itemBuilder: (ctx, i) {
                       final s = sessions[i];
                       final isSelected = selectedSession == s;
-                      final exercisesSummary = s.exercises.map((e) => e.name).join(', ');
+                      final exercisesSummary = s.exercises.map((e) => t.catalogName(e.id, e.name)).join(', ');
 
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 8),
@@ -238,7 +275,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
                           child: Container(
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
-                              color: isSelected ? gc.accentSoft : gc.bgRaised,
+                              color: isSelected ? gc.accentSoft : gc.bgRaised2,
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(color: isSelected ? gc.accent : gc.border),
                             ),
@@ -254,7 +291,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        t.longDate(s.date),
+                                        t.fullDate(s.date),
                                         style: AppTheme.d(14, weight: FontWeight.w700, color: gc.text),
                                       ),
                                       const SizedBox(height: 2),
@@ -290,13 +327,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
                   onTap: () {
                     fit.attachPhotoToSession(selectedSession, base64Str, before: isBefore);
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Foto vinculada com sucesso!', style: AppTheme.s(13, color: Colors.white)),
-                        backgroundColor: gc.bgRaised,
-                        duration: const Duration(seconds: 2),
-                      ),
-                    );
+                    AppToast.showSuccess(context, 'Foto vinculada com sucesso!');
                   },
                 ),
               ],
@@ -311,35 +342,49 @@ class _GalleryScreenState extends State<GalleryScreen> {
     final gc = context.gc;
     showModalBottomSheet(
       context: context,
-      backgroundColor: gc.bgRaised,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      backgroundColor: Colors.transparent,
+      builder: (_) => Container(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          color: gc.bgRaised,
+          border: Border.all(color: gc.border),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 36,
+              width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: gc.border,
+                color: gc.bgRaised2,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
+            const SizedBox(height: 18),
+            Text(
+              'ADICIONAR FOTO DE PROGRESSO',
+              style: AppTheme.d(14, weight: FontWeight.w600, color: gc.text, letterSpacing: 2),
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: 16),
             ListTile(
-              leading: Icon(Icons.camera_alt, color: gc.accent),
-              title: Text(t.takePhoto, style: AppTheme.s(14, color: gc.text)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              tileColor: gc.bgRaised2,
+              leading: Icon(PhosphorIconsRegular.camera, color: gc.accent),
+              title: Text(t.takePhoto, style: AppTheme.s(14, weight: FontWeight.w600, color: gc.text)),
               onTap: () {
                 Navigator.pop(context);
                 _addNewPhoto(ImageSource.camera);
               },
             ),
+            const SizedBox(height: 8),
             ListTile(
-              leading: Icon(Icons.photo_library, color: gc.accent),
-              title: Text(t.chooseGallery, style: AppTheme.s(14, color: gc.text)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              tileColor: gc.bgRaised2,
+              leading: Icon(PhosphorIconsRegular.image, color: gc.accent),
+              title: Text(t.chooseGallery, style: AppTheme.s(14, weight: FontWeight.w600, color: gc.text)),
               onTap: () {
                 Navigator.pop(context);
                 _addNewPhoto(ImageSource.gallery);
@@ -393,19 +438,8 @@ class _GalleryScreenState extends State<GalleryScreen> {
                 Expanded(
                   child: photos.isEmpty
                       ? _buildEmptyState(gc)
-                      : GridView.builder(
-                          padding: const EdgeInsets.all(16),
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
-                            childAspectRatio: 0.8,
-                          ),
-                          itemCount: photos.length,
-                          itemBuilder: (context, index) {
-                            final item = photos[index];
-                            return _buildPhotoTile(gc, item);
-                          },
+                      : CustomScrollView(
+                          slivers: _buildDateGroupedSlivers(gc, photos),
                         ),
                 ),
               ],
@@ -456,60 +490,69 @@ class _GalleryScreenState extends State<GalleryScreen> {
     );
   }
 
-  Widget _buildPhotoTile(GymColors gc, _GalleryItem item) {
-    final imageWidget = _buildImageWidget(item.data);
+  List<Widget> _buildDateGroupedSlivers(GymColors gc, List<_GalleryItem> photos) {
+    // Group by date AND workout session so different workouts are kept in separate grids
+    final grouped = <String, List<_GalleryItem>>{};
+    for (final item in photos) {
+      final key = '${item.date.year}-${item.date.month}-${item.date.day}_${item.session.date.millisecondsSinceEpoch}';
+      grouped.putIfAbsent(key, () => []).add(item);
+    }
 
-    return GestureDetector(
-      onTap: () => _openPhotoDetail(context, gc, item),
-      child: Container(
-        decoration: BoxDecoration(
-          color: gc.bgRaised,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: gc.border),
-          boxShadow: const [
-            BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 4)),
-          ],
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Stack(
-          children: [
-            Positioned.fill(child: imageWidget),
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              height: 60,
-              child: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.transparent, Colors.black87],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
+    final slivers = <Widget>[];
+    for (final entry in grouped.entries) {
+      final firstItem = entry.value.first;
+      final dateLabel = t.fullDate(firstItem.date);
+      final workoutName = _getWorkoutTitle(firstItem.session);
+
+      slivers.add(
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 16, 14, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  dateLabel,
+                  style: AppTheme.d(13, weight: FontWeight.w600, color: gc.text),
                 ),
-              ),
-            ),
-            Positioned(
-              left: 8,
-              right: 8,
-              bottom: 8,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
+                if (workoutName.isNotEmpty)
                   Text(
-                    t.shortDate(item.date),
-                    style: AppTheme.d(12, weight: FontWeight.w700, color: Colors.white),
+                    workoutName,
+                    style: AppTheme.s(11, color: gc.textSecondary),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  Text(
-                    item.label,
-                    style: AppTheme.s(10, weight: FontWeight.w500, color: Colors.white70),
-                  ),
-                ],
-              ),
+              ],
             ),
-          ],
+          ),
         ),
+      );
+      slivers.add(
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 2),
+          sliver: SliverGrid(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              crossAxisSpacing: 2,
+              mainAxisSpacing: 2,
+            ),
+            delegate: SliverChildBuilderDelegate(
+              (context, index) => _buildPhotoTile(gc, entry.value[index], photos),
+              childCount: entry.value.length,
+            ),
+          ),
+        ),
+      );
+    }
+    return slivers;
+  }
+
+  Widget _buildPhotoTile(GymColors gc, _GalleryItem item, List<_GalleryItem> allPhotos) {
+    return GestureDetector(
+      onTap: () => _openPhotoDetail(context, gc, item, allPhotos),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(2),
+        child: _buildImageWidget(item.data),
       ),
     );
   }
@@ -535,90 +578,263 @@ class _GalleryScreenState extends State<GalleryScreen> {
     }
   }
 
-  void _openPhotoDetail(BuildContext context, GymColors gc, _GalleryItem item) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => Container(
-        height: MediaQuery.of(context).size.height * 0.88,
-        decoration: BoxDecoration(
-          color: gc.pageBg,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        ),
+  void _openPhotoDetail(BuildContext context, GymColors gc, _GalleryItem item, List<_GalleryItem> allPhotos) {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: true,
+        pageBuilder: (context, animation, secondaryAnimation) {
+          return _FullScreenPhotoViewer(
+            photos: allPhotos,
+            initialIndex: allPhotos.indexOf(item),
+            onDelete: (photo) {
+              fit.deleteSessionPhoto(photo.session, before: photo.isBefore);
+              Navigator.of(context).pop();
+            },
+            onShare: (photo) {
+              final durMins = photo.session.durationSec > 0 ? (photo.session.durationSec / 60).round() : 30;
+              showSharePhotoSheet(
+                context,
+                durationStr: '$durMins MIN',
+                prCount: 0,
+                volumeKg: photo.session.volume,
+                calories: (durMins * 5 + photo.session.volume * 0.02).round().clamp(20, 2000),
+                muscleGroupsStr: '',
+                initialImageBase64: photo.data,
+              );
+            },
+          );
+        },
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+      ),
+    );
+  }
+}
+
+class _FullScreenPhotoViewer extends StatefulWidget {
+  final List<_GalleryItem> photos;
+  final int initialIndex;
+  final void Function(_GalleryItem) onDelete;
+  final void Function(_GalleryItem) onShare;
+
+  const _FullScreenPhotoViewer({
+    required this.photos,
+    required this.initialIndex,
+    required this.onDelete,
+    required this.onShare,
+  });
+
+  @override
+  State<_FullScreenPhotoViewer> createState() => _FullScreenPhotoViewerState();
+}
+
+class _FullScreenPhotoViewerState extends State<_FullScreenPhotoViewer> {
+  late PageController _pageController;
+  late int _currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+    _pageController = PageController(initialPage: _currentIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  Widget _buildImage(String data) {
+    if (data.startsWith('/') || data.startsWith('file://')) {
+      final file = File(data.replaceFirst('file://', ''));
+      if (file.existsSync()) {
+        return Image.file(file, fit: BoxFit.contain);
+      }
+    }
+    try {
+      final bytes = base64Decode(data);
+      return Image.memory(bytes, fit: BoxFit.contain);
+    } catch (_) {
+      return const Center(child: Icon(Icons.broken_image, color: Colors.white38, size: 48));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final gc = context.gc;
+    final currentPhoto = widget.photos[_currentIndex];
+
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: SafeArea(
         child: Column(
           children: [
+            // Top bar
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    '${item.label} · ${t.shortDate(item.date)}',
-                    style: AppTheme.d(14, weight: FontWeight.w700, color: gc.text),
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Text(
+                          t.fullDate(currentPhoto.date),
+                          style: AppTheme.d(15, weight: FontWeight.w700, color: Colors.white),
+                          textAlign: TextAlign.center,
+                        ),
+                        if (_getWorkoutTitle(currentPhoto.session).isNotEmpty)
+                          Text(
+                            _getWorkoutTitle(currentPhoto.session),
+                            style: AppTheme.s(12, color: Colors.white70),
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                      ],
+                    ),
                   ),
                   IconButton(
-                    icon: Icon(Icons.close, color: gc.textSecondary),
-                    onPressed: () => Navigator.pop(context),
+                    icon: Icon(PhosphorIcons.downloadSimple(PhosphorIconsStyle.light), color: Colors.white),
+                    onPressed: () => _downloadImage(currentPhoto),
                   ),
                 ],
               ),
             ),
+
+            // Photo viewer with swipe and zoom
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: _buildImageWidget(item.data),
-                ),
+              child: PageView.builder(
+                controller: _pageController,
+                itemCount: widget.photos.length,
+                onPageChanged: (index) {
+                  setState(() => _currentIndex = index);
+                },
+                itemBuilder: (context, index) {
+                  return InteractiveViewer(
+                    minScale: 1.0,
+                    maxScale: 5.0,
+                    child: Center(
+                      child: _buildImage(widget.photos[index].data),
+                    ),
+                  );
+                },
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-              child: Column(
+
+            // Bottom action bar (Samsung/Xiaomi style)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+              decoration: const BoxDecoration(
+                border: Border(top: BorderSide(color: Colors.white12)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  PrimaryButton(
-                    label: 'COMPARTILHAR FOTO',
-                    onTap: () {
-                      Navigator.pop(context);
-                      final durMins = item.session.durationSec > 0 ? (item.session.durationSec / 60).round() : 30;
-                      showSharePhotoSheet(
-                        context,
-                        durationStr: '$durMins MIN',
-                        prCount: 0,
-                        volumeKg: item.session.volume,
-                        calories: (durMins * 5 + item.session.volume * 0.02).round().clamp(20, 2000),
-                        muscleGroupsStr: 'Treino ${t.shortDate(item.date)}',
-                      );
-                    },
+                  _bottomAction(
+                    PhosphorIcons.export(PhosphorIconsStyle.light),
+                    () => widget.onShare(currentPhoto),
                   ),
-                  const SizedBox(height: 10),
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      fit.deleteSessionPhoto(item.session, before: item.isBefore);
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Foto removida da galeria.', style: AppTheme.s(13, color: Colors.white)),
-                          backgroundColor: gc.bgRaised,
-                          duration: const Duration(seconds: 2),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.delete_outline, size: 18, color: Colors.redAccent),
-                    label: Text('Excluir Foto', style: AppTheme.s(13, weight: FontWeight.w600, color: Colors.redAccent)),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Colors.redAccent),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      minimumSize: const Size(double.infinity, 48),
-                    ),
+                  _bottomAction(
+                    PhosphorIcons.trash(PhosphorIconsStyle.light),
+                    () => _confirmDelete(gc, currentPhoto),
+                    color: Colors.redAccent,
                   ),
                 ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Future<Uint8List> _getPhotoBytes(String data) async {
+    if (data.startsWith('file://')) {
+      final path = data.replaceFirst('file://', '');
+      final f = File(path);
+      if (await f.exists()) return await f.readAsBytes();
+    } else if (data.startsWith('/')) {
+      final f = File(data);
+      if (await f.exists()) return await f.readAsBytes();
+    }
+    return base64Decode(data);
+  }
+
+  Future<void> _downloadImage(_GalleryItem photo) async {
+    try {
+      final bytes = await _getPhotoBytes(photo.data);
+
+      final dir = Directory('/storage/emulated/0/Pictures/FitIron');
+      if (!await dir.exists()) {
+        await dir.create(recursive: true);
+      }
+      final file = File('${dir.path}/FitIron_${DateTime.now().millisecondsSinceEpoch}.png');
+      await file.writeAsBytes(bytes, flush: true);
+
+      if (mounted) {
+        AppToast.showDownload(context, 'Foto salva em Pictures/FitIron');
+      }
+    } catch (e) {
+      if (mounted) {
+        try {
+          final bytes = await _getPhotoBytes(photo.data);
+
+          final tempDir = await getApplicationDocumentsDirectory();
+          final file = File('${tempDir.path}/FitIron_${DateTime.now().millisecondsSinceEpoch}.png');
+          await file.writeAsBytes(bytes, flush: true);
+
+          if (mounted) {
+            AppToast.showDownload(context, 'Foto salva em ${file.path}');
+          }
+        } catch (e2) {
+          if (mounted) {
+            AppToast.showError(context, 'Erro ao salvar foto: $e2');
+          }
+        }
+      }
+    }
+  }
+
+  Widget _bottomAction(IconData icon, VoidCallback onTap, {Color color = Colors.white}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: Icon(icon, color: color, size: 26),
+      ),
+    );
+  }
+
+  void _confirmDelete(GymColors gc, _GalleryItem photo) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: gc.bgRaised,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text('Excluir Foto?', style: AppTheme.d(16, weight: FontWeight.w700, color: gc.text)),
+        content: Text(
+          'Esta ação não pode ser desfeita.',
+          style: AppTheme.s(13, color: gc.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text('Cancelar', style: AppTheme.s(13, weight: FontWeight.w600, color: gc.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              widget.onDelete(photo);
+            },
+            child: Text('Excluir', style: AppTheme.s(13, weight: FontWeight.w600, color: Colors.redAccent)),
+          ),
+        ],
       ),
     );
   }

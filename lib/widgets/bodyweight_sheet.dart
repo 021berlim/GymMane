@@ -67,6 +67,7 @@ class _BodyweightSheetState extends State<BodyweightSheet> {
 
     return Container(
       padding: EdgeInsets.fromLTRB(20, 12, 20, 20 + MediaQuery.of(context).viewInsets.bottom),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: gc.bgRaised,
         border: Border.all(color: gc.border),

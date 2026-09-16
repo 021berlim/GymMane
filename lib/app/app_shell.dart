@@ -320,9 +320,6 @@ class _NavBar extends StatelessWidget {
             colors: [gc.accent, gc.brass],
           ),
           shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(color: gc.accent.withValues(alpha: 0.45), blurRadius: 18, offset: const Offset(0, 6)),
-          ],
         ),
         child: Icon(PhosphorIconsFill.play, size: 24, color: gc.bg),
       ),
