@@ -356,6 +356,8 @@ void main() {
       'O QUE MUDOU NESTA VERSÃO',
       'Melhorias de desempenho, correções de bugs e otimizações gerais do FIT//IRON.',
       'Nenhum Treino Encontrado',
+      'NENHUM TREINO ENCONTRADO',
+      'ADICIONAR FOTO DE PROGRESSO',
       'Para salvar fotos de progresso na galeria, é necessário ter pelo menos 1 treino concluído no seu histórico.',
       'ENTENDI',
       'VINCULAR FOTO AO TREINO',
@@ -365,6 +367,10 @@ void main() {
       'Foto vinculada com sucesso!',
       'Foto removida da galeria.',
       'Excluir Foto',
+      'Excluir Foto?',
+      'Esta ação não pode ser desfeita.',
+      'Cancelar',
+      'Excluir',
     };
 
     final offenders = <String>[];
