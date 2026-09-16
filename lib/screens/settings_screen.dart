@@ -554,6 +554,42 @@ class SettingsScreen extends StatelessWidget {
 
 
 
+  void _showLoadingSnack(BuildContext context, GymColors gc, String message) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: gc.bgRaised,
+        margin: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: gc.accent),
+        ),
+        content: Row(
+          children: [
+            SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.5,
+                valueColor: AlwaysStoppedAnimation<Color>(gc.accent),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                message,
+                style: AppTheme.s(13, weight: FontWeight.w600, color: gc.text),
+              ),
+            ),
+          ],
+        ),
+        duration: const Duration(minutes: 1),
+      ),
+    );
+  }
+
   void _showStyledSnack(BuildContext context, GymColors gc, String message, {bool isError = false}) {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -582,27 +618,32 @@ class SettingsScreen extends StatelessWidget {
             ),
           ],
         ),
-        duration: const Duration(seconds: 3),
+        duration: const Duration(seconds: 4),
       ),
     );
   }
 
   Future<void> _manualCheckForUpdate(BuildContext context) async {
     final gc = context.gc;
-    _showStyledSnack(context, gc, 'Verificando atualizações...');
+    _showLoadingSnack(context, gc, 'Verificando atualizações...');
 
     try {
-      final info = await UpdateService.checkForUpdate();
+      final result = await UpdateService.checkForUpdate();
       if (!context.mounted) return;
-      if (info != null) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        showUpdateDialog(context, info);
-      } else {
-        _showStyledSnack(context, gc, 'Você já está com a versão mais recente instalada.');
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+      switch (result) {
+        case UpdateAvailable(:final info):
+          showUpdateDialog(context, info);
+        case UpToDate():
+          _showStyledSnack(context, gc, 'Você já está na versão mais recente');
+        case CheckFailed(:final reason):
+          _showStyledSnack(context, gc, 'Não foi possível verificar: $reason', isError: true);
       }
-    } catch (_) {
+    } catch (e) {
       if (!context.mounted) return;
-      _showStyledSnack(context, gc, 'Não foi possível verificar atualizações no momento.', isError: true);
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      _showStyledSnack(context, gc, 'Não foi possível verificar: $e', isError: true);
     }
   }
 

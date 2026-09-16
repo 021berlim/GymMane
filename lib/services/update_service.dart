@@ -1,6 +1,9 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
@@ -21,6 +24,26 @@ class UpdateInfo {
     required this.apkUrl,
     required this.isForced,
   });
+}
+
+/// Typed result of an update check operation.
+sealed class UpdateCheckResult {
+  const UpdateCheckResult();
+}
+
+class UpdateAvailable extends UpdateCheckResult {
+  final UpdateInfo info;
+  const UpdateAvailable(this.info);
+}
+
+class UpToDate extends UpdateCheckResult {
+  const UpToDate();
+}
+
+class CheckFailed extends UpdateCheckResult {
+  final String reason;
+  final String? debugDetail;
+  const CheckFailed(this.reason, [this.debugDetail]);
 }
 
 /// Checks GitHub Releases for a newer APK and can download + install it.
@@ -124,20 +147,92 @@ class UpdateService {
     } catch (_) {}
   }
 
-  /// Returns info about a newer release, or `null` when the app is up-to-date,
-  /// offline, rate-limited, or any other error occurs (fail-silent).
-  static Future<UpdateInfo?> checkForUpdate() async {
-    try {
-      Map<String, dynamic>? data = await _fetchLatestReleaseData();
-      if (data == null) return null;
+  /// Checks GitHub Releases for a newer release and returns an [UpdateCheckResult].
+  static Future<UpdateCheckResult> checkForUpdate() async {
+    const headers = {
+      'Accept': 'application/vnd.github.v3+json',
+      'User-Agent':
+          'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36 FitIron-App/1.0',
+    };
 
+    http.Response? primaryResponse;
+    Object? primaryException;
+
+    try {
+      final url = Uri.parse('https://api.github.com/repos/$_owner/$_repo/releases/latest');
+      primaryResponse = await http.get(url, headers: headers).timeout(const Duration(seconds: 8));
+      if (primaryResponse.statusCode == 200) {
+        final data = jsonDecode(primaryResponse.body) as Map<String, dynamic>;
+        return await _parseReleaseData(data);
+      }
+    } on TimeoutException catch (e) {
+      primaryException = e;
+      return _logAndFail('Tempo esgotado ao conectar ao GitHub', e.toString());
+    } on SocketException catch (e) {
+      primaryException = e;
+      return _logAndFail('Sem conexão ou domínio bloqueado', e.toString());
+    } on http.ClientException catch (e) {
+      primaryException = e;
+      return _logAndFail('Sem conexão ou domínio bloqueado', e.toString());
+    } on FormatException catch (e) {
+      return _logAndFail('Resposta inesperada do GitHub', e.toString());
+    } catch (e) {
+      primaryException = e;
+    }
+
+    if (primaryResponse != null && primaryResponse.statusCode == 403) {
+      final bodyLower = primaryResponse.body.toLowerCase();
+      if (bodyLower.contains('rate limit') || primaryResponse.headers['x-ratelimit-remaining'] == '0') {
+        return _logAndFail('Limite de requisições do GitHub atingido, tente mais tarde', 'status 403');
+      }
+    }
+
+    // Try secondary fallback endpoint: releases list
+    try {
+      final url = Uri.parse('https://api.github.com/repos/$_owner/$_repo/releases');
+      final fallbackResponse = await http.get(url, headers: headers).timeout(const Duration(seconds: 8));
+      if (fallbackResponse.statusCode == 200) {
+        final list = jsonDecode(fallbackResponse.body) as List;
+        if (list.isNotEmpty) {
+          return await _parseReleaseData(list.first as Map<String, dynamic>);
+        }
+      }
+    } catch (_) {}
+
+    if (primaryResponse != null) {
+      final shortBody = primaryResponse.body.length > 100
+          ? primaryResponse.body.substring(0, 100)
+          : primaryResponse.body;
+      return _logAndFail('GitHub respondeu ${primaryResponse.statusCode}', shortBody);
+    }
+
+    if (primaryException != null) {
+      return _logAndFail('Erro ao conectar ao GitHub', primaryException.toString());
+    }
+
+    return _logAndFail('GitHub não respondeu', null);
+  }
+
+  static CheckFailed _logAndFail(String reason, String? debugDetail) {
+    final msg = debugDetail != null && debugDetail.isNotEmpty
+        ? '[UpdateService] $reason ($debugDetail)'
+        : '[UpdateService] $reason';
+    debugPrint(msg);
+    log(msg, name: 'UpdateService');
+    return CheckFailed(reason, debugDetail);
+  }
+
+  static Future<UpdateCheckResult> _parseReleaseData(Map<String, dynamic> data) async {
+    try {
       final tagName = data['tag_name'] as String? ?? '';
       final remoteVersion = tagName.replaceFirst(RegExp(r'^v'), '');
 
       final info = await PackageInfo.fromPlatform();
       final currentVersion = '${info.version}+${info.buildNumber}';
 
-      if (!_isNewer(remoteVersion, currentVersion)) return null;
+      if (!_isNewer(remoteVersion, currentVersion)) {
+        return const UpToDate();
+      }
 
       final abi = await _deviceAbi();
       final assets = (data['assets'] as List?) ?? [];
@@ -151,51 +246,25 @@ class UpdateService {
         }
         apkUrl ??= asset['browser_download_url'] as String?;
       }
-      if (apkUrl == null) return null;
+      if (apkUrl == null) {
+        return _logAndFail('Nenhum APK compatível encontrado no release', 'tag $tagName');
+      }
 
       final title = (data['name'] as String?) ?? '';
       final isForced = title.startsWith('[FORCE]');
       final changelog = (data['body'] as String?) ?? '';
 
-      return UpdateInfo(
-        version: remoteVersion,
-        changelog: changelog,
-        apkUrl: apkUrl,
-        isForced: isForced,
+      return UpdateAvailable(
+        UpdateInfo(
+          version: remoteVersion,
+          changelog: changelog,
+          apkUrl: apkUrl,
+          isForced: isForced,
+        ),
       );
-    } catch (_) {
-      return null;
+    } catch (e) {
+      return _logAndFail('Resposta inesperada do GitHub', e.toString());
     }
-  }
-
-  static Future<Map<String, dynamic>?> _fetchLatestReleaseData() async {
-    const headers = {
-      'Accept': 'application/vnd.github.v3+json',
-      'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36 FitIron-App/1.0',
-    };
-
-    // Primary endpoint: latest release
-    try {
-      final url = Uri.parse('https://api.github.com/repos/$_owner/$_repo/releases/latest');
-      final response = await http.get(url, headers: headers).timeout(const Duration(seconds: 8));
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body) as Map<String, dynamic>;
-      }
-    } catch (_) {}
-
-    // Secondary fallback endpoint: releases list
-    try {
-      final url = Uri.parse('https://api.github.com/repos/$_owner/$_repo/releases');
-      final response = await http.get(url, headers: headers).timeout(const Duration(seconds: 8));
-      if (response.statusCode == 200) {
-        final list = jsonDecode(response.body) as List;
-        if (list.isNotEmpty) {
-          return list.first as Map<String, dynamic>;
-        }
-      }
-    } catch (_) {}
-
-    return null;
   }
 
   /// Downloads the APK and triggers the Android package installer.
@@ -208,7 +277,8 @@ class UpdateService {
       _showProgressNotification(info.version, 0);
 
       final request = http.Request('GET', Uri.parse(info.apkUrl));
-      request.headers['User-Agent'] = 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36 FitIron-App/1.0';
+      request.headers['User-Agent'] =
+          'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36 FitIron-App/1.0';
       final streamedResponse = await request.send();
 
       final contentLength = streamedResponse.contentLength ?? 0;

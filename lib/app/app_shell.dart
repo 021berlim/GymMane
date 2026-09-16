@@ -47,9 +47,9 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     if (!Platform.isAndroid) return;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       try {
-        final info = await UpdateService.checkForUpdate();
-        if (info != null && mounted) {
-          showUpdateDialog(context, info);
+        final result = await UpdateService.checkForUpdate();
+        if (result is UpdateAvailable && mounted) {
+          showUpdateDialog(context, result.info);
         }
       } catch (_) {
         // Fail silently — never block the app.
