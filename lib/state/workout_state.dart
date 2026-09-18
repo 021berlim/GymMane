@@ -104,6 +104,26 @@ mixin WorkoutState on FitCore, SettingsState, LibraryState, PlacesState, StatsSt
 
   bool isPicked(String id) => sessionPicks.contains(id);
 
+  void clearPicks() {
+    sessionPicks.clear();
+    notifyListeners();
+  }
+
+  void resetDefaultPicks() {
+    sessionPicks
+      ..clear()
+      ..addAll(_defaultPicks(selectedMuscles).map((e) => e.id));
+    notifyListeners();
+  }
+
+  void toggleResetPicks() {
+    if (sessionPicks.isNotEmpty) {
+      clearPicks();
+    } else {
+      resetDefaultPicks();
+    }
+  }
+
   void trainBack() {
     trainStep = 'select';
     notifyListeners();

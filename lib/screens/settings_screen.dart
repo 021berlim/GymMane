@@ -867,6 +867,7 @@ class SettingsScreen extends StatelessWidget {
   void _editLanguage(BuildContext context) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => _LanguageSheet(),
     );
@@ -967,21 +968,23 @@ class _LanguageSheet extends StatelessWidget {
         color: gc.bgRaised,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const SheetHandle(),
-          const SizedBox(height: 18),
-          Text(t.languageLabel,
-              textAlign: TextAlign.center,
-              style: AppTheme.f(17, weight: FontWeight.w700, color: gc.text)),
-          const SizedBox(height: 18),
-          for (final code in appLanguages) ...[
-            _option(context, code),
-            const SizedBox(height: 10),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SheetHandle(),
+            const SizedBox(height: 18),
+            Text(t.languageLabel,
+                textAlign: TextAlign.center,
+                style: AppTheme.f(17, weight: FontWeight.w700, color: gc.text)),
+            const SizedBox(height: 18),
+            for (final code in appLanguages) ...[
+              _option(context, code),
+              const SizedBox(height: 10),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
