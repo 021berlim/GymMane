@@ -560,6 +560,7 @@ class FitState extends FitCore
   int applyTemplate(ProgramTemplate template) {
     final planWasEmpty = weeklyPlan.isEmpty;
     var made = 0;
+    final sameDay = <String, String>{};
     for (final day in template.days) {
       final ids = <String, int>{};
       for (final (name, sets) in day.exercises) {
@@ -568,7 +569,14 @@ class FitState extends FitCore
         ids[ex.id] = sets;
       }
       if (ids.isEmpty) continue;
+      final key = '${day.name}|${ids.entries.map((e) => '${e.key}:${e.value}').join(',')}';
+      final twin = sameDay[key];
+      if (twin != null) {
+        if (planWasEmpty && day.weekday != null) weeklyPlan[day.weekday!] = twin;
+        continue;
+      }
       final id = createRoutine(day.name);
+      sameDay[key] = id;
       setRoutineGroup(id, template.name);
       for (final entry in ids.entries) {
         toggleRoutineExercise(id, entry.key);

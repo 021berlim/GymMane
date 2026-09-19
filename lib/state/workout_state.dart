@@ -993,8 +993,10 @@ mixin WorkoutState on FitCore, SettingsState, LibraryState, PlacesState, StatsSt
       final entry = LoggedSession(s.loggedAt ?? DateTime.now(), s.summaryDuration ?? 0, logged);
       sessions.add(entry);
       sessions.sort((a, b) => a.date.compareTo(b.date));
+      _filed = entry;
       _computeSummaryHighlights(entry);
     } else {
+      _filed = null;
       summaryPrs = 0;
       summaryVsLast = null;
     }
@@ -1059,6 +1061,28 @@ mixin WorkoutState on FitCore, SettingsState, LibraryState, PlacesState, StatsSt
     summaryVsLast = previous?.volume;
   }
 
+  LoggedSession? _filed;
+
+  void continueSession() {
+    final s = session;
+    if (s == null || !s.complete) return;
+    final filed = _filed;
+    if (filed != null) sessions.remove(filed);
+    _filed = null;
+    _elapsedBefore = s.summaryDuration ?? _elapsedBefore;
+    s
+      ..complete = false
+      ..summaryVolume = null
+      ..summarySets = null
+      ..summaryDuration = null;
+    sessionPaused = false;
+    _startTicking();
+    persistNow();
+    _refreshWidgets();
+    syncTrainReminder();
+    notifyListeners();
+  }
+
   void resumeLoggedSession(LoggedSession ls) {
     if (session != null && !session!.complete) return;
     sessions.remove(ls);
@@ -1106,6 +1130,7 @@ mixin WorkoutState on FitCore, SettingsState, LibraryState, PlacesState, StatsSt
     sessionPaused = false;
     sessionLocked = false;
     session = null;
+    _filed = null;
     selectedMuscles.clear();
     sessionPicks.clear();
     pickSeed.clear();

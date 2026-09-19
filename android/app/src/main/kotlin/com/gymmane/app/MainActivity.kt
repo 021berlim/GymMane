@@ -11,6 +11,9 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import android.provider.MediaStore
+import android.view.InputDevice
+import android.view.MotionEvent
+import android.view.ViewConfiguration
 import android.view.WindowManager
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -20,6 +23,7 @@ import java.io.FileOutputStream
 
 class MainActivity : FlutterActivity() {
     private var incomingChannel: MethodChannel? = null
+    private var rotaryChannel: MethodChannel? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -63,18 +67,28 @@ class MainActivity : FlutterActivity() {
         }
 
         MethodChannel(messenger, "gymmane/screen").setMethodCallHandler { call, result ->
-            if (call.method != "keepOn") {
-                result.notImplemented()
-                return@setMethodCallHandler
-            }
             val on = call.argument<Boolean>("on") ?: false
-            if (on) {
-                window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-            } else {
-                window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            when (call.method) {
+                "keepOn" -> {
+                    if (on) {
+                        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                    } else {
+                        window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                    }
+                    result.success(null)
+                }
+                "dim" -> {
+                    val params = window.attributes
+                    params.screenBrightness =
+                        if (on) 0.02f else WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
+                    window.attributes = params
+                    result.success(null)
+                }
+                else -> result.notImplemented()
             }
-            result.success(null)
         }
+
+        rotaryChannel = MethodChannel(messenger, "gymmane/rotary")
 
         val live = MethodChannel(messenger, "gymmane/live")
         live.setMethodCallHandler { call, result ->
@@ -102,7 +116,25 @@ class MainActivity : FlutterActivity() {
         }
     }
 
+    override fun dispatchGenericMotionEvent(event: MotionEvent): Boolean {
+        val channel = rotaryChannel
+        if (channel != null &&
+            event.action == MotionEvent.ACTION_SCROLL &&
+            event.isFromSource(InputDevice.SOURCE_ROTARY_ENCODER)
+        ) {
+            val factor = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                ViewConfiguration.get(this).scaledVerticalScrollFactor
+            } else {
+                64f
+            }
+            channel.invokeMethod("scroll", (-event.getAxisValue(MotionEvent.AXIS_SCROLL) * factor).toDouble())
+            return true
+        }
+        return super.dispatchGenericMotionEvent(event)
+    }
+
     override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
+        rotaryChannel = null
         LiveNotifier.dart = null
         if (isFinishing) LiveNotifier.cancel(this)
         super.cleanUpFlutterEngine(flutterEngine)

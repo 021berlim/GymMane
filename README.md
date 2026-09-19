@@ -117,13 +117,12 @@ Tap the muscles you want to train, log your sets and watch your numbers go up.
 
 - **500+ exercises** with animations and step-by-step instructions
 - Filters by muscle, equipment and level, and **your own exercises**
-  with your own photo, GIF or video
+- Swap the art of any exercise for **your own photo, GIF or video**
 - **Places**: say what kit you have and only get offered what fits
 - A **training journal** on a calendar, with photos and video
 - **Six calculators**: 1RM, plates, BMI, calories and macros, body fat,
   warm-up
 - **Five widgets**: today, this week, activity, stats and muscle map
-- A **Wear OS app** that works on its own, no phone needed
 
 </td>
 <td width="50%" valign="top">
@@ -154,8 +153,8 @@ take the `arm64-v8a` APK if you're not sure which one you need.
 | Platform | Status |
 |---|---|
 | Android 7.0+ | Supported |
-| Wear OS 3+ | Supported, in the same APK |
-| iOS 15+ | Beta, unsigned IPA from [Actions](https://github.com/InlitX/GymMane/actions/workflows/build-ios.yml) |
+| Wear OS 3+ | In progress |
+| iOS 15+ | In progress |
 | Desktop | Planned |
 
 ## Privacy
