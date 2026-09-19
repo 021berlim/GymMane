@@ -550,6 +550,7 @@ const Map<String, String> kExerciseNameEs = {
   'outdoor-walk': 'Caminar',
   'outdoor-hike': 'Senderismo',
   'swim': 'Natación',
+  'leg-extension': 'Extensión de cuádriceps en máquina',
 };
 
 const Map<String, List<String>> kExerciseStepsEs = {
@@ -4373,5 +4374,12 @@ const Map<String, List<String>> kExerciseStepsEs = {
     'Estira el brazo en cada brazada y empuja el agua hacia atrás hasta la cadera.',
     'Respira de lado al ritmo de las brazadas.',
     'Apunta la distancia total y el tiempo que has nadado.',
+  ],
+  'leg-extension': [
+    'Ajusta el respaldo para que el eje de la máquina quede a la altura del lateral de la rodilla.',
+    'Agarra fuerte las asas laterales, pégate al asiento y aprieta el core para fijar la cadera.',
+    'Suelta el aire mientras estiras las piernas hacia arriba en un movimiento suave y controlado.',
+    'Aguanta la extensión completa 1-2 segundos arriba.',
+    'Coge aire mientras bajas el peso despacio a la posición inicial, en 2-3 segundos.',
   ],
 };

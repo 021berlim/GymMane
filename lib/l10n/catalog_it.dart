@@ -537,6 +537,7 @@ const Map<String, String> kExerciseNameIt = {
   'outdoor-walk': 'Camminata',
   'outdoor-hike': 'Escursionismo',
   'swim': 'Nuoto',
+  'leg-extension': 'Leg extension alla macchina',
 };
 
 const Map<String, List<String>> kExerciseStepsIt = {
@@ -4262,5 +4263,12 @@ const Map<String, List<String>> kExerciseStepsIt = {
     'Allunga il braccio a ogni bracciata e spingi l\'acqua indietro oltre il bacino.',
     'Respira di lato a ritmo con le bracciate.',
     'Segna la distanza totale e il tempo passato a nuotare.',
+  ],
+  'leg-extension': [
+    "Regola lo schienale in modo che l'asse della macchina sia allineato con il lato del ginocchio.",
+    'Afferra bene le maniglie laterali, siediti a fondo e attiva il core per bloccare il bacino.',
+    "Espira mentre distendi le gambe verso l'alto con un movimento fluido e controllato.",
+    'Mantieni la posizione di massima estensione per 1-2 secondi.',
+    'Inspira mentre riporti lentamente il peso alla posizione iniziale in 2-3 secondi.',
   ],
 };

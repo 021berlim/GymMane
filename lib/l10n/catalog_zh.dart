@@ -550,6 +550,7 @@ const Map<String, String> kExerciseNameZh = {
   'outdoor-walk': '步行',
   'outdoor-hike': '徒步',
   'swim': '游泳',
+  'leg-extension': '器械腿屈伸',
 };
 
 const Map<String, List<String>> kExerciseStepsZh = {
@@ -4373,5 +4374,12 @@ const Map<String, List<String>> kExerciseStepsZh = {
     '每一划尽量向前伸，把水向后推过髋部。',
     '配合划水节奏侧身换气。',
     '记录总距离和游泳时长。',
+  ],
+  'leg-extension': [
+    '调整靠背，使器械的转轴与膝关节外侧对齐。',
+    '双手紧握两侧把手，坐稳座椅，收紧核心固定髋部和骨盆。',
+    '呼气，股四头肌发力，平稳可控地向上伸直双腿。',
+    '在完全伸直的顶峰位置停留1-2秒。',
+    '吸气，用2-3秒缓慢将重量放回起始位置。',
   ],
 };
