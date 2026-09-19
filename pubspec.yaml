@@ -1,7 +1,7 @@
 name: gymmane
-description: "GymMane — an offline, ad-free gym log for Android."
+description: "GymMane — an offline, ad-free gym log for Android and iOS."
 publish_to: 'none'
-version: 1.2.0+3
+version: 1.3.0+4
 
 environment:
   sdk: ^3.11.5
@@ -38,7 +38,8 @@ dev_dependencies:
 
 flutter_launcher_icons:
   android: true
-  ios: false
+  ios: true
+  remove_alpha_ios: true
   image_path: "assets/icon/ic_1024.png"
   adaptive_icon_background: "#0C0B0A"
   adaptive_icon_foreground: "assets/icon/ic_fg_1024.png"
@@ -56,45 +57,26 @@ flutter:
 
   shaders:
     - assets/shaders/medal.frag
+    - assets/shaders/edge_fade.frag
 
   fonts:
-    - family: Oswald
+    - family: Nunito
       fonts:
-        - asset: assets/fonts/Oswald-500.ttf
-          weight: 500
-        - asset: assets/fonts/Oswald-600.ttf
-          weight: 600
-        - asset: assets/fonts/Oswald-700.ttf
-          weight: 700
-    - family: IBM Plex Sans
-      fonts:
-        - asset: assets/fonts/IBMPlexSans-400.ttf
+        - asset: assets/fonts/Nunito-Regular.ttf
           weight: 400
-        - asset: assets/fonts/IBMPlexSans-500.ttf
-          weight: 500
-        - asset: assets/fonts/IBMPlexSans-600.ttf
-          weight: 600
-        - asset: assets/fonts/IBMPlexSans-700.ttf
-          weight: 700
-    - family: Figtree
-      fonts:
-        - asset: assets/fonts/Figtree-Regular.ttf
+        - asset: assets/fonts/Nunito-Italic.ttf
           weight: 400
-        - asset: assets/fonts/Figtree-Medium.ttf
+          style: italic
+        - asset: assets/fonts/Nunito-Medium.ttf
           weight: 500
-        - asset: assets/fonts/Figtree-SemiBold.ttf
+        - asset: assets/fonts/Nunito-SemiBold.ttf
           weight: 600
-        - asset: assets/fonts/Figtree-Bold.ttf
-          weight: 700
-        - asset: assets/fonts/Figtree-ExtraBold.ttf
-          weight: 800
-    - family: Barlow
-      fonts:
-        - asset: assets/fonts/BarlowSemiCondensed-Medium.ttf
-          weight: 500
-        - asset: assets/fonts/BarlowSemiCondensed-SemiBold.ttf
+        - asset: assets/fonts/Nunito-SemiBoldItalic.ttf
           weight: 600
-        - asset: assets/fonts/BarlowSemiCondensed-Bold.ttf
+          style: italic
+        - asset: assets/fonts/Nunito-Bold.ttf
           weight: 700
-        - asset: assets/fonts/BarlowSemiCondensed-ExtraBold.ttf
+        - asset: assets/fonts/Nunito-ExtraBold.ttf
           weight: 800
+        - asset: assets/fonts/Nunito-Black.ttf
+          weight: 900

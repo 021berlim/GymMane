@@ -8,6 +8,7 @@ Tuyo del todo. Sin cuenta, sin anuncios, sin suscripción — y sin el permiso I
 • Repeticiones, peso y un temporizador de descanso con tu propio sonido de alarma
 • Tipos de serie — calentamiento, efectiva, drop set, al fallo — y los discos por lado calculados mientras cargas la barra
 • La sesión en curso sobrevive a un reinicio — sigues donde lo dejaste
+• Una app para Wear OS que funciona sola, sin el móvil
 • Rutinas que puedes reordenar y programar por día de la semana
 • Sitios — di qué material tienes en casa, en el gimnasio o en el parque y solo te ofrece lo que puedes hacer ahí
 
@@ -27,13 +28,13 @@ Tuyo del todo. Sin cuenta, sin anuncios, sin suscripción — y sin el permiso I
 • Cambia el dibujo de cualquier ejercicio por tu foto, GIF o vídeo
 • Un diario de entrenamiento en un calendario — notas marcadas como nota, plan, logro o molestia, con fotos y vídeo
 • Seis calculadoras — 1RM, discos, IMC, calorías y macros, grasa corporal, calentamiento
-• Cuatro widgets de pantalla de inicio — actividad, estadísticas, mapa muscular y hoy
+• Cinco widgets de pantalla de inicio — hoy, esta semana, actividad, estadísticas y mapa muscular
 
 💾 TUS DATOS
 • Exporta a CSV o a una copia completa en ZIP — tus datos y la media que hayas subido — y vuelve a importarla
-• Importa tu histórico de Hevy, Strong o FitNotes — entrenamientos y peso corporal
+• Importa tu histórico de Hevy, Strong, Lyfta, FitNotes u openGym — entrenamientos y peso corporal
 • Borra todo de un toque
-• Temas claro y oscuro, kg o lb, y seis idiomas
+• Temas claro y oscuro, kg o lb, y 16 idiomas
 
 🔒 PRIVACIDAD
 GymMane no lleva analítica, ni SDK de publicidad, ni código de red. Nunca pide el permiso INTERNET, así que no hay forma de que tus datos salgan del móvil. Lo único que sale fuera son los enlaces que tocas tú.

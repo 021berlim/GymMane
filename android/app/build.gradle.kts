@@ -5,7 +5,6 @@ import com.android.build.gradle.internal.api.ApkVariantOutputImpl
 plugins {
     id("com.android.application")
     id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
@@ -23,7 +22,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-        // Lo exige flutter_local_notifications (usa java.time en API < 26).
         isCoreLibraryDesugaringEnabled = true
     }
 
@@ -39,15 +37,11 @@ android {
         versionName = flutter.versionName
     }
 
-    // F-Droid: fuera el bloque de "Dependency metadata" de Google, que va firmado
-    // y rompe la compilación reproducible.
     dependenciesInfo {
         includeInApk = false
         includeInBundle = false
     }
 
-    // key.properties no está en el repo: en local se genera a mano y en CI lo
-    // escribe el workflow desde los secrets. Sin él se firma con la debug key.
     if (keystorePropertiesFile.exists()) {
         signingConfigs {
             create("release") {
@@ -70,7 +64,6 @@ android {
     }
 }
 
-// Un versionCode por ABI, el mismo esquema que el VercodeOperation de F-Droid.
 val abiCodes = mapOf("armeabi-v7a" to 1, "arm64-v8a" to 2, "x86_64" to 3)
 android.applicationVariants.configureEach {
     val variant = this
