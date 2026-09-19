@@ -116,14 +116,13 @@ Toca los músculos que quieres entrenar, apunta tus series y mira cómo suben tu
 ### Ejercicios y herramientas
 
 - **Más de 500 ejercicios** con animación e instrucciones paso a paso
-- Filtros por músculo, material y nivel, y **tus propios ejercicios** con tu
-  foto, GIF o vídeo
+- Filtros por músculo, material y nivel, y **tus propios ejercicios**
+- Cambia el dibujo de cualquier ejercicio por **tu foto, GIF o vídeo**
 - **Sitios**: dile qué material tienes y solo te ofrece lo que encaja
 - Un **diario de entreno** en un calendario, con fotos y vídeo
 - **Seis calculadoras**: 1RM, discos, IMC, calorías y macros, grasa corporal
   y calentamiento
 - **Cinco widgets**: hoy, esta semana, actividad, estadísticas y mapa muscular
-- Una **app para Wear OS** que funciona sola, sin el móvil
 
 </td>
 <td width="50%" valign="top">
@@ -154,8 +153,8 @@ sabes qué APK elegir, coge el `arm64-v8a`.
 | Plataforma | Estado |
 |---|---|
 | Android 7.0+ | Disponible |
-| Wear OS 3+ | Disponible, en el mismo APK |
-| iOS 15+ | Beta, IPA sin firmar en [Actions](https://github.com/InlitX/GymMane/actions/workflows/build-ios.yml) |
+| Wear OS 3+ | En desarrollo |
+| iOS 15+ | En desarrollo |
 | Escritorio | Planeado |
 
 ## Privacidad
