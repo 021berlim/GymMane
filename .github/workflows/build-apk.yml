@@ -70,6 +70,46 @@ jobs:
           path: build/app/outputs/flutter-apk/GymMane-*.apk
           if-no-files-found: error
 
+  wear:
+    name: Wear OS smoke test
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download APKs
+        uses: actions/download-artifact@v4
+        with:
+          name: gymmane-apks
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      # The watch app ships inside the phone APK: install it on a round Wear OS
+      # emulator, open it and make sure it is still running a few seconds later.
+      - name: Launch on a Wear OS emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 33
+          target: android-wear
+          arch: x86_64
+          profile: wearos_large_round
+          disable-animations: true
+          script: |
+            adb install -r GymMane-x86_64.apk
+            adb shell am start -W -n com.gymmane.app/.MainActivity
+            sleep 20
+            adb shell pidof com.gymmane.app
+            adb exec-out screencap -p > wear.png
+
+      - name: Upload watch screenshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: wear-screenshot
+          path: wear.png
+
   release:
     name: Publish release
     needs: build
