@@ -13,6 +13,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/body_map.dart';
 import '../widgets/dialogs.dart';
+import '../widgets/glass.dart';
 import '../widgets/note_kit.dart';
 import '../widgets/photo_source_sheet.dart';
 import '../widgets/svg_icon.dart';
@@ -683,7 +684,7 @@ class _TimelineScreenState extends State<TimelineScreen> {
 
   Future<void> _poseSheet(DateTime day) async {
     final gc = context.gc;
-    final pose = await showModalBottomSheet<String>(
+    final pose = await showAppSheet<String>(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (sheet) => Container(

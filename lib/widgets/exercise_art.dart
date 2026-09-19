@@ -7,6 +7,7 @@ import 'package:path_drawing/path_drawing.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 import '../theme/app_colors.dart';
+import 'shimmer.dart';
 
 class ExerciseArtData {
   const ExerciseArtData(this.frames, this.bounds);
@@ -128,7 +129,7 @@ class _ExerciseArtState extends State<ExerciseArt> with SingleTickerProviderStat
     if (widget.slug.isEmpty || _failed) {
       child = _fallback(gc, widget.height);
     } else if (art == null) {
-      child = const SizedBox.shrink();
+      child = Shimmer(radius: widget.radius);
     } else if (widget.live && art.frames.length > 1 && _c != null) {
       final c = _c!;
       child = AnimatedBuilder(

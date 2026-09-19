@@ -26,6 +26,10 @@ class Store {
     }
   }
 
+  String? note(String key) => _prefs?.getString('gm_$key');
+
+  void setNote(String key, String value) => _prefs?.setString('gm_$key', value);
+
   Future<void> save(Map<String, dynamic> data) async {
     try {
       await _prefs?.setString(_key, jsonEncode(data));
@@ -36,7 +40,8 @@ class Store {
       const JsonEncoder.withIndent('  ').convert(data);
 
   String exportCsv(List<LoggedSession> sessions) {
-    final rows = StringBuffer('date,exercise,muscle,set,reps,weight_kg,volume_kg,est_1rm_kg\n');
+    final rows = StringBuffer(
+        'date,exercise,muscle,set,reps,weight_kg,volume_kg,est_1rm_kg,distance_km,duration_s,rpe\n');
     final ordered = [...sessions]..sort((a, b) => a.date.compareTo(b.date));
     for (final s in ordered) {
       final day = s.date.toIso8601String().split('T').first;
@@ -52,6 +57,9 @@ class Store {
             _num(st.weight),
             _num(st.volume),
             _num(st.oneRm),
+            st.km == null ? '' : _num(st.km!),
+            st.sec ?? '',
+            st.rpe == null ? '' : _num(st.rpe!),
           ].join(','));
         }
       }

@@ -24,6 +24,13 @@ class TrainReminder {
         playSound: true,
       );
 
+  DarwinNotificationDetails get _darwin => const DarwinNotificationDetails(
+        presentAlert: true,
+        presentBanner: true,
+        presentList: true,
+        presentSound: true,
+      );
+
   Future<void> cancel() async {
     if (!enabled) return;
     for (var i = 0; i < _slots; i++) {
@@ -52,7 +59,7 @@ class TrainReminder {
           title: t.notifTrainTitle,
           body: t.notifTrainBody,
           scheduledDate: atLocal(day),
-          notificationDetails: NotificationDetails(android: _android),
+          notificationDetails: NotificationDetails(android: _android, iOS: _darwin),
           androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
         );
         slot++;

@@ -60,4 +60,26 @@ void main() {
     expect(fit.trainStep, 'review');
     expect(fit.sessionPicks, isNotEmpty);
   });
+
+  test('toggleResetPicks clears picks when non-empty, and restores defaults when empty', () {
+    fit.sessions.clear();
+    fit.selectedMuscles.clear();
+    fit.startFocusWorkout();
+    fit.trainContinue();
+
+    expect(fit.sessionPicks, isNotEmpty);
+    final defaultCount = fit.sessionPicks.length;
+
+    fit.toggleResetPicks();
+    expect(fit.sessionPicks, isEmpty);
+
+    fit.toggleResetPicks();
+    expect(fit.sessionPicks.length, defaultCount);
+
+    fit.clearPicks();
+    expect(fit.sessionPicks, isEmpty);
+
+    fit.resetDefaultPicks();
+    expect(fit.sessionPicks.length, defaultCount);
+  });
 }

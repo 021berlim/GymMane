@@ -11,6 +11,7 @@ import '../state/fit_state.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/dialogs.dart';
+import '../widgets/glass.dart';
 import '../widgets/note_kit.dart';
 import '../widgets/ui_kit.dart';
 
@@ -156,35 +157,43 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 22),
-                  _label(gc, t.noteDateLabel),
-                  _row(
-                    gc,
-                    icon: PhosphorIconsRegular.calendarBlank,
-                    value: t.shortDateYear(_date),
-                    onTap: _pickDate,
-                  ),
                   const SizedBox(height: 14),
-                  _label(gc, t.noteExerciseLabel),
-                  _row(
-                    gc,
-                    icon: PhosphorIconsRegular.barbell,
-                    value: exercise == null ? t.noteGeneral : exerciseName(exercise),
-                    muted: exercise == null,
-                    trailing: exercise == null
-                        ? null
-                        : Semantics(
-                            button: true,
-                            label: t.noteGeneral,
-                            child: GestureDetector(
-                              onTap: () => setState(() => _exerciseId = ''),
-                              child: Padding(
-                                padding: const EdgeInsets.all(6),
-                                child: Icon(PhosphorIconsBold.x, size: 14, color: gc.textTertiary),
-                              ),
-                            ),
-                          ),
-                    onTap: _pickExercise,
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: ColoredBox(
+                      color: gc.bgRaised,
+                      child: Column(children: [
+                        _row(
+                          gc,
+                          icon: PhosphorIconsRegular.calendarBlank,
+                          label: t.noteDateLabel,
+                          value: t.shortDateYear(_date),
+                          onTap: _pickDate,
+                        ),
+                        Divider(height: 1, thickness: 1, indent: 16, endIndent: 16, color: gc.border),
+                        _row(
+                          gc,
+                          icon: PhosphorIconsRegular.barbell,
+                          label: t.noteExerciseLabel,
+                          value: exercise == null ? t.noteGeneral : exerciseName(exercise),
+                          muted: exercise == null,
+                          trailing: exercise == null
+                              ? null
+                              : Semantics(
+                                  button: true,
+                                  label: t.noteGeneral,
+                                  child: GestureDetector(
+                                    onTap: () => setState(() => _exerciseId = ''),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(6),
+                                      child: Icon(PhosphorIconsBold.x, size: 13, color: gc.textTertiary),
+                                    ),
+                                  ),
+                                ),
+                          onTap: _pickExercise,
+                        ),
+                      ]),
+                    ),
                   ),
                   const SizedBox(height: 22),
                   _label(gc, t.noteMediaLabel),
@@ -215,6 +224,7 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
   Widget _row(
     GymColors gc, {
     required IconData icon,
+    required String label,
     required String value,
     required VoidCallback onTap,
     Widget? trailing,
@@ -223,23 +233,28 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
       GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: onTap,
-        child: SoftCard(
-          radius: 14,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          child: Row(
-            children: [
-              Icon(icon, size: 17, color: gc.textSecondary),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(value,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTheme.f(14,
-                        weight: FontWeight.w500, color: muted ? gc.textTertiary : gc.text)),
-              ),
-              trailing ??
-                  Icon(PhosphorIconsRegular.caretRight, size: 14, color: gc.textTertiary),
-            ],
+        child: SizedBox(
+          height: 54,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                Icon(icon, size: 19, color: gc.textSecondary),
+                const SizedBox(width: 14),
+                Text(sentenceCase(label), style: AppTheme.f(14.5, weight: FontWeight.w500, color: gc.text)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(value,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.right,
+                      style: AppTheme.f(13,
+                          weight: FontWeight.w600, color: muted ? gc.textTertiary : gc.textSecondary)),
+                ),
+                const SizedBox(width: 6),
+                trailing ?? Icon(PhosphorIconsRegular.caretRight, size: 15, color: gc.textTertiary),
+              ],
+            ),
           ),
         ),
       );
@@ -251,10 +266,12 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
       children: [
         for (int i = 0; i < _media.length; i++)
           GestureDetector(
-            onTap: () => showNoteMedia(context, _media, i),
+            onTap: () => showNoteMedia(context, _media, i, scope: 'edit'),
             child: NoteThumb(
               name: _media[i],
               size: 74,
+              natural: true,
+              scope: 'edit',
               onRemove: () => setState(() => _media.removeAt(i)),
             ),
           ),
@@ -268,7 +285,7 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
               height: 74,
               decoration: BoxDecoration(
                 color: gc.bgRaised,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(18),
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -286,18 +303,20 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
   }
 
   Future<void> _pickExercise() async {
-    final picked = await showModalBottomSheet<String>(
+    final picked = await showAppSheet<String>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => const _ExercisePickerSheet(),
+      builder: (_) => _ExercisePickerSheet(current: _exerciseId),
     );
     if (picked != null && mounted) setState(() => _exerciseId = picked);
   }
 }
 
 class _ExercisePickerSheet extends StatefulWidget {
-  const _ExercisePickerSheet();
+  const _ExercisePickerSheet({required this.current});
+
+  final String current;
 
   @override
   State<_ExercisePickerSheet> createState() => _ExercisePickerSheetState();
@@ -327,47 +346,42 @@ class _ExercisePickerSheetState extends State<_ExercisePickerSheet> {
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
         height: MediaQuery.of(context).size.height * 0.72,
+        padding: sheetPad(context, bottom: 16),
         decoration: BoxDecoration(
-          color: gc.bg,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+          color: gc.bgRaised,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         ),
-        clipBehavior: Clip.antiAlias,
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            SheetHandle(color: gc.border, margin: const EdgeInsets.symmetric(vertical: 12)),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-              child: TextField(
-                controller: _q,
-                autofocus: true,
-                onChanged: (_) => setState(() {}),
-                cursorColor: gc.accent,
-                style: AppTheme.f(14, weight: FontWeight.w500, color: gc.text),
-                decoration: InputDecoration(
-                  hintText: t.searchAllExercises,
-                  hintStyle: AppTheme.f(14, weight: FontWeight.w500, color: gc.textTertiary),
-                  filled: true,
-                  fillColor: gc.bgRaised,
-                  prefixIcon: Icon(PhosphorIconsRegular.magnifyingGlass, size: 17, color: gc.textTertiary),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                  enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: gc.border)),
-                  focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: gc.accent)),
-                ),
-              ),
+            const SheetHandle(),
+            const SizedBox(height: 16),
+            SheetTitle(sentenceCase(t.noteExerciseLabel)),
+            const SizedBox(height: 14),
+            SearchField(
+              controller: _q,
+              hint: t.searchAllExercises,
+              color: gc.bgRaised2,
+              onChanged: (_) => setState(() {}),
             ),
-            Expanded(
-              child: ListView.builder(
-                padding: EdgeInsets.fromLTRB(20, 0, 20, 24 + MediaQuery.paddingOf(context).bottom),
-                itemCount: results.length + 1,
-                itemBuilder: (context, i) {
-                  if (i == 0) {
-                    return _tile(gc, t.noteGeneral, muted: true, onTap: () => Navigator.of(context).pop(''));
-                  }
-                  final ex = results[i - 1];
-                  return _tile(gc, exerciseName(ex), onTap: () => Navigator.of(context).pop(ex.id));
-                },
+            const SizedBox(height: 12),
+            Flexible(
+              child: OptionGroup(
+                scroll: true,
+                [
+                  OptionItem(
+                    t.noteGeneral,
+                    icon: PhosphorIconsRegular.notebook,
+                    selected: widget.current.isEmpty,
+                    onTap: () => Navigator.of(context).pop(''),
+                  ),
+                  for (final ex in results)
+                    OptionItem(
+                      exerciseName(ex),
+                      selected: widget.current == ex.id,
+                      onTap: () => Navigator.of(context).pop(ex.id),
+                    ),
+                ],
               ),
             ),
           ],
@@ -375,17 +389,4 @@ class _ExercisePickerSheetState extends State<_ExercisePickerSheet> {
       ),
     );
   }
-
-  Widget _tile(GymColors gc, String label, {required VoidCallback onTap, bool muted = false}) =>
-      GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          decoration: BoxDecoration(border: Border(bottom: BorderSide(color: gc.border))),
-          child: Text(label,
-              style: AppTheme.f(14,
-                  weight: FontWeight.w500, color: muted ? gc.textTertiary : gc.text)),
-        ),
-      );
 }

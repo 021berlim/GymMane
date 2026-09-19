@@ -5,6 +5,7 @@ import '../l10n/l10n.dart';
 import '../state/fit_state.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import 'glass.dart';
 import 'medal.dart';
 import 'ui_kit.dart';
 
@@ -85,7 +86,7 @@ class MedalShelf extends StatelessWidget {
 
 Future<void> showMedalSheet(BuildContext context, AwardId id) {
   fit.markAwardsSeen();
-  return showModalBottomSheet<void>(
+  return showAppSheet<void>(
     context: context,
     backgroundColor: Colors.transparent,
     builder: (_) => _MedalSheet(id: id),

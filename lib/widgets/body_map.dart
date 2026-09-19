@@ -99,6 +99,35 @@ class BodyHeatMap extends StatelessWidget {
   }
 }
 
+Color recoveryColor(GymColors gc, double recovered) {
+  final v = recovered.clamp(0.0, 1.0);
+  final fresh = Color.lerp(idleMuscle(gc), gc.sage, 0.62)!;
+  if (v < 0.5) return Color.lerp(gc.danger, gc.warn, v / 0.5)!;
+  return Color.lerp(gc.warn, fresh, (v - 0.5) / 0.5)!;
+}
+
+class BodyRecoveryMap extends StatelessWidget {
+  const BodyRecoveryMap({super.key, required this.recovery, this.focus, this.onTap});
+
+  final Map<String, double> recovery;
+  final String? focus;
+  final ValueChanged<String>? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final gc = context.gc;
+    return _BodyCanvas(
+      onTap: onTap,
+      painter: BodyPainter(
+        gc: gc,
+        token: 'r${heatToken(recovery)}',
+        color: (id) => recoveryColor(gc, recovery[id] ?? 1),
+        outline: focus,
+      ),
+    );
+  }
+}
+
 class BodyHeatArt extends StatelessWidget {
   const BodyHeatArt({super.key, required this.gc, required this.intensity, required this.width});
 

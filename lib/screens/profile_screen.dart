@@ -11,6 +11,7 @@ import '../services/media_store.dart';
 import '../state/fit_state.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import '../widgets/entrance.dart';
 import '../widgets/medal_shelf.dart';
 import '../widgets/photo_source_sheet.dart';
 import '../widgets/profile_avatar.dart';
@@ -78,7 +79,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final gc = context.gc;
-    return CustomScrollView(
+    return RiseScope(
+      id: 'profile',
+      child: CustomScrollView(
       slivers: [
         SliverPersistentHeader(
           pinned: true,
@@ -92,32 +95,48 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 0, 0),
-            child: _stats(gc),
+            padding: const EdgeInsets.fromLTRB(20, 6, 0, 0),
+            child: Rise(index: 0, child: _stats(gc)),
           ),
         ),
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 32, 20, 110),
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 110),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _heading(gc, t.awardsTitle, count: '${fit.awardCount}', onMore: fit.goAwards),
-                const SizedBox(height: 16),
-                const MedalShelf(size: 66),
-                const SizedBox(height: 34),
-                _heading(gc, t.snapshots, onMore: fit.goMoments),
-                const SizedBox(height: 16),
-                _photoCards(gc),
-                const SizedBox(height: 34),
-                _heading(gc, t.yearTitle),
-                const SizedBox(height: 16),
-                _year(gc),
+                Rise(
+                  index: 1,
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                    _heading(gc, t.awardsTitle, count: '${fit.awardCount}', onMore: fit.goAwards),
+                    const SizedBox(height: 16),
+                    const MedalShelf(size: 66),
+                  ]),
+                ),
+                const SizedBox(height: 30),
+                Rise(
+                  index: 2,
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                    _heading(gc, t.snapshots, onMore: fit.goMoments),
+                    const SizedBox(height: 16),
+                    _photoCards(gc),
+                  ]),
+                ),
+                const SizedBox(height: 30),
+                Rise(
+                  index: 3,
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                    _heading(gc, t.yearTitle),
+                    const SizedBox(height: 16),
+                    _year(gc),
+                  ]),
+                ),
               ],
             ),
           ),
         ),
       ],
+      ),
     );
   }
 
@@ -153,13 +172,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 for (var m = 1; m <= 12; m++) ...[
                   if (m > 1) const SizedBox(width: 5),
                   Expanded(
-                    child: Container(
-                      height: 6 + 52 * (months[m - 1] / peak),
-                      decoration: BoxDecoration(
-                        color: m == thisMonth
-                            ? gc.ember
-                            : (months[m - 1] > 0 ? gc.textTertiary : gc.bgRaised2),
-                        borderRadius: BorderRadius.circular(5),
+                    child: TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0, end: months[m - 1] / peak),
+                      duration: Duration(milliseconds: 650 + m * 35),
+                      curve: Curves.easeOutCubic,
+                      builder: (context, v, _) => Container(
+                        height: 6 + 52 * v,
+                        decoration: BoxDecoration(
+                          color: m == thisMonth
+                              ? gc.ember
+                              : (months[m - 1] > 0 ? gc.textTertiary : gc.bgRaised2),
+                          borderRadius: BorderRadius.circular(5),
+                        ),
                       ),
                     ),
                   ),
@@ -208,7 +232,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           crossAxisAlignment: CrossAxisAlignment.baseline,
           textBaseline: TextBaseline.alphabetic,
           children: [
-            Text(value, style: AppTheme.f(26, weight: FontWeight.w800, color: gc.text)),
+            RollIn(value, style: AppTheme.f(26, weight: FontWeight.w800, color: gc.text)),
             if (unit.isNotEmpty)
               Text(unit,
                   style: AppTheme.f(12.5, weight: FontWeight.w600, color: gc.textSecondary)),
@@ -271,7 +295,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 crossAxisAlignment: CrossAxisAlignment.baseline,
                 textBaseline: TextBaseline.alphabetic,
                 children: [
-                  Text(value, style: AppTheme.f(23, weight: FontWeight.w800, color: gc.text)),
+                  RollIn(value, style: AppTheme.f(23, weight: FontWeight.w800, color: gc.text)),
                   if (unit.isNotEmpty) ...[
                     const SizedBox(width: 4),
                     Text(unit,

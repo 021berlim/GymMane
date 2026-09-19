@@ -23,6 +23,13 @@ class ProgressReminder {
         playSound: true,
       );
 
+  DarwinNotificationDetails get _darwin => const DarwinNotificationDetails(
+        presentAlert: true,
+        presentBanner: true,
+        presentList: true,
+        presentSound: true,
+      );
+
   Future<void> scheduleFor(DateTime day, int intervalDays) async {
     if (!enabled) return;
     await cancel();
@@ -36,7 +43,7 @@ class ProgressReminder {
         title: t.notifPhotoTitle,
         body: t.notifPhotoBody(intervalDays),
         scheduledDate: when,
-        notificationDetails: NotificationDetails(android: _android),
+        notificationDetails: NotificationDetails(android: _android, iOS: _darwin),
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       );
     } catch (e) {

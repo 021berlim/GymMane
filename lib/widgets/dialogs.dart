@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import 'glass.dart';
 import 'ui_kit.dart';
 
 AlertDialog appDialog(
@@ -44,7 +45,7 @@ Future<bool> askConfirm(
   bool danger = false,
 }) async {
   final gc = context.gc;
-  final ok = await showDialog<bool>(
+  final ok = await showAppDialog<bool>(
     context: context,
     builder: (dctx) => appDialog(
       gc,
@@ -72,7 +73,7 @@ Future<double?> askNumber(
   final controller = TextEditingController(text: initial)
     ..selection = TextSelection(baseOffset: 0, extentOffset: initial.length);
 
-  final raw = await showDialog<String>(
+  final raw = await showAppDialog<String>(
     context: context,
     builder: (dctx) => appDialog(
       gc,

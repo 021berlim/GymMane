@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:video_player/video_player.dart';
@@ -10,6 +11,7 @@ import '../services/media_store.dart';
 import '../state/fit_state.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import 'glass.dart';
 import 'ui_kit.dart';
 
 Color noteKindColor(GymColors gc, NoteKind k) => switch (k) {
@@ -187,7 +189,7 @@ class NoteCalendar extends StatelessWidget {
 
 Future<void> showNoteDaySheet(BuildContext context, DateTime day) async {
   final gc = context.gc;
-  final kind = await showModalBottomSheet<NoteKind>(
+  final kind = await showAppSheet<NoteKind>(
     context: context,
     backgroundColor: Colors.transparent,
     builder: (sheet) => Container(
@@ -198,40 +200,20 @@ Future<void> showNoteDaySheet(BuildContext context, DateTime day) async {
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const SheetHandle(),
-          const SizedBox(height: 18),
-          Text(noteDayLabel(day).toUpperCase(),
-              style: AppTheme.f(13, weight: FontWeight.w700, color: gc.text, letterSpacing: 0.4)),
-          const SizedBox(height: 3),
-          Text(t.fullDate(day), style: AppTheme.f(12.5, weight: FontWeight.w500, color: gc.textTertiary)),
-          const SizedBox(height: 18),
-          for (final k in NoteKind.values) ...[
-            if (k != NoteKind.values.first) const SizedBox(height: 8),
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => Navigator.of(sheet).pop(k),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                decoration: BoxDecoration(
-                  color: gc.bgRaised2,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  children: [
-                    Icon(noteKindIcon(k), size: 18, color: noteKindColor(gc, k)),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Text(noteKindLabel(k),
-                          style: AppTheme.f(14, weight: FontWeight.w600, color: gc.text)),
-                    ),
-                    Icon(PhosphorIconsRegular.caretRight, size: 14, color: gc.textTertiary),
-                  ],
-                ),
+          const SizedBox(height: 16),
+          SheetTitle(noteDayLabel(day), subtitle: t.fullDate(day)),
+          const SizedBox(height: 14),
+          OptionGroup([
+            for (final k in NoteKind.values)
+              OptionItem(
+                noteKindLabel(k),
+                leading: Icon(noteKindIcon(k), size: 19, color: noteKindColor(gc, k)),
+                onTap: () => Navigator.of(sheet).pop(k),
               ),
-            ),
-          ],
+          ]),
         ],
       ),
     ),
@@ -293,13 +275,9 @@ class NoteKindPicker extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   decoration: BoxDecoration(
                     color: selected == kind
-                        ? noteKindColor(gc, kind).withValues(alpha: 0.14)
+                        ? noteKindColor(gc, kind).withValues(alpha: 0.16)
                         : gc.bgRaised,
                     borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                      color: selected == kind ? noteKindColor(gc, kind) : gc.border,
-                      width: selected == kind ? 1.4 : 1,
-                    ),
                   ),
                   child: Column(
                     children: [
@@ -466,7 +444,7 @@ class NoteCard extends StatelessWidget {
                   ],
                   if (note.media.isNotEmpty) ...[
                     const SizedBox(height: 12),
-                    NoteMediaStrip(media: note.media),
+                    NoteMediaStrip(media: note.media, scope: note.id),
                   ],
                 ],
               ),
@@ -511,11 +489,12 @@ class _NoteRail extends CustomPainter {
 }
 
 class NoteMediaStrip extends StatelessWidget {
-  const NoteMediaStrip({super.key, required this.media, this.size = 64, this.max = 4});
+  const NoteMediaStrip({super.key, required this.media, this.size = 64, this.max = 4, this.scope});
 
   final List<String> media;
   final double size;
   final int max;
+  final String? scope;
 
   @override
   Widget build(BuildContext context) {
@@ -528,10 +507,11 @@ class NoteMediaStrip extends StatelessWidget {
           for (int i = 0; i < shown.length; i++) ...[
             if (i > 0) const SizedBox(width: 8),
             GestureDetector(
-              onTap: () => showNoteMedia(context, media, i),
+              onTap: () => showNoteMedia(context, media, i, scope: scope),
               child: NoteThumb(
                 name: shown[i],
                 size: size,
+                scope: scope,
                 badge: i == shown.length - 1 && extra > 0 ? '+$extra' : null,
               ),
             ),
@@ -542,24 +522,48 @@ class NoteMediaStrip extends StatelessWidget {
   }
 }
 
+String noteHeroTag(String scope, String name) => 'nm:$scope:$name';
+
 class NoteThumb extends StatelessWidget {
-  const NoteThumb({super.key, required this.name, this.size = 64, this.badge, this.onRemove});
+  const NoteThumb({
+    super.key,
+    required this.name,
+    this.size = 64,
+    this.badge,
+    this.onRemove,
+    this.natural = false,
+    this.scope,
+  });
 
   final String name;
   final double size;
   final String? badge;
   final VoidCallback? onRemove;
+  final bool natural;
+  final String? scope;
 
   @override
   Widget build(BuildContext context) {
     final gc = context.gc;
     final path = MediaStore.pathFor(name);
+    final photo = path != null && !MediaStore.isVideo(name);
+    final fallback = Icon(PhosphorIconsRegular.imageSquare, size: size * 0.34, color: gc.textTertiary);
 
     Widget inner;
     if (path == null) {
-      inner = Icon(PhosphorIconsRegular.imageSquare, size: size * 0.34, color: gc.textTertiary);
-    } else if (MediaStore.isVideo(name)) {
+      inner = fallback;
+    } else if (!photo) {
       inner = Icon(PhosphorIconsFill.playCircle, size: size * 0.38, color: gc.textSecondary);
+    } else if (natural) {
+      inner = Image.file(
+        File(path),
+        height: size,
+        fit: BoxFit.contain,
+        gaplessPlayback: true,
+        frameBuilder: (_, child, frame, sync) =>
+            frame == null && !sync ? SizedBox(width: size, height: size) : child,
+        errorBuilder: (_, _, _) => SizedBox(width: size, height: size, child: fallback),
+      );
     } else {
       inner = Image.file(
         File(path),
@@ -567,27 +571,28 @@ class NoteThumb extends StatelessWidget {
         height: size,
         fit: BoxFit.cover,
         gaplessPlayback: true,
-        errorBuilder: (_, _, _) =>
-            Icon(PhosphorIconsRegular.imageSquare, size: size * 0.34, color: gc.textTertiary),
+        errorBuilder: (_, _, _) => fallback,
       );
     }
+    final tag = scope;
+    if (photo && tag != null) inner = Hero(tag: noteHeroTag(tag, name), child: inner);
+
+    final tile = natural && photo
+        ? ClipRRect(borderRadius: BorderRadius.circular(16), child: inner)
+        : Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(color: gc.bgRaised2, borderRadius: BorderRadius.circular(16)),
+            clipBehavior: Clip.antiAlias,
+            child: Center(child: inner),
+          );
 
     return SizedBox(
-      width: size,
       height: size,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                color: gc.bgRaised2,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: Center(child: inner),
-            ),
-          ),
+          tile,
           if (badge != null)
             Positioned.fill(
               child: Container(
@@ -627,17 +632,25 @@ class NoteThumb extends StatelessWidget {
   }
 }
 
-Future<void> showNoteMedia(BuildContext context, List<String> media, int index) => showDialog(
-      context: context,
+Future<void> showNoteMedia(BuildContext context, List<String> media, int index, {String? scope}) =>
+    Navigator.of(context).push(PageRouteBuilder<void>(
+      opaque: false,
+      barrierDismissible: true,
       barrierColor: const Color(0xF2000000),
-      builder: (_) => _MediaViewer(media: media, start: index),
-    );
+      barrierLabel: t.cancel,
+      transitionDuration: const Duration(milliseconds: 360),
+      reverseTransitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (_, _, _) => _MediaViewer(media: media, start: index, scope: scope),
+      transitionsBuilder: (_, animation, _, child) =>
+          FadeTransition(opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut), child: child),
+    ));
 
 class _MediaViewer extends StatefulWidget {
-  const _MediaViewer({required this.media, required this.start});
+  const _MediaViewer({required this.media, required this.start, this.scope});
 
   final List<String> media;
   final int start;
+  final String? scope;
 
   @override
   State<_MediaViewer> createState() => _MediaViewerState();
@@ -655,8 +668,9 @@ class _MediaViewerState extends State<_MediaViewer> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog.fullscreen(
-      backgroundColor: Colors.transparent,
+    final scope = widget.scope;
+    return Material(
+      type: MaterialType.transparency,
       child: Stack(
         children: [
           PageView.builder(
@@ -670,9 +684,12 @@ class _MediaViewerState extends State<_MediaViewer> {
               if (MediaStore.isVideo(name)) {
                 return _FullVideo(key: ValueKey(path), path: path);
               }
+              final image = Image.file(File(path), fit: BoxFit.contain);
               return InteractiveViewer(
                 maxScale: 5,
-                child: Center(child: Image.file(File(path), fit: BoxFit.contain)),
+                child: Center(
+                  child: scope == null ? image : Hero(tag: noteHeroTag(scope, name), child: image),
+                ),
               );
             },
           ),
@@ -762,7 +779,7 @@ class _FullVideoState extends State<_FullVideo> {
     }
     if (c == null) {
       return const Center(
-        child: SizedBox(width: 26, height: 26, child: CircularProgressIndicator(strokeWidth: 2)),
+        child: CupertinoActivityIndicator(radius: 13, color: Colors.white70),
       );
     }
     return GestureDetector(

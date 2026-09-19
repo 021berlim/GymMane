@@ -28,12 +28,10 @@ void main() {
   });
 
   double homeOpacity(WidgetTester tester) {
-    final fade = tester.widget<FadeTransition>(
-      find
-          .ancestor(of: find.byType(HomeScreen), matching: find.byType(FadeTransition))
-          .first,
+    final fade = tester.widget<Opacity>(
+      find.ancestor(of: find.byType(HomeScreen), matching: find.byType(Opacity)).first,
     );
-    return fade.opacity.value;
+    return fade.opacity;
   }
 
   testWidgets('the screen being left is gone before the new one shows up', (tester) async {
@@ -64,6 +62,9 @@ void main() {
         reason: 'no da tiempo a ver la app antes de la medalla');
 
     await tester.pump(const Duration(seconds: 2));
+    expect(find.byType(AwardCelebration), findsNothing);
+
+    await tester.pump(const Duration(milliseconds: 1500));
     expect(find.byType(AwardCelebration), findsOneWidget);
 
     await tester.pump(const Duration(seconds: 2));
@@ -80,21 +81,40 @@ void main() {
     fit.refreshAwards();
     expect(fit.pendingAwards.length, greaterThan(1));
 
-    await tester.pump(const Duration(seconds: 3));
+    await tester.pump(const Duration(milliseconds: 4500));
     expect(find.byType(AwardCelebration), findsOneWidget);
 
     await tester.tap(find.text(t.awardNice));
     await tester.pump();
     expect(find.byType(AwardCelebration), findsNothing);
 
-    await tester.pump(const Duration(seconds: 2));
+    await tester.pump(const Duration(seconds: 4));
     expect(find.byType(AwardCelebration), findsNothing,
         reason: 'la segunda medalla salía pegada a la primera');
 
-    await tester.pump(const Duration(seconds: 2));
+    await tester.pump(const Duration(milliseconds: 2500));
     expect(find.byType(AwardCelebration), findsOneWidget);
 
     await tester.pump(const Duration(seconds: 2));
     fit.persistNow();
+  });
+
+  testWidgets('holding a tab lets the pill slide to another one', (tester) async {
+    await tester.pumpWidget(const GymManeApp());
+    await tester.pump();
+
+    final home = tester.getCenter(find.text(t.home));
+    final profile = tester.getCenter(find.text(t.profile));
+    final gesture = await tester.startGesture(home);
+    await tester.pump(const Duration(milliseconds: 700));
+    for (var i = 1; i <= 10; i++) {
+      await gesture.moveTo(Offset.lerp(home, profile, i / 10)!);
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    expect(fit.route, 'home');
+    await gesture.up();
+    await tester.pump();
+    expect(fit.route, 'settings');
+    await tester.pump(const Duration(seconds: 1));
   });
 }

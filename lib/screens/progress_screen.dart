@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
@@ -13,6 +14,12 @@ import '../theme/app_theme.dart';
 import '../widgets/body_map.dart';
 import '../widgets/charts.dart';
 import '../widgets/dialogs.dart';
+import '../widgets/entrance.dart';
+import '../widgets/exercise_media.dart';
+import '../widgets/glass.dart';
+import '../widgets/muscle_radar.dart';
+import '../widgets/rolling_text.dart';
+import '../widgets/ruler_picker.dart';
 import '../widgets/ui_kit.dart';
 import 'share_sheet.dart';
 import 'start_sheet.dart';
@@ -28,13 +35,16 @@ class ProgressScreen extends StatelessWidget {
     final prs = fit.personalRecords;
     final bw = fit.bodyweightSeries;
 
-    return SafeArea(
+    return RiseScope(
+      id: 'progress',
+      child: SafeArea(
       bottom: false,
       child: SingleChildScrollView(
+        clipBehavior: Clip.none,
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 110),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+          children: riseAll([
             Row(
               children: [
                 Expanded(
@@ -70,6 +80,10 @@ class ProgressScreen extends StatelessWidget {
             _totals(gc),
             const SizedBox(height: 12),
             const _MuscleMapCard(),
+            if (fit.sessions.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              const MuscleRadarCard(),
+            ],
             for (final block in _blocks(context, gc, bw, split, prs)) ...[
               const SizedBox(height: 12),
               block,
@@ -78,8 +92,9 @@ class ProgressScreen extends StatelessWidget {
               const SizedBox(height: 12),
               _setupCard(context, gc),
             ],
-          ],
+          ]),
         ),
+      ),
       ),
     );
   }
@@ -121,7 +136,7 @@ class ProgressScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.baseline,
               textBaseline: TextBaseline.alphabetic,
               children: [
-                Text(value, style: AppTheme.f(28, weight: FontWeight.w800, color: gc.text)),
+                RollIn(value, style: AppTheme.f(28, weight: FontWeight.w800, color: gc.text)),
                 if (unit.isNotEmpty) ...[
                   const SizedBox(width: 5),
                   Text(unit, style: AppTheme.f(13, weight: FontWeight.w500, color: gc.textSecondary)),
@@ -171,7 +186,12 @@ class ProgressScreen extends StatelessWidget {
               badge: change == null ? null : _delta(gc, change),
               chart: fit.sessions.isEmpty
                   ? const SizedBox(height: 40)
-                  : Sparkline(values: fit.volumeChartPoints, height: 40, color: gc.textSecondary),
+                  : Sparkline(
+                      values: [for (final v in fit.volumeChartPoints) fit.toDisplayWeight(v) / 1000],
+                      height: 40,
+                      color: gc.textSecondary,
+                      scale: fmt,
+                    ),
             ),
           ),
           const SizedBox(width: 12),
@@ -190,7 +210,12 @@ class ProgressScreen extends StatelessWidget {
                     note: t.shortDate(weight.date),
                     chart: bw.length < 2
                         ? const SizedBox(height: 40)
-                        : Sparkline(values: bw, height: 40, color: gc.textSecondary),
+                        : Sparkline(
+                            values: [for (final v in bw) fit.toDisplayWeight(v)],
+                            height: 40,
+                            color: gc.textSecondary,
+                            scale: fmt,
+                          ),
                     onTap: () => _logBodyweight(context),
                   ),
           ),
@@ -433,32 +458,11 @@ class ProgressScreen extends StatelessWidget {
     return [
       if (fit.sessions.isNotEmpty) _thisWeek(gc),
       if (fit.trackedExercises.isNotEmpty) _StrengthCard(),
-      if (prs.isNotEmpty) _prCard(gc, prs),
+      if (prs.isNotEmpty) _PrCard(prs),
       if (fit.shotCount > 0) _timelineCard(gc),
       if (fit.measures.isNotEmpty) _measuresCard(gc),
     ];
   }
-
-  Widget _prCard(
-      GymColors gc, List<({String id, String name, double topWeight, double oneRm})> prs) {
-    return SoftCard(
-      radius: 20,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(t.personalRecords,
-              style: AppTheme.f(10, weight: FontWeight.w600, color: gc.textTertiary, letterSpacing: 0.9)),
-          const SizedBox(height: 14),
-          if (prs.isEmpty)
-            Text(t.prEmpty,
-                style: AppTheme.s(13, color: gc.textSecondary))
-          else
-            for (int i = 0; i < prs.length; i++) _prRow(gc, prs[i], i < prs.length - 1),
-        ],
-      ),
-    );
-  }
-
 
   Widget _timelineCard(GymColors gc) {
     final pair = fit.comparePair;
@@ -470,15 +474,22 @@ class ProgressScreen extends StatelessWidget {
       onTap: fit.goTimeline,
       child: SoftCard(
         radius: 20,
+        padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(color: gc.accentSoft, shape: BoxShape.circle),
+                  child: Icon(PhosphorIconsBold.clockCounterClockwise, size: 16, color: gc.accent),
+                ),
+                const SizedBox(width: 11),
                 Expanded(
                   child: Text(t.timeline,
-                      style: AppTheme.d(14,
-                          weight: FontWeight.w600, color: gc.text, letterSpacing: 1)),
+                      style: AppTheme.d(14, weight: FontWeight.w600, color: gc.text, letterSpacing: 1)),
                 ),
                 if (last != null && left != null)
                   Text(fit.photoDue ? t.photoDueNow : t.photoNextIn(left),
@@ -489,47 +500,107 @@ class ProgressScreen extends StatelessWidget {
                 Icon(PhosphorIconsRegular.caretRight, size: 15, color: gc.textTertiary),
               ],
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 16),
             if (last == null)
               Text(t.timelineHint, style: AppTheme.s(13, color: gc.textSecondary, height: 1.5))
+            else if (pair == null)
+              Row(
+                children: [
+                  SizedBox(width: 66, child: _shotThumb(gc, last)),
+                  const SizedBox(width: 12),
+                  Expanded(child: _track(gc, [last.date], last.date, last.date, null)),
+                  const SizedBox(width: 12),
+                  SizedBox(
+                    width: 66,
+                    child: AspectRatio(
+                      aspectRatio: 0.78,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: gc.border, width: 1.4),
+                        ),
+                        child: Icon(PhosphorIconsRegular.plus, size: 16, color: gc.textTertiary),
+                      ),
+                    ),
+                  ),
+                ],
+              )
             else
               Row(
                 children: [
-                  if (pair != null) ...[
-                    Expanded(child: _shotThumb(gc, pair.from)),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: Icon(PhosphorIconsBold.arrowRight, size: 14, color: gc.accent),
+                  SizedBox(width: 66, child: _shotThumb(gc, pair.from)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _track(
+                      gc,
+                      [for (final e in fit.timelineAsc) e.date],
+                      pair.from.date,
+                      pair.to.date,
+                      t.daysApart(fit.compareDays),
                     ),
-                    Expanded(child: _shotThumb(gc, pair.to)),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      flex: 2,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(t.daysApart(fit.compareDays),
-                              style: AppTheme.d(15, weight: FontWeight.w700, color: gc.text)),
-                          const SizedBox(height: 2),
-                          Text(t.photoCount(fit.shotCount),
-                              style: AppTheme.s(12, color: gc.textSecondary)),
-                        ],
-                      ),
-                    ),
-                  ] else ...[
-                    Expanded(child: _shotThumb(gc, last)),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      flex: 3,
-                      child: Text(t.compareNeedTwo,
-                          style: AppTheme.s(12.5, color: gc.textSecondary, height: 1.45)),
-                    ),
-                  ],
+                  ),
+                  const SizedBox(width: 12),
+                  SizedBox(width: 66, child: _shotThumb(gc, pair.to)),
                 ],
               ),
+            if (last != null) ...[
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  SizedBox(
+                    width: 66,
+                    child: Text(t.shortDate((pair?.from ?? last).date),
+                        textAlign: TextAlign.center,
+                        style: AppTheme.s(11, weight: FontWeight.w600, color: gc.textTertiary)),
+                  ),
+                  Expanded(
+                    child: Text(pair == null ? t.compareNeedTwo : t.photoCount(fit.shotCount),
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTheme.s(11, weight: FontWeight.w500, color: gc.textTertiary)),
+                  ),
+                  SizedBox(
+                    width: 66,
+                    child: pair == null
+                        ? null
+                        : Text(t.shortDate(pair.to.date),
+                            textAlign: TextAlign.center,
+                            style: AppTheme.s(11, weight: FontWeight.w600, color: gc.textTertiary)),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),
+    );
+  }
+
+  Widget _track(GymColors gc, List<DateTime> dates, DateTime from, DateTime to, String? label) {
+    final span = to.difference(from).inMinutes.abs();
+    final spots = [
+      for (final d in dates)
+        if (!d.isBefore(from) && !d.isAfter(to)) span == 0 ? 0.0 : d.difference(from).inMinutes / span,
+    ];
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (label != null) ...[
+          Text(label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTheme.d(13.5, weight: FontWeight.w700, color: gc.text)),
+          const SizedBox(height: 8),
+        ],
+        SizedBox(
+          height: 14,
+          child: CustomPaint(
+            size: const Size(double.infinity, 14),
+            painter: _TrackPainter(spots, gc.accent, gc.border, gc.bgRaised, open: label == null),
+          ),
+        ),
+      ],
     );
   }
 
@@ -612,30 +683,6 @@ class ProgressScreen extends StatelessWidget {
     );
   }
 
-  Widget _prRow(GymColors gc, ({String id, String name, double topWeight, double oneRm}) pr, bool border) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        border: border ? Border(bottom: BorderSide(color: gc.border)) : null,
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-              child: Text(t.catalogName(pr.id, pr.name),
-                  style: AppTheme.s(14, weight: FontWeight.w500, color: gc.text))),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(fit.weightLabel(pr.topWeight), style: AppTheme.d(18, weight: FontWeight.w700, color: gc.text)),
-              Text(t.oneRmEst(fit.weightLabel(pr.oneRm)), style: AppTheme.s(11, color: gc.textSecondary)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget bwRow(BuildContext context, GymColors gc, BodyweightEntry e) {
     return Row(
       children: [
@@ -658,18 +705,11 @@ class ProgressScreen extends StatelessWidget {
     );
   }
 
-  void _showDay(BuildContext context, int index) {
-    final date = fit.heatmapDate(index);
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _DaySheet(date: date),
-    );
-  }
+  void _showDay(BuildContext context, int index) => showDaySheet(context, fit.heatmapDate(index));
 
   void _logBodyweight(BuildContext context) {
     final start = fit.latestBodyweight?.kg ?? fit.profile.weightKg;
-    showModalBottomSheet(
+    showAppSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
@@ -697,6 +737,7 @@ class _MuscleMapCardState extends State<_MuscleMapCard> {
   @override
   Widget build(BuildContext context) {
     final gc = context.gc;
+    if (_days == 0) return _recoveryCard(gc);
     final sets = fit.muscleSetsOver(_days);
     final heat = fit.muscleHeatOver(_days);
     final focus = _focus;
@@ -712,15 +753,7 @@ class _MuscleMapCardState extends State<_MuscleMapCard> {
             children: [
               Text(t.muscleMap,
                   style: AppTheme.f(10, weight: FontWeight.w600, color: gc.textTertiary, letterSpacing: 0.9)),
-              SegToggle(
-                [
-                  SegOption(t.days7, _days == 7, () => _setDays(7)),
-                  SegOption(t.days30, _days == 30, () => _setDays(30)),
-                ],
-                hPad: 11,
-                vPad: 5,
-                fontSize: 11,
-              ),
+              _modes(),
             ],
           ),
           const SizedBox(height: 16),
@@ -768,6 +801,128 @@ class _MuscleMapCardState extends State<_MuscleMapCard> {
     );
   }
 
+  Widget _modes() => SegToggle(
+        [
+          SegOption(t.days7, _days == 7, () => _setDays(7)),
+          SegOption(t.days30, _days == 30, () => _setDays(30)),
+          SegOption(t.recoveryTab, _days == 0, () => _setDays(0)),
+        ],
+        hPad: 10,
+        vPad: 5,
+        fontSize: 11,
+      );
+
+  Widget _recoveryCard(GymColors gc) {
+    final recovery = fit.muscleRecovery();
+    final overall = fit.overallRecovery();
+    final tired = fit.stillRecovering();
+    final focus = _focus;
+    return SoftCard(
+      radius: 20,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(t.muscleMap,
+                  style: AppTheme.f(10, weight: FontWeight.w600, color: gc.textTertiary, letterSpacing: 0.9)),
+              _modes(),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(children: [
+            SizedBox(
+              width: 46,
+              height: 46,
+              child: Stack(alignment: Alignment.center, children: [
+                SizedBox.expand(
+                  child: CircularProgressIndicator(
+                    value: overall / 100,
+                    strokeWidth: 4.5,
+                    strokeCap: StrokeCap.round,
+                    backgroundColor: gc.bgRaised2,
+                    color: recoveryColor(gc, overall / 100),
+                  ),
+                ),
+                Text('$overall', style: AppTheme.f(14, weight: FontWeight.w800, color: gc.text)),
+              ]),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(t.recoveryOverall(overall),
+                      style: AppTheme.f(15, weight: FontWeight.w700, color: gc.text)),
+                  const SizedBox(height: 2),
+                  Text(tired.isEmpty ? t.recoveryAllFresh : t.recoveryStill(tired.take(3).map(t.muscle).join(' · ')),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTheme.s(12, color: gc.textSecondary)),
+                ],
+              ),
+            ),
+          ]),
+          const SizedBox(height: 16),
+          BodyRecoveryMap(
+            recovery: recovery,
+            focus: focus,
+            onTap: (id) => setState(() => _focus = focus == id ? null : id),
+          ),
+          const SizedBox(height: 16),
+          Row(children: [
+            Text(t.recoveryTired, style: AppTheme.s(11, color: gc.textTertiary)),
+            const SizedBox(width: 8),
+            for (var i = 0; i <= 4; i++) ...[
+              if (i > 0) const SizedBox(width: 3),
+              Expanded(
+                child: Container(
+                  height: 7,
+                  decoration: BoxDecoration(
+                    color: recoveryColor(gc, i / 4),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+            ],
+            const SizedBox(width: 8),
+            Text(t.recoveryFresh, style: AppTheme.s(11, color: gc.textTertiary)),
+          ]),
+          const SizedBox(height: 14),
+          Container(
+            constraints: const BoxConstraints(minHeight: 36),
+            alignment: Alignment.centerLeft,
+            child: focus == null
+                ? Text(t.recoveryHint, style: AppTheme.s(13, color: gc.textSecondary))
+                : _recoveryReadout(gc, focus, recovery[focus] ?? 1),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _recoveryReadout(GymColors gc, String id, double value) {
+    final hours = fit.hoursUntilRecovered(id);
+    return Row(children: [
+      Container(
+        width: 10,
+        height: 10,
+        decoration: BoxDecoration(color: recoveryColor(gc, value), shape: BoxShape.circle),
+      ),
+      const SizedBox(width: 8),
+      Text(t.muscle(id), style: AppTheme.s(13, weight: FontWeight.w600, color: gc.text)),
+      const SizedBox(width: 8),
+      Expanded(
+        child: Text(
+            hours == null
+                ? t.recoveryPct((value * 100).round())
+                : '${t.recoveryPct((value * 100).round())} · ${t.readyInHours(hours)}',
+            style: AppTheme.s(13, color: gc.textSecondary)),
+      ),
+    ]);
+  }
+
   Widget _readout(GymColors gc, String id, double sets, double heat) {
     return Row(children: [
       Container(
@@ -795,6 +950,7 @@ class _StrengthCard extends StatelessWidget {
 
     return SoftCard(
       radius: 20,
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -802,33 +958,66 @@ class _StrengthCard extends StatelessWidget {
               style: AppTheme.f(10, weight: FontWeight.w600, color: gc.textTertiary, letterSpacing: 0.9)),
           const SizedBox(height: 14),
           if (id == null)
-            Text(t.strengthEmpty,
-                style: AppTheme.s(13, color: gc.textSecondary))
+            Text(t.strengthEmpty, style: AppTheme.s(13, color: gc.textSecondary))
           else
-            ..._chart(gc, id, tracked),
+            ..._chart(context, gc, id, tracked),
         ],
       ),
     );
   }
 
   List<Widget> _chart(
+    BuildContext context,
     GymColors gc,
     String id,
     List<({String id, String name, int sessions})> tracked,
   ) {
-    final series = fit.oneRmSeries(id);
+    final history = fit.exerciseHistory(id).reversed.toList();
+    final recent = history.length > 24 ? history.sublist(history.length - 24) : history;
+    final series = [for (final h in recent) (h.ex.bestOneRm * 10).round() / 10];
     final first = series.first, last = series.last;
     final delta = last - first;
     final up = delta >= 0;
+    final name = tracked.firstWhere((e) => e.id == id, orElse: () => tracked.first).name;
+    final pickable = tracked.length > 1;
 
     return [
+      Semantics(
+        button: pickable,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: pickable ? () => _pick(context, id, tracked) : null,
+          child: Row(
+            children: [
+              _PrThumb(id: id, size: 40),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(t.catalogName(id, name),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTheme.f(15, weight: FontWeight.w700, color: gc.text)),
+              ),
+              if (pickable) ...[
+                const SizedBox(width: 8),
+                Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(color: gc.bgRaised2, shape: BoxShape.circle),
+                  child: Icon(PhosphorIconsBold.caretDown, size: 13, color: gc.textSecondary),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+      const SizedBox(height: 16),
       Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           RichText(
             text: TextSpan(
               text: fit.weightValue(last),
-              style: AppTheme.d(32, weight: FontWeight.w700, color: gc.text),
+              style: AppTheme.d(34, weight: FontWeight.w800, color: gc.text),
               children: [
                 TextSpan(
                     text: ' ${fit.units}',
@@ -836,43 +1025,245 @@ class _StrengthCard extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 10),
+          const Spacer(),
           if (delta.abs() >= 0.1)
             Padding(
-              padding: const EdgeInsets.only(bottom: 5),
+              padding: const EdgeInsets.only(bottom: 6),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                 decoration: BoxDecoration(
-                    color: up ? gc.sageSoft : gc.accentSoft, borderRadius: BorderRadius.circular(8)),
-                child: Text('${up ? '+' : ''}${fit.weightLabel(delta)}',
-                    style: AppTheme.s(11, weight: FontWeight.w600, color: up ? gc.sage : gc.accent)),
+                    color: up ? gc.sageSoft : gc.accentSoft, borderRadius: BorderRadius.circular(100)),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(up ? PhosphorIconsBold.trendUp : PhosphorIconsBold.trendDown,
+                      size: 12, color: up ? gc.sage : gc.accent),
+                  const SizedBox(width: 4),
+                  Text('${up ? '+' : ''}${fit.weightLabel(delta)}',
+                      style: AppTheme.s(11.5, weight: FontWeight.w700, color: up ? gc.sage : gc.accent)),
+                ]),
               ),
             ),
         ],
       ),
       const SizedBox(height: 12),
-      Sparkline(values: series, height: 56, color: gc.textSecondary),
-      const SizedBox(height: 12),
-      SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(children: [
-          for (final e in tracked.take(8)) ...[
-            Pill(
-              label: t.catalogName(e.id, e.name),
-              bg: e.id == id ? gc.ember : gc.bgRaised2,
-              fg: e.id == id ? gc.onEmber : gc.textSecondary,
-              onTap: () => fit.setStrengthExercise(e.id),
-              hPad: 12,
-              vPad: 7,
-              fontSize: 12,
-            ),
-            const SizedBox(width: 8),
-          ],
-        ]),
+      TrendChart(values: [for (final v in series) fit.toDisplayWeight(v)], height: 96, scale: fmt),
+      const SizedBox(height: 8),
+      Row(
+        children: [
+          Text(t.shortDate(recent.first.date),
+              style: AppTheme.s(11, weight: FontWeight.w600, color: gc.textTertiary)),
+          const Spacer(),
+          Text(t.sessionCount(series.length),
+              style: AppTheme.s(11, weight: FontWeight.w600, color: gc.textTertiary)),
+          const Spacer(),
+          Text(t.shortDate(recent.last.date),
+              style: AppTheme.s(11, weight: FontWeight.w600, color: gc.textTertiary)),
+        ],
       ),
     ];
   }
+
+  void _pick(BuildContext context, String current, List<({String id, String name, int sessions})> tracked) {
+    showAppSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (sheet) {
+        final gc = sheet.gc;
+        return Container(
+          padding: sheetPad(sheet),
+          constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(sheet).height * 0.8),
+          decoration: BoxDecoration(
+            color: gc.bgRaised,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SheetHandle(),
+              const SizedBox(height: 16),
+              SheetTitle(sentenceCase(t.strength1rm)),
+              const SizedBox(height: 14),
+              Flexible(
+                child: OptionGroup(
+                  [
+                    for (final e in tracked)
+                      OptionItem(
+                        t.catalogName(e.id, e.name),
+                        leading: _PrThumb(id: e.id, size: 34),
+                        detail: t.sessionCount(e.sessions),
+                        selected: e.id == current,
+                        onTap: () {
+                          fit.setStrengthExercise(e.id);
+                          Navigator.of(sheet).pop();
+                        },
+                      ),
+                  ],
+                  scroll: true,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 }
+
+class _PrThumb extends StatelessWidget {
+  const _PrThumb({required this.id, this.size = 44});
+
+  final String id;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final gc = context.gc;
+    final ex = fit.exerciseById(id);
+    return SizedBox(
+      width: size,
+      height: size,
+      child: ex == null
+          ? Container(
+              decoration: BoxDecoration(color: gc.bgRaised2, borderRadius: BorderRadius.circular(size * 0.28)),
+              child: Icon(PhosphorIconsRegular.barbell, size: size * 0.45, color: gc.textTertiary),
+            )
+          : ExerciseMedia(ex: ex, height: size, radius: size * 0.28, bordered: false),
+    );
+  }
+}
+
+class _PrCard extends StatefulWidget {
+  const _PrCard(this.prs);
+
+  final List<({String id, String name, double topWeight, double oneRm})> prs;
+
+  @override
+  State<_PrCard> createState() => _PrCardState();
+}
+
+class _PrCardState extends State<_PrCard> {
+  static const _shown = 5;
+  bool _all = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final gc = context.gc;
+    final prs = widget.prs;
+    final rows = _all ? prs : prs.take(_shown).toList();
+    final hidden = prs.length - rows.length;
+    return SoftCard(
+      radius: 20,
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Icon(PhosphorIconsFill.trophy, size: 14, color: gc.accent),
+            const SizedBox(width: 7),
+            Expanded(
+              child: Text(t.personalRecords,
+                  style: AppTheme.f(10, weight: FontWeight.w600, color: gc.textTertiary, letterSpacing: 0.9)),
+            ),
+            Text('${prs.length}', style: AppTheme.f(12, weight: FontWeight.w700, color: gc.textSecondary)),
+          ]),
+          const SizedBox(height: 8),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 280),
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.topCenter,
+            child: Column(
+              children: [
+                for (var i = 0; i < rows.length; i++) _row(gc, rows[i], i, i < rows.length - 1 || hidden > 0),
+              ],
+            ),
+          ),
+          if (prs.length > _shown)
+            Semantics(
+              button: true,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => setState(() => _all = !_all),
+                child: SizedBox(
+                  height: 44,
+                  child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                    if (!_all)
+                      Text('+$hidden',
+                          style: AppTheme.f(12.5, weight: FontWeight.w700, color: gc.textSecondary)),
+                    const SizedBox(width: 6),
+                    AnimatedRotation(
+                      turns: _all ? 0.5 : 0,
+                      duration: const Duration(milliseconds: 240),
+                      child: Icon(PhosphorIconsBold.caretDown, size: 13, color: gc.textSecondary),
+                    ),
+                  ]),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _row(GymColors gc, ({String id, String name, double topWeight, double oneRm}) pr, int rank, bool border) {
+    final medal = rank < 3 ? [gc.brass, gc.textSecondary, gc.accent][rank] : null;
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 11),
+      decoration: BoxDecoration(
+        border: border ? Border(bottom: BorderSide(color: gc.border.withValues(alpha: 0.6))) : null,
+      ),
+      child: Row(
+        children: [
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              _PrThumb(id: pr.id),
+              if (medal != null)
+                Positioned(
+                  right: -4,
+                  top: -4,
+                  child: Container(
+                    width: 18,
+                    height: 18,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: medal,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: gc.bgRaised, width: 2),
+                    ),
+                    child: Text('${rank + 1}', style: AppTheme.f(9, weight: FontWeight.w800, color: gc.bgRaised)),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(width: 13),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(t.catalogName(pr.id, pr.name),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTheme.s(14, weight: FontWeight.w600, color: gc.text, height: 1.25)),
+                const SizedBox(height: 3),
+                Text(t.oneRmEst(fit.weightLabel(pr.oneRm)),
+                    style: AppTheme.s(11.5, weight: FontWeight.w500, color: gc.textTertiary)),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(fit.weightLabel(pr.topWeight), style: AppTheme.d(19, weight: FontWeight.w800, color: gc.text)),
+        ],
+      ),
+    );
+  }
+}
+
+void showDaySheet(BuildContext context, DateTime date) => showAppSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _DaySheet(date: date),
+    );
 
 class _DaySheet extends StatelessWidget {
   const _DaySheet({required this.date});
@@ -961,6 +1352,19 @@ class _DaySheet extends StatelessWidget {
               style: AppTheme.s(11, weight: FontWeight.w600, color: gc.textTertiary, letterSpacing: 1),
             ),
           ),
+          Semantics(
+            button: true,
+            label: t.deleteWorkout,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => _confirmDeleteWorkout(context, s),
+              child: SizedBox(
+                width: 40,
+                height: 36,
+                child: Icon(PhosphorIconsRegular.trash, size: 16, color: gc.textTertiary),
+              ),
+            ),
+          ),
           if (!fit.isSessionActive)
             GestureDetector(
               behavior: HitTestBehavior.opaque,
@@ -982,6 +1386,19 @@ class _DaySheet extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _confirmDeleteWorkout(BuildContext context, LoggedSession s) async {
+    final ok = await askConfirm(
+      context,
+      title: t.deleteWorkout,
+      body: t.deleteWorkoutBody,
+      confirmLabel: t.delete,
+      danger: true,
+    );
+    if (!ok) return;
+    fit.deleteSession(s);
+    if (context.mounted && fit.sessionsOn(date).isEmpty) Navigator.of(context).pop();
   }
 
   Future<void> _confirmResume(BuildContext context, LoggedSession s) async {
@@ -1095,8 +1512,6 @@ class _LogBodyweightSheet extends StatefulWidget {
 class _LogBodyweightSheetState extends State<_LogBodyweightSheet> {
   late double _shown = ((fit.toDisplayWeight(widget.start)) * 10).round() / 10;
 
-  void _bump(double d) => setState(() => _shown = ((_shown + d) * 10).round() / 10);
-
   @override
   Widget build(BuildContext context) {
     final gc = context.gc;
@@ -1116,23 +1531,29 @@ class _LogBodyweightSheetState extends State<_LogBodyweightSheet> {
               style: AppTheme.d(14, weight: FontWeight.w600, color: gc.text, letterSpacing: 2)),
           const SizedBox(height: 4),
           Text(t.trackWeight, style: AppTheme.s(13, color: gc.textSecondary)),
-          const SizedBox(height: 22),
+          const SizedBox(height: 18),
           Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
             children: [
-              _round(gc, '–', () => _bump(-0.1)),
-              const SizedBox(width: 22),
-              SizedBox(
-                width: 130,
-                child: Text('${fmt(_shown)} ${fit.units}',
-                    textAlign: TextAlign.center,
-                    style: AppTheme.d(40, weight: FontWeight.w700, color: gc.text)),
-              ),
-              const SizedBox(width: 22),
-              _round(gc, '+', () => _bump(0.1)),
+              RollingText(_shown.toStringAsFixed(1),
+                  style: AppTheme.f(52, weight: FontWeight.w800, color: gc.text, height: 1.1)),
+              const SizedBox(width: 6),
+              Text(fit.units, style: AppTheme.f(18, weight: FontWeight.w700, color: gc.textSecondary)),
             ],
           ),
-          const SizedBox(height: 22),
+          const SizedBox(height: 16),
+          RulerPicker(
+            value: _shown,
+            min: fit.isLb ? 60 : 25,
+            max: fit.isLb ? 660 : 300,
+            step: 0.1,
+            majorEvery: 10,
+            label: (v) => '${v.round()}',
+            onChanged: (v) => setState(() => _shown = v),
+          ),
+          const SizedBox(height: 18),
           PrimaryButton(
             label: t.save,
             onTap: () {
@@ -1145,23 +1566,11 @@ class _LogBodyweightSheetState extends State<_LogBodyweightSheet> {
     );
   }
 
-  Widget _round(GymColors gc, String glyph, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 52,
-        height: 52,
-        decoration: BoxDecoration(color: gc.bgRaised2, shape: BoxShape.circle),
-        alignment: Alignment.center,
-        child: Text(glyph, style: TextStyle(color: gc.text, fontSize: 26, height: 1)),
-      ),
-    );
-  }
 }
 
 void showEditLoggedSheet(BuildContext context, LoggedSession s, LoggedExercise e) {
   final gc = context.gc;
-  showModalBottomSheet<void>(
+  showAppSheet<void>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
@@ -1294,7 +1703,7 @@ Widget _editSetRow(GymColors gc, LoggedSession s, LoggedExercise e, int i, bool 
 }
 
 void showHeatToneSheet(BuildContext context) {
-  showModalBottomSheet<void>(
+  showAppSheet<void>(
     context: context,
     backgroundColor: Colors.transparent,
     builder: (_) => const _HeatToneSheet(),
@@ -1364,4 +1773,57 @@ class _HeatToneSheetState extends State<_HeatToneSheet> {
       ),
     );
   }
+}
+
+class _TrackPainter extends CustomPainter {
+  _TrackPainter(this.spots, this.color, this.rail, this.bg, {this.open = false});
+  final List<double> spots;
+  final Color color;
+  final Color rail;
+  final Color bg;
+  final bool open;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final y = size.height / 2;
+    final line = Paint()
+      ..color = rail
+      ..strokeWidth = 2
+      ..strokeCap = StrokeCap.round;
+    if (open) {
+      for (var x = 0.0; x < size.width; x += 8) {
+        canvas.drawLine(Offset(x, y), Offset(math.min(x + 4, size.width), y), line);
+      }
+      canvas.drawCircle(Offset(5, y), 5, Paint()..color = color);
+      return;
+    }
+    canvas.drawLine(Offset(0, y), Offset(size.width, y), line);
+    const inset = 5.0;
+    final w = size.width - inset * 2;
+    canvas.drawLine(
+      Offset(inset, y),
+      Offset(inset + w, y),
+      Paint()
+        ..shader = LinearGradient(colors: [color.withValues(alpha: 0.25), color])
+            .createShader(Rect.fromLTWH(0, 0, size.width, size.height))
+        ..strokeWidth = 2
+        ..strokeCap = StrokeCap.round,
+    );
+    for (final s in spots) {
+      final c = Offset(inset + w * s, y);
+      final edge = s <= 0.001 || s >= 0.999;
+      canvas.drawCircle(c, edge ? 5 : 3.5, Paint()..color = bg);
+      canvas.drawCircle(
+          c,
+          edge ? 5 : 3.5,
+          Paint()
+            ..color = edge ? color : color.withValues(alpha: 0.7)
+            ..style = edge ? PaintingStyle.fill : PaintingStyle.stroke
+            ..strokeWidth = 2);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_TrackPainter o) =>
+      o.spots != spots || o.color != color || o.rail != rail || o.open != open;
 }

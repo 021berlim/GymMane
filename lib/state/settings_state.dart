@@ -3,8 +3,22 @@ part of 'fit_state.dart';
 const String kBgPhotoId = 'bg';
 
 mixin SettingsState on FitCore, ToolsState, LibraryState {
-  bool dark = true;
-  ThemeMode get themeMode => dark ? ThemeMode.dark : ThemeMode.light;
+  String themePref = 'dark';
+
+  bool get dark => themePref == 'system'
+      ? PlatformDispatcher.instance.platformBrightness == Brightness.dark
+      : themePref == 'dark';
+
+  set dark(bool on) => themePref = on ? 'dark' : 'light';
+
+  ThemeMode get themeMode => switch (themePref) {
+        'system' => ThemeMode.system,
+        'light' => ThemeMode.light,
+        _ => ThemeMode.dark,
+      };
+
+  String demoSize = 'large';
+  String alarmStyle = 'quiet';
   int restSeconds = 90;
   String? alarmSound;
   String? alarmSoundName;
@@ -15,7 +29,10 @@ mixin SettingsState on FitCore, ToolsState, LibraryState {
   double bgDim = 0.55;
   bool showFocus = true;
   bool autoAdvance = true;
+  bool keepScreenOn = true;
+  bool startCountdown = true;
   bool logRpe = false;
+  String effortScale = 'rpe';
   int? trainReminderMin;
   bool smartReminder = false;
   bool onboarded = false;
@@ -23,34 +40,46 @@ mixin SettingsState on FitCore, ToolsState, LibraryState {
   int? alarmAskedAt;
   String language = 'en';
 
-  Locale get locale => Locale(language);
+  Locale get locale => localeOf(language);
 
   void _adoptDeviceLanguage() =>
-      _applyLanguage(PlatformDispatcher.instance.locale.languageCode);
+      _applyLanguage(PlatformDispatcher.instance.locale.toLanguageTag());
 
   void _applyLanguage(String code) {
     setAppLanguage(code);
     language = appLanguage;
   }
 
-  void toggleTheme() {
-    dark = !dark;
+  void setThemePref(String pref) {
+    if (!const ['system', 'dark', 'light'].contains(pref)) return;
+    themePref = pref;
     _persist();
     _refreshWidgets();
     notifyListeners();
   }
 
-  void setThemeDark() {
-    dark = true;
-    _persist();
+  void setThemeDark() => setThemePref('dark');
+
+  void setThemeLight() => setThemePref('light');
+
+  void systemBrightnessChanged() {
+    if (themePref != 'system') return;
     _refreshWidgets();
     notifyListeners();
   }
 
-  void setThemeLight() {
-    dark = false;
+  void setDemoSize(String size) {
+    if (!const ['large', 'small', 'off'].contains(size)) return;
+    demoSize = size;
     _persist();
-    _refreshWidgets();
+    notifyListeners();
+  }
+
+  void setAlarmStyle(String style) {
+    if (!const ['loud', 'quiet', 'vibrate'].contains(style)) return;
+    alarmStyle = style;
+    RestAlarm.instance.style = style;
+    _persist();
     notifyListeners();
   }
 
@@ -187,7 +216,8 @@ mixin SettingsState on FitCore, ToolsState, LibraryState {
     notifyListeners();
   }
 
-  int restFor(String exerciseId) => exerciseRest[exerciseId] ?? restSeconds;
+  int restFor(String exerciseId) =>
+      exerciseRest[exerciseId] ?? (modeOf(exerciseId) == 'cardio' ? 0 : restSeconds);
 
   bool hasCustomRest(String exerciseId) => exerciseRest.containsKey(exerciseId);
 
@@ -246,8 +276,35 @@ mixin SettingsState on FitCore, ToolsState, LibraryState {
     notifyListeners();
   }
 
+  String get effortMode => logRpe ? effortScale : '';
+
+  void setEffortMode(String mode) {
+    logRpe = mode.isNotEmpty;
+    if (logRpe) effortScale = mode;
+    _persist();
+    notifyListeners();
+  }
+
+  bool get usesRir => effortScale == 'rir';
+
+  String effortLabel(double rpe) => usesRir ? 'RIR ${fmt(10 - rpe)}' : 'RPE ${fmt(rpe)}';
+
+  String effortTag(double rpe) => usesRir ? 'R${fmt(10 - rpe)}' : '@${fmt(rpe)}';
+
   void toggleAutoAdvance() {
     autoAdvance = !autoAdvance;
+    _persist();
+    notifyListeners();
+  }
+
+  void toggleStartCountdown() {
+    startCountdown = !startCountdown;
+    _persist();
+    notifyListeners();
+  }
+
+  void toggleKeepScreenOn() {
+    keepScreenOn = !keepScreenOn;
     _persist();
     notifyListeners();
   }

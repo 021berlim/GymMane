@@ -12,6 +12,7 @@ import '../state/fit_state.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/exercise_media.dart';
+import '../widgets/glass.dart';
 import '../widgets/svg_icon.dart';
 import '../widgets/ui_kit.dart';
 
@@ -290,16 +291,19 @@ class _FilterChipData {
   final VoidCallback onTap;
 }
 
-void showCreateExerciseSheet(BuildContext context, {void Function(String id)? onCreated}) {
+void showCreateExerciseSheet(BuildContext context,
+    {void Function(String id)? onCreated, Exercise? editing}) {
   final gc = context.gc;
-  final nameCtrl = TextEditingController();
-  String muscle = kMuscles.first.id;
-  String equipment = kEquipment.first;
-  String difficulty = kDifficulties.first;
+  final nameCtrl = TextEditingController(text: editing?.name ?? '');
+  final stepsCtrl = TextEditingController(text: editing?.steps.join('\n') ?? '');
+  String muscle = editing?.primary ?? kMuscles.first.id;
+  String equipment = editing?.equipment ?? kEquipment.first;
+  String difficulty = editing?.difficulty ?? kDifficulties.first;
+  String mode = editing?.mode ?? '';
   bool advanced = false;
   String? mediaPath;
   bool busy = false;
-  showModalBottomSheet<void>(
+  showAppSheet<void>(
     context: context,
     isScrollControlled: true,
     backgroundColor: gc.bgRaised,
@@ -324,12 +328,12 @@ void showCreateExerciseSheet(BuildContext context, {void Function(String id)? on
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(titleCase(t.newExercise),
+                  Text(titleCase(editing == null ? t.newExercise : t.editExercise),
                       style: AppTheme.f(19, weight: FontWeight.w800, color: gc.text)),
                   const SizedBox(height: 16),
                   TextField(
                     controller: nameCtrl,
-                    autofocus: true,
+                    autofocus: editing == null,
                     style: AppTheme.f(15, weight: FontWeight.w500, color: gc.text),
                     cursorColor: gc.accent,
                     textCapitalization: TextCapitalization.words,
@@ -388,6 +392,48 @@ void showCreateExerciseSheet(BuildContext context, {void Function(String id)? on
                       ),
                   ]),
                   const SizedBox(height: 16),
+                  _filterLabel(gc, t.exerciseTypeLabel),
+                  const SizedBox(height: 8),
+                  Wrap(spacing: 8, runSpacing: 8, children: [
+                    for (final (id, label) in [
+                      ('', t.typeReps),
+                      ('time', t.typeTime),
+                      ('cardio', t.typeCardio),
+                    ])
+                      Pill(
+                        label: label,
+                        bg: mode == id ? gc.ember : gc.bgRaised2,
+                        fg: mode == id ? gc.onEmber : gc.textSecondary,
+                        onTap: () => setSheet(() => mode = id),
+                        vPad: 7,
+                        fontSize: 12,
+                      ),
+                  ]),
+                  const SizedBox(height: 16),
+                  _filterLabel(gc, t.howToLabel),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: stepsCtrl,
+                    minLines: 3,
+                    maxLines: 8,
+                    keyboardType: TextInputType.multiline,
+                    textCapitalization: TextCapitalization.sentences,
+                    style: AppTheme.f(14, weight: FontWeight.w500, color: gc.text, height: 1.45),
+                    cursorColor: gc.accent,
+                    decoration: InputDecoration(
+                      hintText: t.howToHint,
+                      hintStyle: AppTheme.f(14, weight: FontWeight.w500, color: gc.textTertiary),
+                      filled: true,
+                      fillColor: gc.bgRaised2,
+                      contentPadding: const EdgeInsets.all(14),
+                      enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: gc.border)),
+                      focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: gc.accent)),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  if (editing == null)
                   GestureDetector(
                     behavior: HitTestBehavior.opaque,
                     onTap: () => setSheet(() => advanced = !advanced),
@@ -479,12 +525,29 @@ void showCreateExerciseSheet(BuildContext context, {void Function(String id)? on
                   ],
                   const SizedBox(height: 20),
                   PrimaryButton(
-                    label: t.addExercise,
+                    label: editing == null ? t.addExercise : t.saveChanges,
                     onTap: () async {
                       if (busy || nameCtrl.text.trim().isEmpty) return;
                       busy = true;
+                      final steps = stepsCtrl.text.split('\n');
+                      if (editing != null) {
+                        fit.updateCustomExercise(editing.id,
+                            name: nameCtrl.text,
+                            primary: muscle,
+                            equipment: equipment,
+                            difficulty: difficulty,
+                            steps: steps,
+                            mode: mode);
+                        Navigator.pop(sheetCtx);
+                        return;
+                      }
                       final id = fit.addCustomExercise(
-                          name: nameCtrl.text, primary: muscle, equipment: equipment, difficulty: difficulty);
+                          name: nameCtrl.text,
+                          primary: muscle,
+                          equipment: equipment,
+                          difficulty: difficulty,
+                          steps: steps,
+                          mode: mode);
                       if (mediaPath != null) {
                         await fit.attachExerciseMedia(id, mediaPath!);
                       }
@@ -515,7 +578,7 @@ void _clearFilters(VoidCallback? onClear) {
 
 void showExerciseFilters(BuildContext context, {VoidCallback? onClear}) {
   final gc = context.gc;
-  showModalBottomSheet<void>(
+  showAppSheet<void>(
     context: context,
     backgroundColor: Colors.transparent,
     isScrollControlled: true,

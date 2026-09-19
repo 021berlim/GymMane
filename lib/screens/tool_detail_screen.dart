@@ -5,6 +5,7 @@ import '../state/fit_state.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/dialogs.dart';
+import '../widgets/glass.dart';
 import '../widgets/ui_kit.dart';
 
 class ToolDetailScreen extends StatelessWidget {
@@ -19,6 +20,7 @@ class ToolDetailScreen extends StatelessWidget {
     return SafeArea(
       bottom: false,
       child: SingleChildScrollView(
+        clipBehavior: Clip.none,
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -44,11 +46,38 @@ class ToolDetailScreen extends StatelessWidget {
               ]),
             ),
             const SizedBox(height: 18),
-            ..._inputs(context, gc, id),
+            ..._grouped(_inputs(context, gc, id)),
           ],
         ),
       ),
     );
+  }
+
+  List<Widget> _grouped(List<Widget> items) {
+    final out = <Widget>[];
+    final run = <ToolRow>[];
+    void add(Widget w) {
+      if (out.isNotEmpty) out.add(const SizedBox(height: 10));
+      out.add(w);
+    }
+
+    void flush() {
+      if (run.isEmpty) return;
+      add(ToolGroup([...run]));
+      run.clear();
+    }
+
+    for (final w in items) {
+      if (w is SizedBox) continue;
+      if (w is ToolRow) {
+        run.add(w);
+        continue;
+      }
+      flush();
+      add(w);
+    }
+    flush();
+    return out;
   }
 
   (String, String, String) _meta(String? id) {
@@ -81,7 +110,7 @@ class ToolDetailScreen extends StatelessWidget {
         ];
       case 'bmi':
         return [
-          ToolRow(label: t.heightLabel, control: StepperControl(value: fit.cmLabel(fit.bmiHeight), onDec: () => fit.bumpBmiHeight(-fit.cmStep), onInc: () => fit.bumpBmiHeight(fit.cmStep), onEdit: () => _editNumber(context, title: t.heightLabel, current: fit.toDisplayCm(fit.bmiHeight), decimal: true, apply: (v) => fit.bumpBmiHeight(fit.fromDisplayCm(v) - fit.bmiHeight)))),
+          ToolRow(label: t.heightLabel, control: StepperControl(value: fit.heightLabel(fit.bmiHeight), onDec: () => fit.bumpBmiHeight(-fit.heightStep), onInc: () => fit.bumpBmiHeight(fit.heightStep), onEdit: () => _editNumber(context, title: t.heightLabel, current: fit.toDisplayCm(fit.bmiHeight), decimal: true, apply: (v) => fit.bumpBmiHeight(fit.fromDisplayCm(v) - fit.bmiHeight)))),
           const SizedBox(height: 10),
           ToolRow(label: t.weightLabel, control: StepperControl(value: '${fit.weightValue(fit.bmiWeight)} ${fit.units}', onDec: () => fit.bumpBmiWeight(-fit.fromDisplayWeight(fit.isLb ? 1 : 0.5)), onInc: () => fit.bumpBmiWeight(fit.fromDisplayWeight(fit.isLb ? 1 : 0.5)), onEdit: () => _editNumber(context, title: t.weightLabel, current: fit.toDisplayWeight(fit.bmiWeight), decimal: true, apply: (v) => fit.bumpBmiWeight(fit.fromDisplayWeight(v) - fit.bmiWeight)))),
         ];
@@ -97,7 +126,7 @@ class ToolDetailScreen extends StatelessWidget {
           const SizedBox(height: 10),
           ToolRow(label: t.ageLabel, control: StepperControl(value: '${fit.calAge}', minWidth: 40, onDec: () => fit.bumpCalAge(-1), onInc: () => fit.bumpCalAge(1), onEdit: () => _editNumber(context, title: t.ageLabel, current: fit.calAge.toDouble(), decimal: false, apply: (v) => fit.bumpCalAge(v.round() - fit.calAge)))),
           const SizedBox(height: 10),
-          ToolRow(label: t.heightLabel, control: StepperControl(value: fit.cmLabel(fit.calHeight), onDec: () => fit.bumpCalHeight(-fit.cmStep), onInc: () => fit.bumpCalHeight(fit.cmStep), onEdit: () => _editNumber(context, title: t.heightLabel, current: fit.toDisplayCm(fit.calHeight), decimal: true, apply: (v) => fit.bumpCalHeight(fit.fromDisplayCm(v) - fit.calHeight)))),
+          ToolRow(label: t.heightLabel, control: StepperControl(value: fit.heightLabel(fit.calHeight), onDec: () => fit.bumpCalHeight(-fit.heightStep), onInc: () => fit.bumpCalHeight(fit.heightStep), onEdit: () => _editNumber(context, title: t.heightLabel, current: fit.toDisplayCm(fit.calHeight), decimal: true, apply: (v) => fit.bumpCalHeight(fit.fromDisplayCm(v) - fit.calHeight)))),
           const SizedBox(height: 10),
           ToolRow(label: t.weightLabel, control: StepperControl(value: '${fit.weightValue(fit.calWeight)} ${fit.units}', onDec: () => fit.bumpCalWeight(-fit.fromDisplayWeight(fit.isLb ? 1 : 0.5)), onInc: () => fit.bumpCalWeight(fit.fromDisplayWeight(fit.isLb ? 1 : 0.5)), onEdit: () => _editNumber(context, title: t.weightLabel, current: fit.toDisplayWeight(fit.calWeight), decimal: true, apply: (v) => fit.bumpCalWeight(fit.fromDisplayWeight(v) - fit.calWeight)))),
           const SizedBox(height: 10),
@@ -107,7 +136,7 @@ class ToolDetailScreen extends StatelessWidget {
         ];
       case 'bf':
         return [
-          ToolRow(label: t.heightLabel, control: StepperControl(value: fit.cmLabel(fit.bfHeight), onDec: () => fit.bumpBfHeight(-fit.cmStep), onInc: () => fit.bumpBfHeight(fit.cmStep), onEdit: () => _editNumber(context, title: t.heightLabel, current: fit.toDisplayCm(fit.bfHeight), decimal: true, apply: (v) => fit.bumpBfHeight(fit.fromDisplayCm(v) - fit.bfHeight)))),
+          ToolRow(label: t.heightLabel, control: StepperControl(value: fit.heightLabel(fit.bfHeight), onDec: () => fit.bumpBfHeight(-fit.heightStep), onInc: () => fit.bumpBfHeight(fit.heightStep), onEdit: () => _editNumber(context, title: t.heightLabel, current: fit.toDisplayCm(fit.bfHeight), decimal: true, apply: (v) => fit.bumpBfHeight(fit.fromDisplayCm(v) - fit.bfHeight)))),
           const SizedBox(height: 10),
           ToolRow(label: t.neck, control: StepperControl(value: fit.cmLabel(fit.bfNeck), onDec: () => fit.bumpBfNeck(-fit.girthStep), onInc: () => fit.bumpBfNeck(fit.girthStep), onEdit: () => _editNumber(context, title: t.neck, current: fit.toDisplayCm(fit.bfNeck), decimal: true, apply: (v) => fit.bumpBfNeck(fit.fromDisplayCm(v) - fit.bfNeck)))),
           const SizedBox(height: 10),
@@ -160,7 +189,8 @@ class ToolDetailScreen extends StatelessWidget {
     }
 
     return SoftCard(
-      radius: 14,
+      radius: 20,
+      borderColor: Colors.transparent,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,7 +211,8 @@ class ToolDetailScreen extends StatelessWidget {
   Widget _macros(GymColors gc) {
     Widget card(String label, String value) => Expanded(
           child: SoftCard(
-            radius: 14,
+            radius: 20,
+            borderColor: Colors.transparent,
             padding: const EdgeInsets.all(12),
             child: Column(children: [
               Text(label, style: AppTheme.f(10, weight: FontWeight.w600, color: gc.textSecondary)),
@@ -218,7 +249,8 @@ class ToolDetailScreen extends StatelessWidget {
 
     final bars = fit.barOptions;
     return SoftCard(
-      radius: 14,
+      radius: 20,
+      borderColor: Colors.transparent,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -241,7 +273,8 @@ class ToolDetailScreen extends StatelessWidget {
     final target = fit.toDisplayWeight(fit.plateTarget);
     final loadable = fit.loadableTotal(target, fit.plateBarDisplay);
     return SoftCard(
-      radius: 14,
+      radius: 20,
+      borderColor: Colors.transparent,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -273,7 +306,8 @@ class ToolDetailScreen extends StatelessWidget {
   Widget _warmupCard(GymColors gc) {
     final sets = fit.warmupSets;
     return SoftCard(
-      radius: 14,
+      radius: 20,
+      borderColor: Colors.transparent,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Column(
         children: [
@@ -300,7 +334,7 @@ class ToolDetailScreen extends StatelessWidget {
 void showPlateSheet(BuildContext context, double displayTarget) {
   final gc = context.gc;
   var bar = fit.defaultBar;
-  showModalBottomSheet<void>(
+  showAppSheet<void>(
     context: context,
     backgroundColor: Colors.transparent,
     builder: (sheet) => StatefulBuilder(
@@ -318,10 +352,8 @@ void showPlateSheet(BuildContext context, double displayTarget) {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SheetHandle(),
-              const SizedBox(height: 18),
-              Text(t.toolTitle('plate'),
-                  textAlign: TextAlign.center,
-                  style: AppTheme.f(14, weight: FontWeight.w700, color: gc.text, letterSpacing: 0.4)),
+              const SizedBox(height: 16),
+              SheetTitle(t.toolTitle('plate')),
               const SizedBox(height: 4),
               Text('${fmt(displayTarget)} ${fit.units}',
                   textAlign: TextAlign.center,

@@ -4,10 +4,10 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
-import '../theme/app_theme.dart';
+import 'glass.dart';
 import 'ui_kit.dart';
 
-Future<ImageSource?> pickPhotoSource(BuildContext context) => showModalBottomSheet<ImageSource>(
+Future<ImageSource?> pickPhotoSource(BuildContext context) => showAppSheet<ImageSource>(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (_) => const PhotoSourceSheet(),
@@ -23,35 +23,21 @@ class PhotoSourceSheet extends StatelessWidget {
       padding: sheetPad(context),
       decoration: BoxDecoration(
         color: gc.bgRaised,
-        border: Border.all(color: gc.border),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const SheetHandle(),
           const SizedBox(height: 18),
-          _option(context, PhosphorIconsRegular.camera, t.takePhoto, ImageSource.camera),
-          const SizedBox(height: 10),
-          _option(context, PhosphorIconsRegular.image, t.chooseGallery, ImageSource.gallery),
+          OptionGroup([
+            OptionItem(t.takePhoto,
+                icon: PhosphorIconsRegular.camera, onTap: () => Navigator.of(context).pop(ImageSource.camera)),
+            OptionItem(t.chooseGallery,
+                icon: PhosphorIconsRegular.image, onTap: () => Navigator.of(context).pop(ImageSource.gallery)),
+          ]),
         ],
-      ),
-    );
-  }
-
-  Widget _option(BuildContext context, IconData icon, String label, ImageSource source) {
-    final gc = context.gc;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => Navigator.of(context).pop(source),
-      child: SoftCard(
-        radius: 16,
-        padding: const EdgeInsets.all(16),
-        child: Row(children: [
-          Icon(icon, size: 20, color: gc.textSecondary),
-          const SizedBox(width: 14),
-          Expanded(child: Text(label, style: AppTheme.f(14, weight: FontWeight.w600, color: gc.text))),
-        ]),
       ),
     );
   }

@@ -1,9 +1,11 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import 'rolling_text.dart';
 import 'svg_icon.dart';
 
 class SoftCard extends StatelessWidget {
@@ -148,6 +150,44 @@ class TinySwitch extends StatelessWidget {
   }
 }
 
+class Pressable extends StatefulWidget {
+  const Pressable({super.key, required this.child, required this.onTap, this.scale = 0.965, this.onLongPress});
+
+  final Widget child;
+  final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
+  final double scale;
+
+  @override
+  State<Pressable> createState() => _PressableState();
+}
+
+class _PressableState extends State<Pressable> {
+  bool _down = false;
+
+  void _set(bool v) {
+    if (_down != v && mounted) setState(() => _down = v);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: widget.onTap,
+      onLongPress: widget.onLongPress,
+      onTapDown: widget.onTap == null ? null : (_) => _set(true),
+      onTapUp: (_) => _set(false),
+      onTapCancel: () => _set(false),
+      child: AnimatedScale(
+        scale: _down ? widget.scale : 1,
+        duration: Duration(milliseconds: _down ? 90 : 260),
+        curve: _down ? Curves.easeOut : Curves.easeOutBack,
+        child: widget.child,
+      ),
+    );
+  }
+}
+
 class GhostButton extends StatelessWidget {
   const GhostButton({super.key, required this.label, required this.icon, required this.onTap});
 
@@ -158,8 +198,7 @@ class GhostButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final gc = context.gc;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
+    return Pressable(
       onTap: onTap,
       child: Container(
         height: 46,
@@ -203,6 +242,139 @@ class SheetHandle extends StatelessWidget {
       );
 }
 
+class SheetTitle extends StatelessWidget {
+  const SheetTitle(this.text, {super.key, this.subtitle});
+
+  final String text;
+  final String? subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    final gc = context.gc;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(text, textAlign: TextAlign.center, style: AppTheme.f(17, weight: FontWeight.w700, color: gc.text)),
+        if (subtitle != null) ...[
+          const SizedBox(height: 4),
+          Text(subtitle!,
+              textAlign: TextAlign.center,
+              style: AppTheme.f(12, weight: FontWeight.w500, color: gc.textSecondary, height: 1.35)),
+        ],
+      ],
+    );
+  }
+}
+
+class OptionItem {
+  const OptionItem(
+    this.label, {
+    required this.onTap,
+    this.icon,
+    this.leading,
+    this.detail,
+    this.selected = false,
+    this.danger = false,
+  });
+
+  final String label;
+  final VoidCallback onTap;
+  final IconData? icon;
+  final Widget? leading;
+  final String? detail;
+  final bool selected;
+  final bool danger;
+}
+
+class OptionGroup extends StatelessWidget {
+  const OptionGroup(this.items, {super.key, this.scroll = false});
+
+  final List<OptionItem> items;
+  final bool scroll;
+
+  @override
+  Widget build(BuildContext context) {
+    final gc = context.gc;
+    final divider = Divider(height: 1, thickness: 1, indent: 16, endIndent: 16, color: gc.border);
+    final Widget body = scroll
+        ? ListView.separated(
+            shrinkWrap: true,
+            padding: EdgeInsets.zero,
+            itemCount: items.length,
+            separatorBuilder: (_, _) => divider,
+            itemBuilder: (_, i) => _OptionRow(items[i]),
+          )
+        : Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (var i = 0; i < items.length; i++) ...[
+                if (i > 0) divider,
+                _OptionRow(items[i]),
+              ],
+            ],
+          );
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(18),
+      child: ColoredBox(color: gc.bgRaised2, child: body),
+    );
+  }
+}
+
+class _OptionRow extends StatelessWidget {
+  const _OptionRow(this.o);
+
+  final OptionItem o;
+
+  @override
+  Widget build(BuildContext context) {
+    final gc = context.gc;
+    final tone = o.danger ? gc.danger : (o.selected ? gc.ember : gc.text);
+    return Semantics(
+      button: true,
+      selected: o.selected,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: o.onTap,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 50),
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: o.detail == null ? 0 : 11),
+            child: Row(children: [
+              if (o.leading != null) ...[
+                o.leading!,
+                const SizedBox(width: 12),
+              ] else if (o.icon != null) ...[
+                Icon(o.icon, size: 19, color: o.danger ? gc.danger : (o.selected ? gc.ember : gc.textSecondary)),
+                const SizedBox(width: 14),
+              ],
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(o.label,
+                        style: AppTheme.f(14.5,
+                            weight: o.selected ? FontWeight.w800 : FontWeight.w600, color: tone)),
+                    if (o.detail != null) ...[
+                      const SizedBox(height: 2),
+                      Text(o.detail!,
+                          style: AppTheme.f(12, weight: FontWeight.w500, color: gc.textSecondary, height: 1.3)),
+                    ],
+                  ],
+                ),
+              ),
+              if (o.selected) ...[
+                const SizedBox(width: 10),
+                Icon(PhosphorIconsFill.checkCircle, size: 18, color: gc.ember),
+              ],
+            ]),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class RoundAction extends StatelessWidget {
   const RoundAction({
     super.key,
@@ -222,9 +394,9 @@ class RoundAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final gc = context.gc;
-    final button = GestureDetector(
-      behavior: HitTestBehavior.opaque,
+    final button = Pressable(
       onTap: onTap,
+      scale: 0.9,
       child: Container(
         width: size,
         height: size,
@@ -298,6 +470,11 @@ class ScreenHeader extends StatelessWidget {
   }
 }
 
+String sentenceCase(String s) {
+  if (s.isEmpty || s != s.toUpperCase() || s == s.toLowerCase()) return s;
+  return s[0] + s.substring(1).toLowerCase();
+}
+
 String titleCase(String s) {
   if (s.isEmpty || s != s.toUpperCase()) return s;
   if (s.length <= 4 && !s.contains(' ')) return s;
@@ -369,7 +546,7 @@ class StepperControl extends StatelessWidget {
     Widget label = Container(
       constraints: BoxConstraints(minWidth: minWidth),
       alignment: Alignment.center,
-      child: Text(value, style: AppTheme.f(fontSize, weight: FontWeight.w700, color: gc.text)),
+      child: RollingText(value, style: AppTheme.f(fontSize, weight: FontWeight.w700, color: gc.text)),
     );
     if (onEdit != null) {
       label = GestureDetector(behavior: HitTestBehavior.opaque, onTap: onEdit, child: label);
@@ -393,16 +570,51 @@ class ToolRow extends StatelessWidget {
   final Widget control;
   @override
   Widget build(BuildContext context) {
-    final gc = context.gc;
     return SoftCard(
-      radius: 14,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Flexible(child: Text(label, style: AppTheme.f(13, weight: FontWeight.w600, color: gc.textSecondary))),
-          control,
-        ],
+      radius: 20,
+      borderColor: Colors.transparent,
+      padding: EdgeInsets.zero,
+      child: _line(context),
+    );
+  }
+
+  Widget _line(BuildContext context) {
+    final gc = context.gc;
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 56),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Flexible(child: Text(sentenceCase(label), style: AppTheme.f(14.5, weight: FontWeight.w500, color: gc.text))),
+            const SizedBox(width: 12),
+            control,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class ToolGroup extends StatelessWidget {
+  const ToolGroup(this.rows, {super.key});
+
+  final List<ToolRow> rows;
+
+  @override
+  Widget build(BuildContext context) {
+    final gc = context.gc;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: ColoredBox(
+        color: gc.bgRaised,
+        child: Column(children: [
+          for (var i = 0; i < rows.length; i++) ...[
+            if (i > 0) Divider(height: 1, thickness: 1, indent: 16, endIndent: 16, color: gc.border),
+            rows[i]._line(context),
+          ],
+        ]),
       ),
     );
   }
@@ -516,8 +728,9 @@ class Pill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return Pressable(
       onTap: onTap,
+      scale: 0.94,
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: hPad, vertical: vPad),
         decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(100)),
@@ -549,7 +762,7 @@ class PrimaryButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final gc = context.gc;
     final f = fg ?? gc.onEmber;
-    return GestureDetector(
+    return Pressable(
       onTap: onTap,
       child: Container(
         width: double.infinity,
@@ -559,7 +772,10 @@ class PrimaryButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            if (icon != null) ...[SvgPathIcon(icon!, size: 18, color: f), const SizedBox(width: 10)],
+            if (icon != null) ...[
+              SvgPathIcon(icon!, size: 15, color: f),
+              const SizedBox(width: 9),
+            ],
             Flexible(
               child: FittedBox(
                 fit: BoxFit.scaleDown,

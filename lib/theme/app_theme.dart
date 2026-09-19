@@ -5,9 +5,9 @@ import 'app_colors.dart';
 class AppTheme {
   AppTheme._();
 
-  static const String disp = 'Oswald';
-  static const String sans = 'IBM Plex Sans';
-  static const String round = 'Figtree';
+  static const String disp = 'Nunito';
+  static const String sans = 'Nunito';
+  static const String round = 'Nunito';
 
   static ThemeData get dark => _build(Brightness.dark, GymColors.dark);
   static ThemeData get light => _build(Brightness.light, GymColors.light);

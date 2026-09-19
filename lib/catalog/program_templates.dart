@@ -96,6 +96,69 @@ const List<ProgramTemplate> kProgramTemplates = [
       ('Standing Calf Raise', 4),
     ], weekday: 5),
   ]),
+  ProgramTemplate('abcd', 'ABCD Split', [
+    ProgramDay('A · Chest & Triceps', [
+      ('Barbell Bench Press', 4),
+      ('Incline Dumbbell Press', 3),
+      ('Cable Fly', 3),
+      ('Triceps Pushdown', 3),
+      ('Skull Crushers', 3),
+    ], weekday: 1),
+    ProgramDay('B · Back & Biceps', [
+      ('Pull Up', 4),
+      ('Barbell Row', 4),
+      ('Lat Pulldown', 3),
+      ('Barbell Curl', 3),
+      ('Hammer Curl', 3),
+    ], weekday: 2),
+    ProgramDay('C · Legs', [
+      ('Barbell Squat', 4),
+      ('Romanian Deadlift', 3),
+      ('Leg Press', 3),
+      ('Leg Curl', 3),
+      ('Standing Calf Raise', 4),
+    ], weekday: 4),
+    ProgramDay('D · Shoulders & Abs', [
+      ('Overhead Press', 4),
+      ('Lateral Raise', 3),
+      ('Face Pull', 3),
+      ('Hanging Leg Raise', 3),
+      ('Plank', 3),
+    ], weekday: 5),
+  ]),
+  ProgramTemplate('abcde', 'ABCDE Split', [
+    ProgramDay('A · Chest', [
+      ('Barbell Bench Press', 4),
+      ('Incline Dumbbell Press', 4),
+      ('Cable Fly', 3),
+      ('Triceps Dip', 3),
+    ], weekday: 1),
+    ProgramDay('B · Back', [
+      ('Deadlift', 3),
+      ('Pull Up', 4),
+      ('Barbell Row', 4),
+      ('Seated Cable Row', 3),
+    ], weekday: 2),
+    ProgramDay('C · Legs', [
+      ('Barbell Squat', 4),
+      ('Leg Press', 4),
+      ('Leg Extension', 3),
+      ('Leg Curl', 3),
+      ('Standing Calf Raise', 4),
+    ], weekday: 3),
+    ProgramDay('D · Shoulders', [
+      ('Overhead Press', 4),
+      ('Dumbbell Standing Overhead Press', 3),
+      ('Lateral Raise', 4),
+      ('Face Pull', 3),
+    ], weekday: 4),
+    ProgramDay('E · Arms', [
+      ('Barbell Curl', 4),
+      ('Skull Crushers', 4),
+      ('Hammer Curl', 3),
+      ('Triceps Pushdown', 3),
+    ], weekday: 5),
+  ]),
   ProgramTemplate('stronglifts', 'StrongLifts 5×5', [
     ProgramDay('Workout A', [
       ('Barbell Squat', 5),

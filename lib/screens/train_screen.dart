@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
+import '../catalog/exercise_catalog.dart';
 import '../l10n/l10n.dart';
 import '../models/exercise.dart';
 import '../state/fit_state.dart';
@@ -8,7 +10,9 @@ import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/body_map.dart';
 import '../widgets/exercise_media.dart';
+import '../widgets/liquid_notch.dart';
 import '../widgets/svg_icon.dart';
+import '../widgets/glass.dart';
 import '../widgets/ui_kit.dart';
 import 'exercises_screen.dart' show showCreateExerciseSheet;
 
@@ -22,6 +26,7 @@ class TrainScreen extends StatefulWidget {
 class _TrainScreenState extends State<TrainScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
   String _q = '';
+  String? _gear;
 
   void _clearSearch() {
     _searchCtrl.clear();
@@ -54,12 +59,21 @@ class _TrainScreenState extends State<TrainScreen> {
             ),
           ),
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-              child: review ? _review(context, gc) : _select(context, gc),
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.fromLTRB(20, 20, 20, review ? 112 : 12),
+                    child: review ? _review(context, gc) : _select(context, gc),
+                  ),
+                ),
+                if (review) ...[
+                  const Positioned(left: 0, right: 0, bottom: 0, child: EdgeBlur(top: false, height: 112, sigma: 11, shade: 0.35)),
+                  Positioned(left: 0, right: 0, bottom: 0, child: _startBar(context, gc)),
+                ],
+              ],
             ),
           ),
-          if (review) _startBar(context, gc),
         ],
       ),
     );
@@ -67,7 +81,7 @@ class _TrainScreenState extends State<TrainScreen> {
 
   Widget _startBar(BuildContext context, GymColors gc) {
     final n = fit.sessionPicks.length;
-    return Container(
+    return Padding(
       padding: EdgeInsets.fromLTRB(20, 8, 20, 14 + MediaQuery.of(context).padding.bottom),
       child: PrimaryButton(
         label: n == 0 ? t.pickAnExercise : t.startCount(n),
@@ -145,7 +159,15 @@ class _TrainScreenState extends State<TrainScreen> {
   Widget _review(BuildContext context, GymColors gc) {
     final searching = _q.trim().isNotEmpty;
 
-    final exercises = searching ? fit.trainSearchResults(_q) : fit.reviewExercises();
+    final all = searching ? fit.trainSearchResults(_q) : fit.reviewExercises();
+    final gearHere = <String>[
+      for (final e in kFilterEquipment)
+        if (all.any((x) => x.equipment == e)) e,
+    ];
+    final gear = gearHere.contains(_gear) ? _gear : null;
+    final exercises = gear == null ? all : all.where((e) => e.equipment == gear).toList();
+    final seeded = searching ? const <Exercise>[] : exercises.where((e) => fit.pickSeed.contains(e.id)).toList();
+    final others = searching ? exercises : exercises.where((e) => !fit.pickSeed.contains(e.id)).toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -169,20 +191,77 @@ class _TrainScreenState extends State<TrainScreen> {
         ),
         const SizedBox(height: 14),
         _searchRow(context, gc),
-        const SizedBox(height: 14),
-        if (!searching && exercises.isNotEmpty) ...[
-          Text(t.pickedHint(exercises.length),
+        const SizedBox(height: 12),
+        if (gearHere.length > 1) ...[
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(children: [
+              _gearChip(gc, t.allExercisesShort, gear == null, null),
+              for (final e in gearHere) _gearChip(gc, t.equipment(e), gear == e, e),
+            ]),
+          ),
+          const SizedBox(height: 14),
+        ],
+        if (!searching && all.isNotEmpty) ...[
+          Text(t.pickedHint(all.length),
               style: AppTheme.f(12, weight: FontWeight.w500, color: gc.textTertiary)),
           const SizedBox(height: 12),
         ],
         if (exercises.isEmpty)
           _emptyReview(context, gc, searching)
-        else
-          for (final ex in exercises) ...[
-            _pickRow(gc, ex),
+        else ...[
+          if (seeded.isNotEmpty) ...[
+            _sectionLabel(gc, t.suggestedPicks),
+            for (final ex in seeded) ...[
+              _pickRow(context, gc, ex),
+              const SizedBox(height: 10),
+            ],
+            if (others.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              _sectionLabel(gc, t.moreOptions),
+            ],
+          ],
+          for (final ex in others) ...[
+            _pickRow(context, gc, ex),
             const SizedBox(height: 10),
           ],
+        ],
       ],
+    );
+  }
+
+  Widget _sectionLabel(GymColors gc, String label) => Padding(
+        padding: const EdgeInsets.only(bottom: 10, left: 2),
+        child: Text(label.toUpperCase(),
+            style: AppTheme.f(10.5, weight: FontWeight.w700, color: gc.textTertiary, letterSpacing: 1.3)),
+      );
+
+  Widget _gearChip(GymColors gc, String label, bool on, String? value) => Padding(
+        padding: const EdgeInsets.only(right: 8),
+        child: Pill(
+          label: label,
+          bg: on ? gc.ember : gc.bgRaised2,
+          fg: on ? gc.onEmber : gc.textSecondary,
+          onTap: () => setState(() => _gear = value),
+          hPad: 12,
+          vPad: 6,
+          fontSize: 12,
+        ),
+      );
+
+  void _hideFromSuggestions(BuildContext context, Exercise ex) {
+    if (!fit.suggests(ex.id)) return;
+    HapticFeedback.mediumImpact();
+    fit.toggleSuggest(ex.id);
+    showNotchToast(
+      context,
+      t.noLongerSuggested,
+      subtitle: exerciseName(ex),
+      icon: PhosphorIconsFill.eyeSlash,
+      accent: context.gc.warn,
+      action: t.undo,
+      onTap: () => fit.toggleSuggest(ex.id),
+      duration: const Duration(milliseconds: 3200),
     );
   }
 
@@ -225,6 +304,26 @@ class _TrainScreenState extends State<TrainScreen> {
                   ),
                 ),
             ]),
+          ),
+        ),
+        const SizedBox(width: 10),
+        GestureDetector(
+          onTap: () => setState(() => fit.toggleResetPicks()),
+          child: Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: fit.sessionPicks.isNotEmpty ? gc.emberSoft : gc.bgRaised,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: fit.sessionPicks.isNotEmpty ? gc.ember.withValues(alpha: 0.3) : gc.border,
+              ),
+            ),
+            child: Icon(
+              PhosphorIconsRegular.arrowCounterClockwise,
+              size: 20,
+              color: fit.sessionPicks.isNotEmpty ? gc.ember : gc.textTertiary,
+            ),
           ),
         ),
         const SizedBox(width: 10),
@@ -286,11 +385,12 @@ class _TrainScreenState extends State<TrainScreen> {
     );
   }
 
-  Widget _pickRow(GymColors gc, Exercise ex) {
+  Widget _pickRow(BuildContext context, GymColors gc, Exercise ex) {
     final picked = fit.isPicked(ex.id);
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () => fit.togglePick(ex.id),
+      onLongPress: () => _hideFromSuggestions(context, ex),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
         padding: const EdgeInsets.all(14),

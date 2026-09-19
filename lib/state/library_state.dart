@@ -115,6 +115,8 @@ mixin LibraryState on FitCore {
     required String primary,
     required String equipment,
     String difficulty = 'Beginner',
+    List<String> steps = const [],
+    String mode = '',
   }) {
     final id = 'c${DateTime.now().microsecondsSinceEpoch}-${_customSeq++}';
     customExercises.add(Exercise(
@@ -125,16 +127,76 @@ mixin LibraryState on FitCore {
       equipment: equipment,
       difficulty: difficulty,
       art: '',
-      steps: const [],
+      steps: _cleanSteps(steps),
+      mode: kExerciseModeIds.contains(mode) ? mode : '',
     ));
     _persist();
     notifyListeners();
     return id;
   }
 
+  void updateCustomExercise(
+    String id, {
+    required String name,
+    required String primary,
+    required String equipment,
+    required String difficulty,
+    required List<String> steps,
+    required String mode,
+  }) {
+    final i = customExercises.indexWhere((e) => e.id == id);
+    if (i < 0 || name.trim().isEmpty) return;
+    customExercises[i] = customExercises[i].copyWith(
+      name: name.trim(),
+      primary: primary,
+      equipment: equipment,
+      difficulty: difficulty,
+      steps: _cleanSteps(steps),
+      mode: kExerciseModeIds.contains(mode) ? mode : '',
+    );
+    modeOverride.remove(id);
+    _persist();
+    notifyListeners();
+  }
+
+  static final _bullet = RegExp(r'^(\d+[.)]|[-•*])\s*');
+
+  static List<String> _cleanSteps(List<String> raw) => [
+        for (final s in raw.map((s) => s.trim().replaceFirst(_bullet, '')))
+          if (s.isNotEmpty) s,
+      ];
+
+  String modeOf(String id) {
+    final forced = modeOverride[id];
+    if (forced != null) return forced == 'weight' ? '' : forced;
+    for (final e in customExercises) {
+      if (e.id == id) return e.mode;
+    }
+    return kExerciseModes[id] ?? '';
+  }
+
+  bool isCardio(String id) => modeOf(id) == 'cardio';
+
+  bool isTimed(String id) => modeOf(id) == 'time';
+
+  void setExerciseMode(String id, String mode) {
+    final base = customExercises.where((e) => e.id == id).map((e) => e.mode).firstOrNull ??
+        kExerciseModes[id] ??
+        '';
+    final wanted = mode == 'weight' ? '' : mode;
+    if (wanted == base) {
+      modeOverride.remove(id);
+    } else {
+      modeOverride[id] = mode.isEmpty ? 'weight' : mode;
+    }
+    _persist();
+    notifyListeners();
+  }
+
   void deleteCustomExercise(String id) {
     clearExerciseMedia(id);
     customExercises.removeWhere((e) => e.id == id);
+    modeOverride.remove(id);
     for (final r in routines) {
       r.exerciseIds.remove(id);
     }
@@ -192,5 +254,5 @@ mixin LibraryState on FitCore {
     notifyListeners();
   }
 
-  bool isCustom(String id) => id.startsWith('c');
+  bool isCustom(String id) => customExercises.any((e) => e.id == id);
 }

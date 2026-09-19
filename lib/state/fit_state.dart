@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
-import 'dart:typed_data';
 import 'dart:ui' show PlatformDispatcher;
 
 import 'package:app_settings/app_settings.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../catalog/exercise_catalog.dart';
 import '../catalog/program_templates.dart';
@@ -19,6 +19,7 @@ import '../models/profile.dart';
 import '../models/progress_shot.dart';
 import '../models/workout.dart';
 import '../services/alarm_store.dart';
+import '../services/beeper.dart';
 import '../services/exercise_match.dart';
 import '../services/local_store.dart';
 import '../services/media_store.dart';
@@ -54,7 +55,7 @@ class FitState extends FitCore
         profile.name = kDefaultName;
       }
 
-      dark = data['dark'] as bool? ?? true;
+      themePref = _themeFrom(data, fallback: 'dark');
       units = data['units'] as String? ?? 'kg';
 
       _applyLanguage(data['language'] as String? ?? language);
@@ -139,11 +140,32 @@ class FitState extends FitCore
     profile.since = DateTime(first.year, first.month, first.day);
   }
 
+  static String _themeFrom(Map<String, dynamic> data, {required String fallback}) {
+    final pref = data['theme'];
+    if (pref is String && const ['system', 'dark', 'light'].contains(pref)) return pref;
+    final dark = data['dark'];
+    if (dark is bool) return dark ? 'dark' : 'light';
+    return fallback;
+  }
+
   void _loadToggles(Map<String, dynamic> data) {
+    demoSize = data['demo'] as String? ?? 'large';
+    alarmStyle = data['alarmStyle'] as String? ?? 'quiet';
+    RestAlarm.instance.style = alarmStyle;
+    noSuggest
+      ..clear()
+      ..addAll(((data['noSuggest'] as List?) ?? const []).cast<String>());
+    modeOverride
+      ..clear()
+      ..addAll(((data['exMode'] as Map?) ?? const {}).map((k, v) => MapEntry(k as String, v as String))
+        ..removeWhere((_, v) => !const ['weight', 'cardio', 'time'].contains(v)));
     bgDim = (data['bgDim'] as num?)?.toDouble() ?? 0.55;
     showFocus = data['showFocus'] as bool? ?? true;
     autoAdvance = data['autoAdvance'] as bool? ?? true;
+    keepScreenOn = data['keepAwake'] as bool? ?? true;
+    startCountdown = data['countdown'] as bool? ?? true;
     logRpe = data['rpe'] as bool? ?? false;
+    effortScale = data['effort'] == 'rir' ? 'rir' : 'rpe';
     trainReminderMin = (data['trainAt'] as num?)?.toInt();
     smartReminder = data['trainSmart'] as bool? ?? false;
     progressStep
@@ -283,6 +305,7 @@ class FitState extends FitCore
   Map<String, dynamic> toJson() => {
         'profile': profile.toJson(),
         'dark': dark,
+        'theme': themePref,
         'units': units,
         'language': language,
         'rest': restSeconds,
@@ -293,7 +316,14 @@ class FitState extends FitCore
         'bgDim': bgDim,
         'showFocus': showFocus,
         'autoAdvance': autoAdvance,
+        'keepAwake': keepScreenOn,
+        'countdown': startCountdown,
         'rpe': logRpe,
+        'effort': effortScale,
+        'demo': demoSize,
+        'alarmStyle': alarmStyle,
+        'noSuggest': noSuggest.toList(),
+        'exMode': modeOverride,
         'trainAt': trainReminderMin,
         'trainSmart': smartReminder,
         'alarmAskedAt': alarmAskedAt,
@@ -362,6 +392,9 @@ class FitState extends FitCore
     exerciseRest.clear();
     progressStep.clear();
     autoWarmup.clear();
+    noSuggest.clear();
+    modeOverride.clear();
+    demoSize = 'large';
     MediaStore.clearAll();
     favorites.clear();
     sessionPicks.clear();
@@ -369,7 +402,9 @@ class FitState extends FitCore
     profile = Profile();
     showFocus = true;
     autoAdvance = true;
+    startCountdown = true;
     logRpe = false;
+    effortScale = 'rpe';
     trainReminderMin = null;
     smartReminder = false;
     TrainReminder.instance.cancel();
@@ -405,7 +440,7 @@ class FitState extends FitCore
       Map<String, String>? restoredMoments}) {
     _loading = true;
     profile = Profile.fromJson((map['profile'] as Map?)?.cast<String, dynamic>() ?? {});
-    dark = map['dark'] as bool? ?? dark;
+    themePref = _themeFrom(map, fallback: themePref);
     units = map['units'] as String? ?? units;
     _applyLanguage(map['language'] as String? ?? language);
     restSeconds = (map['rest'] as num?)?.toInt() ?? restSeconds;
@@ -547,52 +582,232 @@ class FitState extends FitCore
     return made;
   }
 
+  static const planTemplate = '{\n'
+      '  "program": "Upper Lower",\n'
+      '  "unit": "kg",\n'
+      '  "routines": [\n'
+      '    {\n'
+      '      "name": "Upper A",\n'
+      '      "days": ["Monday", "Thursday"],\n'
+      '      "exercises": [\n'
+      '        {"name": "Barbell Bench Press", "sets": 4, "reps": 8, "weight": 60, "rest": 120,\n'
+      '         "plan": [{"type": "warmup", "reps": 10, "weight": 30}]},\n'
+      '        {"name": "Barbell Bent Over Row", "sets": 4, "reps": 8, "superset": true},\n'
+      '        {"name": "Dumbbell Biceps Curl", "sets": 3, "reps": 12}\n'
+      '      ]\n'
+      '    }\n'
+      '  ]\n'
+      '}';
+
+  static const planWeeksTemplate = '{"program": "12 weeks", "weeks": [\n'
+      '  {"name": "Week 1", "routines": [{"name": "Day A", "exercises": [{"name": "Barbell Full Squat", "sets": 3, "reps": 8}]}]},\n'
+      '  {"name": "Week 2", "routines": [{"name": "Day A", "exercises": [{"name": "Barbell Full Squat", "sets": 4, "reps": 8}]}]}\n'
+      ']}';
+
   String planRequestText() {
     final here = allExercises.where(fitsHere).toList();
     final lines = <String>[
       'GymMane · ${activePlace?.name ?? t.placeAll}',
       t.planIntro,
       t.planFormat,
-      '{"name": "Push", "exercises": [{"name": "Barbell Bench Press", "sets": 3}]}',
+      planTemplate,
+      t.planFormatNotes,
+      planWeeksTemplate,
       '',
     ];
     for (final ex in here) {
       final local = exerciseName(ex);
       final label = local == ex.name ? ex.name : '${ex.name} ($local)';
-      lines.add('$label | ${ex.primary} | ${ex.equipment} | ${ex.difficulty}');
+      final mode = modeOf(ex.id);
+      lines.add('$label | ${ex.primary} | ${ex.equipment} | ${ex.difficulty}${mode.isEmpty ? '' : ' | $mode'}');
     }
     return lines.join('\n');
   }
 
-  ({int added, List<String> missed, bool readable}) importPlan(String raw) {
+  ({int added, List<String> missed, bool readable}) importPlan(String raw, {bool schedule = false}) {
     final plans = parsePlan(raw);
     if (plans.isEmpty) return (added: 0, missed: const [], readable: false);
-    var added = 0;
+    final result = applyPlan(plans, schedule: schedule);
+    return (added: result.added, missed: result.missed, readable: true);
+  }
+
+  Exercise? _planExercise(PlanItem item, {bool create = false}) {
+    final byId = item.id == null ? null : exerciseById(item.id!);
+    if (byId != null && (item.name.isEmpty || !isCustom(byId.id) || byId.name == item.name)) return byId;
+    final byName = matchExerciseByName(item.name);
+    if (byName != null) return byName;
+    if (!create || (item.muscle ?? '').isEmpty) return null;
+    final muscle = kMuscles.any((m) => m.id == item.muscle) ? item.muscle! : 'chest';
+    final gear = kEquipment.contains(item.equipment) ? item.equipment! : 'Other';
+    final level = kDifficulties.contains(item.level) ? item.level! : 'Beginner';
+    final id = addCustomExercise(
+        name: item.name, primary: muscle, equipment: gear, difficulty: level, steps: item.steps, mode: item.mode);
+    return exerciseById(id);
+  }
+
+  ({int routines, int added, List<String> missed}) previewPlan(List<PlanRoutine> plans) {
+    var made = 0, added = 0;
     final missed = <String>[];
     for (final plan in plans) {
-      final ids = <String, int>{};
+      var found = 0;
       for (final item in plan.items) {
-        final ex = matchExerciseByName(item.name);
+        final known = _planExercise(item) != null || (item.muscle ?? '').isNotEmpty;
+        if (known) {
+          found++;
+        } else if (!missed.contains(item.name)) {
+          missed.add(item.name);
+        }
+      }
+      if (found > 0) made++;
+      added += found;
+    }
+    return (routines: made, added: added, missed: missed);
+  }
+
+  bool _sameRoutine(Routine r, String name, List<String> ids) =>
+      r.name.trim().toLowerCase() == name.trim().toLowerCase() &&
+      r.exerciseIds.length == ids.length &&
+      [for (var i = 0; i < ids.length; i++) r.exerciseIds[i] == ids[i]].every((x) => x);
+
+  ({int routines, int added, List<String> missed}) applyPlan(List<PlanRoutine> plans,
+      {bool schedule = false}) {
+    var made = 0, added = 0;
+    final missed = <String>[];
+    for (final plan in plans) {
+      final picked = <(Exercise, PlanItem)>[];
+      for (final item in plan.items) {
+        final ex = _planExercise(item, create: true);
         if (ex == null) {
           if (!missed.contains(item.name)) missed.add(item.name);
           continue;
         }
-        if (ids.containsKey(ex.id)) continue;
-        ids[ex.id] = (item.sets ?? kDefaultRoutineSets).clamp(1, 12);
+        if (picked.any((p) => p.$1.id == ex.id)) continue;
+        picked.add((ex, item));
       }
-      if (ids.isEmpty) continue;
-      final id = createRoutine(plan.name.isEmpty ? t.newRoutineName : plan.name);
-      for (final entry in ids.entries) {
-        toggleRoutineExercise(id, entry.key);
-        bumpRoutineSets(id, entry.key, entry.value - kDefaultRoutineSets);
+      if (picked.isEmpty) continue;
+      final name = plan.name.isEmpty ? t.newRoutineName : plan.name;
+      final ids = [for (final p in picked) p.$1.id];
+      final existing = routines.where((r) => _sameRoutine(r, name, ids) && r.group == plan.group).firstOrNull;
+      final id = existing?.id ?? createRoutine(name);
+      if (existing == null) {
+        setRoutineGroup(id, plan.group);
+        for (final (ex, item) in picked) {
+          toggleRoutineExercise(id, ex.id);
+          final sets = _plannedFrom(item);
+          if (sets.isNotEmpty) {
+            setPlannedSets(id, ex.id, sets);
+          } else if (item.sets != null) {
+            setRoutineSetCount(id, ex.id, item.sets!);
+          }
+          if (item.superset) toggleChain(id, ex.id);
+          final rest = item.restSec;
+          if (rest != null && !hasCustomRest(ex.id)) setExerciseRest(ex.id, rest);
+        }
+        made++;
+        added += picked.length;
       }
-      added += ids.length;
+      if (schedule) {
+        for (final d in plan.days) {
+          weeklyPlan[d] = id;
+        }
+      }
     }
-    if (added > 0) {
+    if (added > 0 || schedule) {
       persistNow();
+      syncTrainReminder();
       notifyListeners();
     }
-    return (added: added, missed: missed, readable: true);
+    return (routines: made, added: added, missed: missed);
+  }
+
+  List<PlannedSet> _plannedFrom(PlanItem item) {
+    final explicit = [
+      for (final p in item.plan)
+        PlannedSet(
+          reps: p.reps ?? item.reps,
+          weightKg: p.weightKg ?? (p.kind == SetKind.warmup.index ? null : item.weightKg),
+          kind: setKindFrom(p.kind),
+          sec: p.sec,
+          km: p.km,
+        ),
+    ];
+    final working = explicit.where((p) => p.kind != SetKind.warmup).length;
+    final simple = item.reps == null && item.weightKg == null;
+    final wanted = item.sets ?? (working > 0 || simple ? working : kDefaultRoutineSets);
+    if (simple && explicit.isEmpty) return const [];
+    return [
+      ...explicit,
+      for (var i = working; i < wanted.clamp(0, 20); i++) PlannedSet(reps: item.reps, weightKg: item.weightKg),
+    ];
+  }
+
+  static const _kindNames = ['normal', 'warmup', 'drop', 'failure', 'restpause'];
+
+  String exportPlanJson(List<Routine> list, {bool withSchedule = true}) {
+    return encodePlan({
+      'gymmane': 'plan',
+      'v': 1,
+      'unit': 'kg',
+      'routines': [
+        for (final r in list)
+          {
+            'name': routineTitle(r),
+            if (r.group.isNotEmpty) 'group': r.group,
+            if (withSchedule)
+              'days': [for (var d = 1; d <= 7; d++) if (weeklyPlan[d] == r.id) d],
+            'exercises': [
+              for (final id in r.exerciseIds)
+                if (exerciseById(id) case final ex?)
+                  {
+                    'id': id,
+                    'name': ex.name,
+                    'sets': routineSets(r, id),
+                    if (hasPlan(r, id))
+                      'plan': [
+                        for (final p in plannedSets(r, id))
+                          {
+                            if (p.kind != SetKind.normal) 'type': _kindNames[p.kind.index],
+                            if (p.reps != null) 'reps': p.reps,
+                            if (p.weightKg != null) 'weight': _round3(p.weightKg!),
+                            if (p.sec != null) 'time': p.sec,
+                            if (p.km != null) 'distance': p.km,
+                          },
+                      ],
+                    if (chainsToNext(r, id)) 'superset': true,
+                    if (hasCustomRest(id)) 'rest': restFor(id),
+                    if (isCustom(id))
+                      'custom': {
+                        'muscle': ex.primary,
+                        'equipment': ex.equipment,
+                        'level': ex.difficulty,
+                        if (ex.steps.isNotEmpty) 'steps': ex.steps,
+                        if (modeOf(id).isNotEmpty) 'track': modeOf(id),
+                      },
+                  },
+            ],
+          },
+      ],
+    });
+  }
+
+  String planSummaryText(List<Routine> list) {
+    final out = <String>[];
+    for (final r in list) {
+      final days = [for (var d = 1; d <= 7; d++) if (weeklyPlan[d] == r.id) t.weekdayShort(d)];
+      out.add(days.isEmpty ? routineTitle(r) : '${routineTitle(r)} · ${days.join(', ')}');
+      for (final id in r.exerciseIds) {
+        final ex = exerciseById(id);
+        if (ex == null) continue;
+        final planned = plannedSets(r, id).where((p) => p.kind != SetKind.warmup).toList();
+        final reps = planned.isEmpty ? null : planned.first.reps;
+        final kg = planned.isEmpty ? null : planned.first.weightKg;
+        final detail = StringBuffer('${routineSets(r, id)}')..write(reps == null ? '' : ' × $reps');
+        if (kg != null) detail.write(' @ ${weightLabel(kg)}');
+        out.add('• ${exerciseName(ex)} — $detail${chainsToNext(r, id) ? ' +' : ''}');
+      }
+      out.add('');
+    }
+    return out.join('\n').trim();
   }
 
   static String _sessionKey(LoggedSession s) =>
@@ -610,7 +825,7 @@ class FitState extends FitCore
         final primary =
             match?.primary ?? (kFilterMuscles.contains(hint) ? hint : guessMuscle(pe.name) ?? 'other');
         exs.add(LoggedExercise(id, match?.name ?? pe.name, primary,
-            [for (final s in pe.sets) LoggedSet(s.reps, s.weightKg)]));
+            [for (final s in pe.sets) LoggedSet(s.reps, s.weightKg, rpe: s.rpe)]));
       }
       if (exs.isEmpty) continue;
       final ls = LoggedSession(ps.date, ps.durationSec, exs);

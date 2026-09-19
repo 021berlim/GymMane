@@ -17,6 +17,7 @@ class Exercise {
     required this.difficulty,
     required this.art,
     required this.steps,
+    this.mode = '',
   });
   final String id;
   final String name;
@@ -26,6 +27,27 @@ class Exercise {
   final String difficulty;
   final String art;
   final List<String> steps;
+  final String mode;
+
+  Exercise copyWith({
+    String? name,
+    String? primary,
+    String? equipment,
+    String? difficulty,
+    List<String>? steps,
+    String? mode,
+  }) =>
+      Exercise(
+        id: id,
+        name: name ?? this.name,
+        primary: primary ?? this.primary,
+        secondary: secondary,
+        equipment: equipment ?? this.equipment,
+        difficulty: difficulty ?? this.difficulty,
+        art: art,
+        steps: steps ?? this.steps,
+        mode: mode ?? this.mode,
+      );
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -33,6 +55,8 @@ class Exercise {
         'p': primary,
         'e': equipment,
         'd': difficulty,
+        if (steps.isNotEmpty) 'st': steps,
+        if (mode.isNotEmpty) 'k': mode,
       };
   factory Exercise.fromJson(Map<String, dynamic> j) => Exercise(
         id: j['id'] as String,
@@ -42,9 +66,12 @@ class Exercise {
         equipment: (j['e'] as String?) ?? 'Other',
         difficulty: (j['d'] as String?) ?? 'Beginner',
         art: '',
-        steps: const [],
+        steps: ((j['st'] as List?) ?? const []).whereType<String>().toList(),
+        mode: kExerciseModeIds.contains(j['k']) ? j['k'] as String : '',
       );
 }
+
+const List<String> kExerciseModeIds = ['cardio', 'time'];
 
 class ToolMeta {
   const ToolMeta(this.id, this.name, this.desc);

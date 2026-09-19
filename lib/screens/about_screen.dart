@@ -7,9 +7,10 @@ import '../l10n/l10n.dart';
 import '../state/fit_state.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import '../widgets/entrance.dart';
 import '../widgets/ui_kit.dart';
 
-const _kVersion = '1.2.0';
+const _kVersion = '1.3.0';
 const _kAuthor = 'InlitX';
 const _kAuthorUrl = 'https://github.com/InlitX';
 const _kRepoUrl = 'https://github.com/InlitX/GymMane';
@@ -21,13 +22,17 @@ class AboutScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final gc = context.gc;
-    return SafeArea(
+    return RiseScope(
+      id: 'about',
+      once: false,
+      child: SafeArea(
       bottom: false,
       child: SingleChildScrollView(
+        clipBehavior: Clip.none,
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 36),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+          children: riseAll([
             ScreenHeader(
               title: t.about,
               onBack: fit.backFromAbout,
@@ -57,8 +62,9 @@ class AboutScreen extends StatelessWidget {
                 style: AppTheme.f(12.5, weight: FontWeight.w500, color: gc.textTertiary, height: 1.6)),
             const SizedBox(height: 20),
             _credits(gc),
-          ],
+          ]),
         ),
+      ),
       ),
     );
   }

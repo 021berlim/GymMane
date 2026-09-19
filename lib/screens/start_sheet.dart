@@ -6,10 +6,11 @@ import '../models/workout.dart';
 import '../state/fit_state.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import '../widgets/glass.dart';
 import '../widgets/ui_kit.dart';
 
 void showStartSheet(BuildContext context, {DateTime? day}) {
-  showModalBottomSheet<void>(
+  showAppSheet<void>(
     context: context,
     backgroundColor: Colors.transparent,
     isScrollControlled: true,

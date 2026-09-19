@@ -60,6 +60,10 @@ abstract class FitCore extends ChangeNotifier {
   final Set<String> repsOnly = {};
 
   final Set<String> repsOnlyOff = {};
+
+  final Set<String> noSuggest = {};
+
+  final Map<String, String> modeOverride = {};
   VoidCallback? onWidgetsShouldUpdate;
 
   void refreshWidgets() => _refreshWidgets();
@@ -164,4 +168,26 @@ abstract class FitCore extends ChangeNotifier {
   String volumeValue(double kg) => fmt(_round1(toDisplayWeight(kg) / 1000));
 
   String volumeLabel(double kg) => '${volumeValue(kg)} $volumeUnit';
+
+  static const _kmPerMile = 1.609344;
+
+  String get distanceUnit => isLb ? 'mi' : 'km';
+
+  double toDisplayKm(double km) => isLb ? km / _kmPerMile : km;
+
+  double fromDisplayKm(double shown) => isLb ? shown * _kmPerMile : shown;
+
+  String distanceValue(double km) => fmt((toDisplayKm(km) * 100).round() / 100);
+
+  String distanceLabel(double km) => '${distanceValue(km)} $distanceUnit';
+
+  double get distanceStep => 0.1;
+}
+
+String durationLabel(int sec) {
+  final s = sec < 0 ? 0 : sec;
+  final h = s ~/ 3600;
+  final m = (s % 3600) ~/ 60;
+  final r = (s % 60).toString().padLeft(2, '0');
+  return h > 0 ? '$h:${m.toString().padLeft(2, '0')}:$r' : '$m:$r';
 }

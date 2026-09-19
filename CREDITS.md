@@ -25,5 +25,5 @@ with different equipment.
 
 ## Fonts
 
-Oswald, IBM Plex Sans, Figtree and Barlow Semi Condensed, all under the
-SIL Open Font License.
+Nunito, by the Nunito Project Authors, under the SIL Open Font License
+(`assets/fonts/Nunito-OFL.txt`).

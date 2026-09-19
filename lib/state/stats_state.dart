@@ -3,11 +3,12 @@ part of 'fit_state.dart';
 mixin StatsState on FitCore, ToolsState, LibraryState, TimelineState {
   List<Exercise> recommendedExercises(int n) {
     final muscles = suggestedFocus.muscles;
+    final pool = kExercises.where((e) => !noSuggest.contains(e.id));
     final picks = [
-      for (final m in muscles) ...kExercises.where((e) => e.primary == m).take(1),
+      for (final m in muscles) ...pool.where((e) => e.primary == m).take(1),
     ];
 
-    for (final e in kExercises) {
+    for (final e in pool) {
       if (picks.length >= n) break;
       if (muscles.contains(e.primary) && !picks.contains(e)) picks.add(e);
     }
@@ -316,6 +317,8 @@ mixin StatsState on FitCore, ToolsState, LibraryState, TimelineState {
 
   DateTime _dateForWeekday(int i) => shiftDays(_weekStart, i);
 
+  DateTime dateForWeekday(int i) => _dateForWeekday(i);
+
   bool _hasSessionOn(DateTime day) {
     final k = _dayKey(day);
     return sessions.any((s) => _dayKey(s.date) == k);
@@ -508,6 +511,78 @@ mixin StatsState on FitCore, ToolsState, LibraryState, TimelineState {
     };
   }
 
+  static const Map<String, double> _recoveryHours = {
+    'chest': 60,
+    'back': 60,
+    'quads': 72,
+    'hamstrings': 72,
+    'glutes': 72,
+    'shoulders': 48,
+    'trapezius': 48,
+    'biceps': 48,
+    'triceps': 48,
+    'forearm': 36,
+    'calves': 36,
+    'abdomen': 36,
+    'obliques': 36,
+  };
+
+  static const double _fullFatigue = 8;
+
+  double _tau(String muscle) => (_recoveryHours[muscle] ?? 48) / 3;
+
+  double _setEffort(LoggedSet st) {
+    final rpe = st.rpe;
+    if (rpe == null) return st.kind == SetKind.failure ? 1.2 : 1;
+    return ((rpe - 5) / 4).clamp(0.4, 1.3);
+  }
+
+  Map<String, double> muscleFatigue({DateTime? now}) {
+    final at = now ?? DateTime.now();
+    final out = <String, double>{};
+    for (final s in sessions) {
+      final hours = at.difference(s.date).inMinutes / 60;
+      if (hours < 0 || hours > 24 * 8) continue;
+      for (final e in s.exercises) {
+        final effort = e.workingSets.fold<double>(0, (sum, st) => sum + _setEffort(st));
+        if (effort <= 0) continue;
+        void add(String m, double share) =>
+            out[m] = (out[m] ?? 0) + effort * share * math.exp(-hours / _tau(m));
+        add(e.primary, 1);
+        for (final m in exerciseById(e.id)?.secondary ?? const <String>[]) {
+          add(m, 0.5);
+        }
+      }
+    }
+    return out;
+  }
+
+  Map<String, double> muscleRecovery({DateTime? now}) {
+    final fatigue = muscleFatigue(now: now);
+    return {
+      for (final m in kMuscles) m.id: (1 - (fatigue[m.id] ?? 0) / _fullFatigue).clamp(0.0, 1.0),
+    };
+  }
+
+  int overallRecovery({DateTime? now}) {
+    final r = muscleRecovery(now: now);
+    if (r.isEmpty) return 100;
+    return (r.values.reduce((a, b) => a + b) / r.length * 100).round();
+  }
+
+  int? hoursUntilRecovered(String muscle, {DateTime? now}) {
+    final fatigue = muscleFatigue(now: now)[muscle] ?? 0;
+    final limit = _fullFatigue * 0.2;
+    if (fatigue <= limit) return null;
+    return (_tau(muscle) * math.log(fatigue / limit)).ceil();
+  }
+
+  List<String> stillRecovering({DateTime? now}) {
+    final r = muscleRecovery(now: now);
+    final ids = r.keys.where((k) => r[k]! < 0.8).toList()..sort((a, b) => r[a]!.compareTo(r[b]!));
+    return ids;
+  }
+
   List<String> neglectedMuscles(int days) {
     final sets = muscleSetsOver(days);
     if (sets.isEmpty) return const [];
@@ -536,7 +611,19 @@ mixin StatsState on FitCore, ToolsState, LibraryState, TimelineState {
   String? lastSummaryFor(String id) {
     final sets = lastSetsFor(id);
     if (sets.isEmpty) return null;
-    return sets.map((s) => '${weightValue(s.weight)}×${s.reps}').join(' · ');
+    return setsSummary(sets);
+  }
+
+  String setsSummary(List<LoggedSet> sets) => sets.map(loggedSetLabel).join(' · ');
+
+  String loggedSetLabel(LoggedSet s) {
+    final km = s.km ?? 0;
+    final sec = s.sec;
+    if (km > 0) return sec == null ? distanceLabel(km) : '${distanceLabel(km)} · ${durationLabel(sec)}';
+    if (sec != null && s.reps <= 0) {
+      return s.weight > 0 ? '${weightValue(s.weight)} × ${durationLabel(sec)}' : durationLabel(sec);
+    }
+    return '${weightValue(s.weight)}×${s.reps}';
   }
 
   ({double topWeight, double oneRm})? exercisePr(String id) {

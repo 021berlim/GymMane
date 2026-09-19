@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:video_player/video_player.dart';
 
@@ -9,6 +9,7 @@ import '../services/media_store.dart';
 import '../state/fit_state.dart';
 import '../theme/app_colors.dart';
 import 'exercise_art.dart';
+import 'shimmer.dart';
 
 class ExerciseMedia extends StatelessWidget {
   const ExerciseMedia({
@@ -167,9 +168,10 @@ class _VideoTileState extends State<_VideoTile> {
     } else if (_failed) {
       child = _fallbackIcon(context, widget.height);
     } else {
-      child = const Center(
-        child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2)),
-      );
+      child = Stack(children: [
+        Positioned.fill(child: Shimmer(radius: widget.radius)),
+        const Center(child: CupertinoActivityIndicator()),
+      ]);
     }
     return _MediaFrame(height: widget.height, radius: widget.radius, child: child);
   }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -16,6 +17,7 @@ import '../screens/note_edit_screen.dart';
 import '../screens/notes_screen.dart';
 import '../screens/onboarding_screen.dart';
 import '../screens/places_screen.dart';
+import '../screens/plan_import_sheet.dart';
 import '../screens/progress_screen.dart';
 import '../screens/routine_edit_screen.dart';
 import '../screens/routines_screen.dart';
@@ -29,12 +31,16 @@ import '../screens/timeline_screen.dart';
 import '../screens/tool_detail_screen.dart';
 import '../screens/tools_screen.dart';
 import '../screens/train_screen.dart';
+import '../services/incoming_share.dart';
 import '../state/fit_state.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_background.dart';
 import '../widgets/award_celebration.dart';
 import '../widgets/dialogs.dart';
+import '../widgets/glass.dart';
+import '../widgets/liquid_notch.dart';
+import '../widgets/start_countdown.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
@@ -44,8 +50,23 @@ class AppShell extends StatefulWidget {
 }
 
 class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
-  static const _firstAwardWait = Duration(milliseconds: 2500);
-  static const _nextAwardWait = Duration(milliseconds: 3500);
+  static const _blurTop = {
+    'home',
+    'progress',
+    'session',
+    'about',
+    'ai-plan',
+    'awards',
+    'exercise-detail',
+    'measures',
+    'routines',
+    'preferences',
+    'tools',
+    'tools-detail',
+  };
+
+  static const _firstAwardWait = Duration(milliseconds: 4000);
+  static const _nextAwardWait = Duration(milliseconds: 6000);
 
   String _lastRoute = fit.route;
   int _lastDepth = fit.routeDepth;
@@ -54,6 +75,9 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   AwardId? _celebrating;
   bool _celebratedOne = false;
   Timer? _awardWait;
+  String? _incoming;
+  bool _scrolled = false;
+  int _restTick = fit.restDoneTick;
 
   @override
   void initState() {
@@ -61,11 +85,58 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     fit.refreshAlarmPermission();
     fit.addListener(_queueCelebration);
+    fit.addListener(_offerIncoming);
+    fit.addListener(_restOver);
     _queueCelebration();
+    IncomingShare.listen(_receive);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final text = await IncomingShare.take();
+      if (text != null) _receive(text);
+    });
+  }
+
+  void _receive(String text) {
+    _incoming = text;
+    _offerIncoming();
+  }
+
+  void _offerIncoming() {
+    final text = _incoming;
+    if (text == null || !mounted || !fit.onboarded || fit.isSessionActive) return;
+    _incoming = null;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) showPlanImportSheet(context, text: text);
+    });
+  }
+
+  void _restOver() {
+    if (fit.restDoneTick == _restTick) return;
+    _restTick = fit.restDoneTick;
+    final s = fit.session;
+    final ex = fit.currentExercise;
+    if (!mounted || s == null || ex == null) return;
+    final done = ex.sets.where((st) => st.done).length;
+    final next = done < ex.sets.length ? t.liveSet(done + 1, ex.sets.length) : t.liveAllDone;
+    showNotchToast(
+      context,
+      t.restOverTitle,
+      subtitle: '${t.catalogName(ex.id, ex.name)} · $next',
+      icon: PhosphorIconsFill.timer,
+      accent: context.gc.sage,
+    );
+  }
+
+  bool _onScroll(ScrollNotification n) {
+    if (n.depth != 0 || n.metrics.axis != Axis.vertical) return false;
+    final scrolled = n.metrics.pixels > 6;
+    if (scrolled != _scrolled) setState(() => _scrolled = scrolled);
+    return false;
   }
 
   @override
   void dispose() {
+    fit.removeListener(_restOver);
+    fit.removeListener(_offerIncoming);
     fit.removeListener(_queueCelebration);
     _awardWait?.cancel();
     WidgetsBinding.instance.removeObserver(this);
@@ -93,6 +164,9 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   }
 
   @override
+  void didChangePlatformBrightness() => fit.systemBrightnessChanged();
+
+  @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.inactive ||
         state == AppLifecycleState.paused ||
@@ -117,6 +191,10 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
           canPop: false,
           onPopInvokedWithResult: (didPop, _) async {
             if (didPop) return;
+            if (fit.isSessionActive && fit.sessionLocked) {
+              HapticFeedback.mediumImpact();
+              return;
+            }
             if (fit.isSessionActive) {
               if (await _confirmDiscard(context)) fit.discardSession();
               return;
@@ -129,7 +207,8 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
           },
           child: AnnotatedRegion<SystemUiOverlayStyle>(
             value: fit.dark ? _overlayDark : _overlayLight,
-            child: Stack(
+            child: BackdropGroup(
+              child: Stack(
               children: [
                 Positioned.fill(child: ColoredBox(color: context.gc.bg)),
                 Positioned.fill(
@@ -143,15 +222,39 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
                   backgroundColor: Colors.transparent,
                   body: Padding(
                     padding: EdgeInsets.only(bottom: MediaQuery.viewPaddingOf(context).bottom),
-                    child: _animatedScreen(),
+                    child: NotificationListener<ScrollNotification>(
+                      onNotification: _onScroll,
+                      child: _animatedScreen(),
+                    ),
                   ),
                 ),
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  top: 0,
+                  child: AnimatedOpacity(
+                    opacity: _scrolled && _blurTop.contains(fit.route) ? 1 : 0,
+                    duration: const Duration(milliseconds: 220),
+                    child: EdgeBlur(height: MediaQuery.viewPaddingOf(context).top + 64, sigma: 14),
+                  ),
+                ),
+                if (fit.showNav)
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: EdgeBlur(top: false, height: 128 + MediaQuery.viewPaddingOf(context).bottom),
+                  ),
                 if (fit.showNav && MediaQuery.viewInsetsOf(context).bottom < 60)
                   Positioned(
                     left: 18,
                     right: 18,
                     bottom: 18 + MediaQuery.viewPaddingOf(context).bottom,
-                    child: _NavBar(),
+                    child: Directionality(textDirection: TextDirection.ltr, child: _NavBar()),
+                  ),
+                if (fit.countdownUntil != null && fit.session != null)
+                  Positioned.fill(
+                    child: StartCountdown(key: ValueKey(fit.countdownUntil), until: fit.countdownUntil!),
                   ),
                 if (fit.route != 'session' && _celebrating != null)
                   Positioned.fill(
@@ -162,6 +265,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
                     ),
                   ),
               ],
+              ),
             ),
           ),
         );
@@ -180,8 +284,9 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   Widget _animatedScreen() {
     final route = fit.route;
     if (route != _lastRoute) {
-      final from = _NavBar._routes.indexOf(_lastRoute);
-      final to = _NavBar._routes.indexOf(route);
+      _scrolled = false;
+      final from = _NavBarState._routes.indexOf(_lastRoute);
+      final to = _NavBarState._routes.indexOf(route);
       _sideways = from >= 0 && to >= 0;
       _forward = _sideways ? to > from : fit.routeDepth >= _lastDepth;
       _lastRoute = route;
@@ -191,34 +296,39 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     final dir = _forward ? 1.0 : -1.0;
 
     return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 260),
+      duration: const Duration(milliseconds: 380),
       switchInCurve: const Interval(0.3, 1, curve: Curves.easeOutCubic),
-      switchOutCurve: const Interval(0.6, 1, curve: Curves.easeOutCubic),
+      switchOutCurve: const Interval(0.7, 1, curve: Curves.easeInCubic),
       transitionBuilder: (child, animation) {
         final incoming = (child.key as ValueKey?)?.value == fit.route;
-        final Offset begin;
-        if (sideways) {
-          begin = Offset(incoming ? 30 * dir : -30 * dir, 0);
-        } else if (incoming) {
-          begin = Offset(0, 30 * dir);
-        } else {
-          begin = Offset.zero;
-        }
-        final slide = Tween<Offset>(begin: begin, end: Offset.zero)
-            .animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic));
-        return FadeTransition(
-          opacity: animation,
-          child: AnimatedBuilder(
-            animation: slide,
-            builder: (_, inner) => Transform.translate(offset: slide.value, child: inner),
-            child: child,
-          ),
+        return AnimatedBuilder(
+          animation: animation,
+          child: child,
+          builder: (_, inner) {
+            final v = animation.value.clamp(0.0, 1.0);
+            final away = 1 - v;
+            final shift = sideways
+                ? Offset((incoming ? 26 : -18) * dir * away, 0)
+                : Offset(0, incoming ? 22 * dir * away : -8 * dir * away);
+            final blur = 10 * away;
+            return Opacity(
+              opacity: v,
+              child: ImageFiltered(
+                enabled: blur > 0.25,
+                imageFilter: ImageFilter.blur(sigmaX: blur, sigmaY: blur, tileMode: TileMode.decal),
+                child: Transform.translate(
+                  offset: shift,
+                  child: Transform.scale(scale: incoming ? 1 + 0.03 * away : 1 - 0.04 * away, child: inner),
+                ),
+              ),
+            );
+          },
         );
       },
       layoutBuilder: (currentChild, previousChildren) => Stack(
         children: <Widget>[
-          for (final c in previousChildren) Positioned.fill(child: c),
-          if (currentChild != null) Positioned.fill(child: currentChild),
+          for (final c in previousChildren) Positioned.fill(key: c.key, child: c),
+          if (currentChild != null) Positioned.fill(key: currentChild.key, child: currentChild),
         ],
       ),
       child: KeyedSubtree(key: ValueKey(fit.route), child: _screen()),
@@ -296,81 +406,142 @@ final _overlayLight = _overlayBase.copyWith(
   systemNavigationBarIconBrightness: Brightness.dark,
 );
 
-class _NavBar extends StatelessWidget {
+class _NavBar extends StatefulWidget {
   const _NavBar();
 
+  @override
+  State<_NavBar> createState() => _NavBarState();
+}
+
+class _NavBarState extends State<_NavBar> {
   static const _iw = 58.0;
   static const _fabW = 54.0;
   static const _routes = ['home', 'progress', 'exercises', 'settings'];
 
+  double? _dragX;
+  int? _hover;
+  double _slotW = 0;
+  double _gap = 0;
+
   int get _selectedIndex {
+    if (_hover != null) return _hover!;
     final i = _routes.indexOf(fit.route);
     return i < 0 ? 0 : i;
+  }
+
+  double _slotX(int i) => switch (i) {
+        0 => 0,
+        1 => _iw + _gap,
+        2 => 2 * _iw + 3 * _gap + _fabW,
+        _ => 3 * _iw + 4 * _gap + _fabW,
+      };
+
+  void _go(int i) => [fit.goHome, fit.goProgress, fit.goExercises, fit.goSettings][i]();
+
+  int _nearest(double x) {
+    var best = 0;
+    for (var i = 1; i < 4; i++) {
+      if ((_slotX(i) + _iw / 2 - x).abs() < (_slotX(best) + _iw / 2 - x).abs()) best = i;
+    }
+    return best;
+  }
+
+  void _dragTo(double x) {
+    final near = _nearest(x);
+    if (near != _hover) HapticFeedback.selectionClick();
+    setState(() {
+      _dragX = x.clamp(_iw / 2, _slotW - _iw / 2);
+      _hover = near;
+    });
+  }
+
+  void _dragEnd() {
+    final target = _hover;
+    setState(() {
+      _dragX = null;
+      _hover = null;
+    });
+    if (target != null && target != _routes.indexOf(fit.route)) _go(target);
   }
 
   @override
   Widget build(BuildContext context) {
     final gc = context.gc;
 
-    return Container(
+    return SizedBox(
       height: 74,
-      decoration: BoxDecoration(
-        color: gc.bgRaised,
-        border: Border.all(color: gc.border),
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [BoxShadow(color: const Color(0x59000000), blurRadius: 32, offset: const Offset(0, 12))],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        child: LayoutBuilder(
-          builder: (context, c) {
-            final w = c.maxWidth;
-            final gap = ((w - 4 * _iw - _fabW) / 4).clamp(0.0, 40.0);
+      child: LayoutBuilder(
+        builder: (context, c) {
+          _slotW = c.maxWidth - 16;
+          _gap = ((_slotW - 4 * _iw - _fabW) / 4).clamp(0.0, 40.0);
+          final drag = _dragX;
 
-            double slotX(int i) {
-              switch (i) {
-                case 0:
-                  return 0;
-                case 1:
-                  return _iw + gap;
-                case 2:
-                  return 2 * _iw + 3 * gap + _fabW;
-                default:
-                  return 3 * _iw + 4 * gap + _fabW;
-              }
-            }
-
-            return Stack(
-              alignment: Alignment.center,
-              children: [
-                AnimatedPositioned(
-                  duration: const Duration(milliseconds: 340),
-                  curve: Curves.easeOutCubic,
-                  left: slotX(_selectedIndex),
-                  top: 10,
-                  bottom: 10,
+          return Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(28),
+                    boxShadow: [
+                      BoxShadow(color: const Color(0x4D000000), blurRadius: 32, offset: const Offset(0, 12)),
+                    ],
+                  ),
+                  child: const GlassSurface(radius: 28, blur: 16, child: SizedBox.expand()),
+                ),
+              ),
+              Positioned(
+                left: 8,
+                right: 8,
+                top: 0,
+                bottom: 0,
+                child: _LiquidPill(
+                  left: _slotX(_selectedIndex),
+                  dragLeft: drag == null ? null : drag - _iw / 2,
                   width: _iw,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: gc.bgRaised2,
-                      borderRadius: BorderRadius.circular(18),
-                    ),
+                  color: gc.text.withValues(alpha: fit.dark ? 0.1 : 0.07),
+                ),
+              ),
+              Positioned(
+                left: 8,
+                right: 8,
+                top: 0,
+                bottom: 0,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  onHorizontalDragStart: (d) {
+                    final fab = 2 * _iw + 2 * _gap + _fabW / 2;
+                    if ((d.localPosition.dx - fab).abs() < _fabW / 2 + 4) return;
+                    HapticFeedback.selectionClick();
+                    _dragTo(d.localPosition.dx);
+                  },
+                  onHorizontalDragUpdate: (d) {
+                    if (_dragX != null) _dragTo(d.localPosition.dx);
+                  },
+                  onHorizontalDragEnd: (_) {
+                    if (_dragX != null) _dragEnd();
+                  },
+                  onHorizontalDragCancel: () {
+                    if (_dragX != null) _dragEnd();
+                  },
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _item(context, 0, PhosphorIconsRegular.house, PhosphorIconsFill.house, t.home, fit.goHome),
+                      _item(context, 1, PhosphorIconsRegular.chartLineUp, PhosphorIconsFill.chartLineUp, t.progress,
+                          fit.goProgress),
+                      _fab(context),
+                      _item(context, 2, PhosphorIconsRegular.barbell, PhosphorIconsFill.barbell, t.exercises,
+                          fit.goExercises),
+                      _item(context, 3, PhosphorIconsRegular.userCircle, PhosphorIconsFill.userCircle, t.profile,
+                          fit.goSettings),
+                    ],
                   ),
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _item(context, 0, PhosphorIconsRegular.house, PhosphorIconsFill.house, t.home, fit.goHome),
-                    _item(context, 1, PhosphorIconsRegular.chartLineUp, PhosphorIconsFill.chartLineUp, t.progress, fit.goProgress),
-                    _fab(context),
-                    _item(context, 2, PhosphorIconsRegular.barbell, PhosphorIconsFill.barbell, t.exercises, fit.goExercises),
-                    _item(context, 3, PhosphorIconsRegular.userCircle, PhosphorIconsFill.userCircle, t.profile, fit.goSettings),
-                  ],
-                ),
-              ],
-            );
-          },
-        ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -378,13 +549,27 @@ class _NavBar extends StatelessWidget {
   Widget _item(BuildContext context, int index, IconData icon, IconData iconFill, String label, VoidCallback onTap) {
     final gc = context.gc;
     final selected = _selectedIndex == index;
+    final lifted = selected && _dragX != null;
     final color = selected ? gc.text : gc.textTertiary;
     const dur = Duration(milliseconds: 300);
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
-      child: SizedBox(
+      onLongPressStart: (d) {
+        HapticFeedback.mediumImpact();
+        _dragTo(_slotX(index) + d.localPosition.dx);
+      },
+      onLongPressMoveUpdate: (d) => _dragTo(_slotX(index) + d.localPosition.dx),
+      onLongPressEnd: (_) => _dragEnd(),
+      onLongPressCancel: () {
+        if (_dragX != null) _dragEnd();
+      },
+      child: AnimatedScale(
+        scale: lifted ? 1.06 : 1,
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
+        child: SizedBox(
         width: _iw,
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -414,6 +599,7 @@ class _NavBar extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }
@@ -448,6 +634,112 @@ class _NavBar extends StatelessWidget {
         ),
         child: Icon(PhosphorIconsFill.play, size: 24, color: gc.bg),
       ),
+    );
+  }
+}
+
+class _LiquidPill extends StatefulWidget {
+  const _LiquidPill({required this.left, required this.width, required this.color, this.dragLeft});
+
+  final double left;
+  final double? dragLeft;
+  final double width;
+  final Color color;
+
+  @override
+  State<_LiquidPill> createState() => _LiquidPillState();
+}
+
+class _LiquidPillState extends State<_LiquidPill> with TickerProviderStateMixin {
+  late final AnimationController _move =
+      AnimationController(vsync: this, duration: const Duration(milliseconds: 460), value: 1);
+  late final AnimationController _lift = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 260),
+    reverseDuration: const Duration(milliseconds: 380),
+  );
+  late double _from = widget.left;
+  late double _shown = widget.left;
+
+  @override
+  void didUpdateWidget(_LiquidPill old) {
+    super.didUpdateWidget(old);
+    final dragging = widget.dragLeft != null;
+    if (dragging != (old.dragLeft != null)) {
+      dragging ? _lift.forward() : _lift.reverse();
+    }
+    if (dragging) return;
+    if (old.left == widget.left && old.dragLeft == null) return;
+    _from = _shown;
+    _move.forward(from: 0);
+  }
+
+  static double _lerp(double a, double b, double t) => a + (b - a) * t;
+
+  static const _liftCurve = Cubic(0.3, 1.25, 0.5, 1);
+
+  @override
+  void dispose() {
+    _move.dispose();
+    _lift.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: Listenable.merge([_move, _lift]),
+      builder: (context, _) {
+        final lift = _liftCurve.transform(_lift.value.clamp(0.0, 1.0));
+        final double l, r;
+        var squash = 1.0;
+        final drag = widget.dragLeft;
+        if (drag != null) {
+          l = drag;
+          r = drag + widget.width;
+        } else {
+          final t = _move.value;
+          final to = widget.left;
+          final right = to >= _from;
+          final lead = Curves.easeOutCubic.transform(t);
+          final trail = Curves.easeInOutCubic.transform(t);
+          l = _lerp(_from, to, right ? trail : lead);
+          r = _lerp(_from + widget.width, to + widget.width, right ? lead : trail);
+          squash = 1 - 0.14 * (1 - (2 * t - 1).abs()) * (to == _from ? 0 : 1);
+        }
+        _shown = l;
+        final base = Color.lerp(widget.color, widget.color.withValues(alpha: (widget.color.a * 2.4).clamp(0.0, 1.0)), lift)!;
+        final grow = 6 * lift;
+        final inset = 10 + 12 * (1 - squash) - 6 * lift;
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Positioned(
+              left: l - grow,
+              width: r - l + 2 * grow,
+              top: inset,
+              bottom: inset,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.16 * lift), width: 1),
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Color.alphaBlend(Colors.white.withValues(alpha: 0.12 * lift), base),
+                      base,
+                    ],
+                  ),
+                  boxShadow: lift <= 0
+                      ? null
+                      : [BoxShadow(color: Colors.black.withValues(alpha: 0.28 * lift), blurRadius: 22, offset: const Offset(0, 8))],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

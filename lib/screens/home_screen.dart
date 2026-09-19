@@ -7,9 +7,13 @@ import '../state/fit_state.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/charts.dart';
+import '../widgets/entrance.dart';
 import '../widgets/exercise_media.dart';
+import '../widgets/glass.dart';
+import '../widgets/home_folder.dart';
 import '../widgets/svg_icon.dart';
 import '../widgets/ui_kit.dart';
+import 'progress_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -19,18 +23,21 @@ class HomeScreen extends StatelessWidget {
     final gc = context.gc;
     final recommended = fit.recommendedExercises(8);
 
-    return SafeArea(
+    return RiseScope(
+      id: 'home',
+      child: SafeArea(
       bottom: false,
       child: SingleChildScrollView(
+        clipBehavior: Clip.none,
         padding: const EdgeInsets.fromLTRB(20, 14, 20, 116),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+          children: riseAll([
             _topBar(gc),
             const SizedBox(height: 20),
             _hero(context, gc),
             const SizedBox(height: 14),
-            _weekCard(gc),
+            _weekCard(context, gc),
             if (fit.photoDue) ...[
               const SizedBox(height: 14),
               _photoNudge(gc),
@@ -45,7 +52,10 @@ class HomeScreen extends StatelessWidget {
             SoftCard(
               radius: 22,
               padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
-              child: Heatmap(levels: fit.heatmapLevels, mono: true),
+              child: Heatmap(
+                levels: fit.heatmapLevels,
+                onTapDay: (i) => showDaySheet(context, fit.heatmapDate(i)),
+              ),
             ),
             if (recommended.isNotEmpty) ...[
               const SizedBox(height: 30),
@@ -63,21 +73,39 @@ class HomeScreen extends StatelessWidget {
             ],
             const SizedBox(height: 30),
             Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Expanded(
-                  child: _tile(gc, PhosphorIconsRegular.listChecks, t.routines, fit.goRoutines),
+                  child: HomeFolder(
+                    title: _tc(t.routines),
+                    detail: t.routineCount(fit.routines.length),
+                    peek: const RoutinesPeek(),
+                    onTap: fit.goRoutines,
+                  ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(child: _tile(gc, PhosphorIconsRegular.wrench, t.tools, fit.goTools)),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 Expanded(
-                  child: _tile(gc, PhosphorIconsRegular.notebook, t.journal, fit.goNotes,
-                      badge: fit.notes.length),
+                  child: HomeFolder(
+                    title: _tc(t.tools),
+                    detail: t.calculatorsInside,
+                    peek: const ToolsPeek(),
+                    onTap: fit.goTools,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: HomeFolder(
+                    title: _tc(t.journal),
+                    detail: t.noteCount(fit.notes.length),
+                    peek: const NotesPeek(),
+                    onTap: fit.goNotes,
+                  ),
                 ),
               ],
             ),
-          ],
+          ]),
         ),
+      ),
       ),
     );
   }
@@ -161,11 +189,29 @@ class HomeScreen extends StatelessWidget {
         child: Stack(
           children: [
             Positioned(
-              right: -6,
-              top: -2,
-              bottom: 62,
+              left: -52,
+              top: 34,
+              child: Container(
+                width: 176,
+                height: 176,
+                decoration: BoxDecoration(color: gc.accentSoft, shape: BoxShape.circle),
+              ),
+            ),
+            Positioned(
+              left: 150,
+              top: -44,
+              child: Container(
+                width: 92,
+                height: 92,
+                decoration: BoxDecoration(color: gc.emberSoft, shape: BoxShape.circle),
+              ),
+            ),
+            Positioned(
+              right: 4,
+              top: 12,
+              bottom: 76,
               child: Opacity(
-                opacity: 0.45,
+                opacity: 0.6,
                 child: Image.asset('assets/img/runner.png', fit: BoxFit.fitHeight),
               ),
             ),
@@ -207,25 +253,29 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _weekCard(GymColors gc) {
+  Widget _weekCard(BuildContext context, GymColors gc) {
     return SoftCard(
       radius: 22,
       padding: const EdgeInsets.fromLTRB(14, 16, 14, 16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [for (int i = 0; i < 7; i++) _weekDay(gc, i)],
+        children: [for (int i = 0; i < 7; i++) _weekDay(context, gc, i)],
       ),
     );
   }
 
-  Widget _weekDay(GymColors gc, int i) {
+  Widget _weekDay(BuildContext context, GymColors gc, int i) {
     final done = fit.isDayDone(i);
     final isToday = i == fit.todayIndex;
     final isFuture = i > fit.todayIndex;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: isFuture ? null : () => fit.toggleCheckin(i),
+      onTap: isFuture
+          ? null
+          : fit.isSessionDay(i)
+              ? () => showDaySheet(context, fit.dateForWeekday(i))
+              : () => fit.toggleCheckin(i),
       child: Opacity(
         opacity: isFuture ? 0.5 : 1,
         child: Column(
@@ -306,10 +356,11 @@ class HomeScreen extends StatelessWidget {
           textBaseline: TextBaseline.alphabetic,
           children: [
             Flexible(
-              child: Text(value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTheme.f(23, weight: FontWeight.w800, color: gc.text)),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: RollIn(value, style: AppTheme.f(23, weight: FontWeight.w800, color: gc.text)),
+              ),
             ),
             if (unit.isNotEmpty) ...[
               const SizedBox(width: 3),
@@ -319,36 +370,6 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
       ],
-    );
-  }
-
-  Widget _tile(GymColors gc, IconData icon, String label, VoidCallback onTap, {int badge = 0}) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: SoftCard(
-        radius: 20,
-        padding: const EdgeInsets.fromLTRB(14, 16, 14, 14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, size: 20, color: gc.textSecondary),
-                const Spacer(),
-                if (badge > 0)
-                  Text('$badge',
-                      style: AppTheme.f(11, weight: FontWeight.w700, color: gc.textTertiary)),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Text(_tc(label),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppTheme.f(13, weight: FontWeight.w700, color: gc.text)),
-          ],
-        ),
-      ),
     );
   }
 
@@ -412,7 +433,7 @@ class HomeScreen extends StatelessWidget {
 
 void showWeeklyGoalSheet(BuildContext context) {
   final gc = context.gc;
-  showModalBottomSheet<void>(
+  showAppSheet<void>(
     context: context,
     backgroundColor: Colors.transparent,
     builder: (sheet) => StatefulBuilder(
