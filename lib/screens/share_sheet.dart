@@ -4,17 +4,20 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../l10n/l10n.dart';
 import '../state/fit_state.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import '../widgets/glass.dart';
+import '../widgets/liquid_notch.dart';
 import '../widgets/share_cards.dart';
 import '../widgets/ui_kit.dart';
 
 Future<void> showShareSheet(BuildContext context, {ShareKind initial = ShareKind.streak}) =>
-    showModalBottomSheet<void>(
+    showAppSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -65,7 +68,7 @@ class _ShareSheetState extends State<_ShareSheet> {
       await SharePlus.instance.share(ShareParams(files: [XFile(file.path)], subject: 'GymMane'));
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.shareFailed)));
+        showNotchToast(context, t.shareFailed, icon: PhosphorIconsFill.warningCircle, accent: context.gc.warn);
       }
     } finally {
       if (mounted) setState(() => _busy = false);

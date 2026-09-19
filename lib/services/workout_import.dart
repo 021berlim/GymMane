@@ -9,6 +9,8 @@ const double _lbPerKg = 2.2046226218;
 enum ImportFormat {
   hevy,
   strong,
+  lyfta,
+  fitbod,
   fitnotes,
   gymmane,
   openGym,
@@ -27,9 +29,10 @@ extension ImportFormatX on ImportFormat {
 }
 
 class ParsedSet {
-  ParsedSet(this.reps, this.weightKg);
+  ParsedSet(this.reps, this.weightKg, {this.rpe});
   final int reps;
   final double weightKg;
+  final double? rpe;
 }
 
 class ParsedWeight {
@@ -76,6 +79,7 @@ class _Fmt {
     this.durationText,
     this.durationSec,
     this.setType,
+    this.warmupFlag,
   });
 
   final List<String> date;
@@ -90,6 +94,10 @@ class _Fmt {
   final List<String>? durationText;
   final List<String>? durationSec;
   final List<String>? setType;
+  final List<String>? warmupFlag;
+  List<String> get rpe => const ['rpe'];
+  List<String> get rir => const ['rir'];
+  List<String> get effort => const ['rir/rpe', 'rpe/rir'];
 }
 
 const _formats = <ImportFormat, _Fmt>{
@@ -113,6 +121,25 @@ const _formats = <ImportFormat, _Fmt>{
     weightPlain: ['weight'],
     durationText: ['duration'],
     durationSec: ['duration (sec)', 'duration (seconds)'],
+  ),
+  ImportFormat.lyfta: _Fmt(
+    date: ['date'],
+    group: ['title'],
+    exercise: ['exercise'],
+    reps: ['reps'],
+    weightKg: [],
+    weightLb: [],
+    weightPlain: ['weight'],
+    durationText: ['duration'],
+    setType: ['set type'],
+  ),
+  ImportFormat.fitbod: _Fmt(
+    date: ['date'],
+    exercise: ['exercise'],
+    reps: ['reps'],
+    weightKg: ['weight(kg)', 'weight (kg)'],
+    weightLb: ['weight(lbs)', 'weight(lb)', 'weight (lbs)'],
+    warmupFlag: ['iswarmup'],
   ),
   ImportFormat.fitnotes: _Fmt(
     date: ['date'],
@@ -167,6 +194,15 @@ ImportFormat detectFormat(String csv) {
   if (cols.isEmpty) return ImportFormat.unknown;
   if (cols.contains('exercise_title') && cols.contains('start_time')) return ImportFormat.hevy;
   if (cols.contains('exercise name') && cols.contains('set order')) return ImportFormat.strong;
+  if (cols.contains('exercise') &&
+      cols.contains('set type') &&
+      cols.contains('title') &&
+      (cols.contains('rir/rpe') || cols.any((c) => c.startsWith('recordlevel')))) {
+    return ImportFormat.lyfta;
+  }
+  if (cols.contains('exercise') && cols.contains('reps') && cols.contains('iswarmup')) {
+    return ImportFormat.fitbod;
+  }
   if (cols.contains('weight_kg') && (cols.contains('est_1rm_kg') || cols.contains('volume_kg'))) {
     return ImportFormat.gymmane;
   }
@@ -301,7 +337,11 @@ ImportResult parseImport(String csv, {bool isLb = false}) {
   for (final row in rows.skip(1)) {
     final reps = int.tryParse(cell(row, fmt.reps)) ?? 0;
     if (reps <= 0) continue;
-    if (_norm(cell(row, fmt.setType)) == 'warmup') continue;
+    if (_norm(cell(row, fmt.setType)).startsWith('warmup') ||
+        _norm(cell(row, fmt.setType)).startsWith('warm_up') ||
+        _norm(cell(row, fmt.warmupFlag)) == 'true') {
+      continue;
+    }
 
     final date = _parseDate(cell(row, fmt.date));
     if (date == null) continue;
@@ -332,10 +372,22 @@ ImportResult parseImport(String csv, {bool isLb = false}) {
       session.exercises.add(parsed);
       return parsed;
     });
-    exercise.sets.add(ParsedSet(reps, kg));
+    exercise.sets.add(
+        ParsedSet(reps, kg, rpe: _effort(cell(row, fmt.rpe), cell(row, fmt.rir), cell(row, fmt.effort))));
   }
 
   return ImportResult(format, sessions.values.toList());
+}
+
+double? _effort(String rpe, String rir, String either) {
+  double? read(String v) => double.tryParse(v.replaceAll(',', '.'));
+  final r = read(rpe);
+  if (r != null && r >= 1 && r <= 10) return r;
+  final left = read(rir);
+  if (left != null && left >= 0 && left <= 9) return 10 - left;
+  final mixed = read(either);
+  if (mixed == null || mixed < 0 || mixed > 10) return null;
+  return mixed >= 6 ? mixed : 10 - mixed;
 }
 
 Map<String, dynamic>? _backupOf(String text) {
@@ -458,6 +510,12 @@ String _delimiter(String csv) => (_firstLine(csv) ?? '').contains(';') ? ';' : '
 
 int _parseDuration(String s) {
   if (s.isEmpty) return 0;
+  final clock = RegExp(r'^(\d+):(\d{2})(?::(\d{2}))?$').firstMatch(s.trim());
+  if (clock != null) {
+    final a = int.parse(clock.group(1)!), b = int.parse(clock.group(2)!);
+    final c = clock.group(3);
+    return c == null ? a * 60 + b : a * 3600 + b * 60 + int.parse(c);
+  }
   var seconds = 0;
   final h = RegExp(r'(\d+)\s*h').firstMatch(s);
   final m = RegExp(r'(\d+)\s*m').firstMatch(s);

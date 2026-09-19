@@ -7,8 +7,13 @@ import '../models/workout.dart';
 import '../state/fit_state.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import '../widgets/dialogs.dart';
+import '../widgets/glass.dart';
+import '../widgets/liquid_notch.dart';
+import '../widgets/routine_folder.dart';
 import '../widgets/svg_icon.dart';
 import '../widgets/ui_kit.dart';
+import 'plan_import_sheet.dart';
 
 class RoutinesScreen extends StatelessWidget {
   const RoutinesScreen({super.key});
@@ -19,16 +24,43 @@ class RoutinesScreen extends StatelessWidget {
     return SafeArea(
       bottom: false,
       child: SingleChildScrollView(
+        clipBehavior: Clip.none,
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            ScreenHeader(title: t.routines, onBack: fit.backFromRoutines, titleSize: 22),
+            ScreenHeader(
+              title: t.routines,
+              onBack: fit.backFromRoutines,
+              titleSize: 22,
+              actions: [
+                Semantics(
+                  button: true,
+                  label: t.importRoutines,
+                  child: RoundAction(
+                    onTap: () => showPlanImportSheet(context),
+                    child: Icon(PhosphorIconsRegular.downloadSimple, size: 17, color: gc.text),
+                  ),
+                ),
+                if (fit.routines.isNotEmpty) ...[
+                  const SizedBox(width: 8),
+                  Semantics(
+                    button: true,
+                    label: t.shareWeek,
+                    child: RoundAction(
+                      onTap: () => _shareMenu(context),
+                      child: Icon(PhosphorIconsRegular.shareNetwork, size: 17, color: gc.text),
+                    ),
+                  ),
+                ],
+              ],
+            ),
             const SizedBox(height: 22),
             Text(t.weeklyPlan, style: AppTheme.f(12, weight: FontWeight.w600, color: gc.textSecondary, letterSpacing: 1.5)),
             const SizedBox(height: 10),
             SoftCard(
-              radius: 18,
+              radius: 20,
+              borderColor: Colors.transparent,
               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
               child: Column(children: [for (int i = 0; i < 7; i++) _dayRow(context, gc, i)]),
             ),
@@ -44,10 +76,10 @@ class RoutinesScreen extends StatelessWidget {
             else ...[
               for (final group in fit.routineGroups) ...[
                 _groupHeader(gc, group, fit.routinesInGroup(group).length),
-                for (final r in fit.routinesInGroup(group)) _routineCard(gc, r),
-                const SizedBox(height: 8),
+                _folders(context, fit.routinesInGroup(group)),
+                const SizedBox(height: 10),
               ],
-              for (final r in fit.routinesInGroup('')) _routineCard(gc, r),
+              _folders(context, fit.routinesInGroup('')),
             ],
             const SizedBox(height: 16),
             PrimaryButton(
@@ -62,6 +94,12 @@ class RoutinesScreen extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             GhostButton(
+              label: t.importRoutines,
+              icon: PhosphorIconsRegular.downloadSimple,
+              onTap: () => showPlanImportSheet(context),
+            ),
+            const SizedBox(height: 10),
+            GhostButton(
               label: t.aiRoutine,
               icon: PhosphorIconsRegular.sparkle,
               onTap: fit.goAiPlan,
@@ -72,9 +110,10 @@ class RoutinesScreen extends StatelessWidget {
     );
   }
 
-  void _openTemplates(BuildContext context) {
+  void _shareMenu(BuildContext context) {
     final gc = context.gc;
-    showModalBottomSheet<void>(
+    final planned = fit.routines.where((r) => fit.weeklyPlan.containsValue(r.id)).toList();
+    showAppSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
@@ -92,14 +131,98 @@ class RoutinesScreen extends StatelessWidget {
             children: [
               const SheetHandle(),
               const SizedBox(height: 18),
-              Text(t.templates,
-                  textAlign: TextAlign.center,
-                  style: AppTheme.f(14, weight: FontWeight.w700, color: gc.text, letterSpacing: 0.4)),
-              const SizedBox(height: 6),
-              Text(t.templatesHint,
-                  textAlign: TextAlign.center,
-                  style: AppTheme.f(12, weight: FontWeight.w500, color: gc.textSecondary, height: 1.4)),
-              const SizedBox(height: 18),
+              _shareOption(gc, PhosphorIconsRegular.calendarDots, t.shareWeek, t.shareWeekHint, () {
+                Navigator.pop(sheet);
+                sharePlan(planned.isEmpty ? fit.routines : [
+                  ...planned,
+                  ...fit.routines.where((r) => !planned.contains(r)),
+                ], title: t.weeklyPlan);
+              }),
+              const SizedBox(height: 14),
+              Text(t.shareRoutine.toUpperCase(),
+                  style: AppTheme.f(10.5, weight: FontWeight.w700, color: gc.textTertiary, letterSpacing: 1.3)),
+              const SizedBox(height: 8),
+              for (final r in [
+                for (final group in fit.routineGroups) ...fit.routinesInGroup(group),
+                ...fit.routinesInGroup(''),
+              ])
+                _shareOption(
+                  gc,
+                  PhosphorIconsRegular.listChecks,
+                  fit.routineTitle(r),
+                  [if (r.group.isNotEmpty) r.group, t.exerciseCount(r.exerciseIds.length)].join(' · '),
+                  () {
+                    Navigator.pop(sheet);
+                    sharePlan([r]);
+                  },
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _shareOption(GymColors gc, IconData icon, String title, String hint, VoidCallback onTap) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(color: gc.bgRaised2, borderRadius: BorderRadius.circular(16)),
+        child: Row(children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(color: gc.emberSoft, borderRadius: BorderRadius.circular(11)),
+            child: Icon(icon, size: 19, color: gc.ember),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTheme.f(14, weight: FontWeight.w600, color: gc.text)),
+                const SizedBox(height: 2),
+                Text(hint,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTheme.f(11.5, weight: FontWeight.w500, color: gc.textSecondary)),
+              ],
+            ),
+          ),
+          Icon(PhosphorIconsRegular.shareNetwork, size: 16, color: gc.textSecondary),
+        ]),
+      ),
+    );
+  }
+
+  void _openTemplates(BuildContext context) {
+    final gc = context.gc;
+    showAppSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (sheet) => Container(
+        padding: sheetPad(sheet),
+        constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(sheet).height * 0.85),
+        decoration: BoxDecoration(
+          color: gc.bgRaised,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SheetHandle(),
+              const SizedBox(height: 16),
+              SheetTitle(t.templates, subtitle: t.templatesHint),
+              const SizedBox(height: 16),
               for (final template in kProgramTemplates)
                 _templateCard(context, gc, sheet, template),
             ],
@@ -117,9 +240,8 @@ class RoutinesScreen extends StatelessWidget {
         final made = fit.applyTemplate(template);
         Navigator.pop(sheet);
         if (made == 0 || !context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(t.templateAdded(made)), behavior: SnackBarBehavior.floating),
-        );
+        showNotchToast(context, t.templateAdded(made),
+            subtitle: template.name, icon: PhosphorIconsFill.stack, accent: context.gc.sage);
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
@@ -211,47 +333,73 @@ class RoutinesScreen extends StatelessWidget {
     );
   }
 
-  Widget _routineCard(GymColors gc, Routine r) {
-    final n = r.exerciseIds.length;
-    return GestureDetector(
-      onTap: () => fit.openRoutine(r.id),
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(14),
+  Widget _folders(BuildContext context, List<Routine> list) {
+    return Column(children: [
+      for (var i = 0; i < list.length; i += 2)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Expanded(child: RoutineFolder(routine: list[i], onMenu: () => _routineMenu(context, list[i]))),
+            const SizedBox(width: 12),
+            Expanded(
+              child: i + 1 < list.length
+                  ? RoutineFolder(routine: list[i + 1], onMenu: () => _routineMenu(context, list[i + 1]))
+                  : const SizedBox.shrink(),
+            ),
+          ]),
+        ),
+    ]);
+  }
+
+  void _routineMenu(BuildContext context, Routine r) {
+    final gc = context.gc;
+    showAppSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheet) => Container(
+        padding: sheetPad(sheet),
         decoration: BoxDecoration(
           color: gc.bgRaised,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         ),
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(color: gc.emberSoft, borderRadius: BorderRadius.circular(12)),
-              child: Icon(PhosphorIconsRegular.listChecks, size: 22, color: gc.ember),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(fit.routineTitle(r), style: AppTheme.f(15, weight: FontWeight.w600, color: gc.text)),
-                  const SizedBox(height: 2),
-                  Text(t.exerciseCount(n), style: AppTheme.f(12, weight: FontWeight.w500, color: gc.textSecondary)),
-                ],
-              ),
-            ),
-            if (n > 0)
-              GestureDetector(
-                onTap: () => fit.startRoutine(r),
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(color: gc.ember, shape: BoxShape.circle),
-                  child: Icon(PhosphorIconsFill.play, size: 18, color: gc.onEmber),
-                ),
-              ),
+            const SheetHandle(),
+            const SizedBox(height: 16),
+            SheetTitle(fit.routineTitle(r), subtitle: t.exerciseCount(r.exerciseIds.length)),
+            const SizedBox(height: 14),
+            OptionGroup([
+              OptionItem(t.editEntry, icon: PhosphorIconsRegular.pencilSimple, onTap: () {
+                Navigator.pop(sheet);
+                fit.openRoutine(r.id);
+              }),
+              if (r.exerciseIds.isNotEmpty)
+                OptionItem(titleCase(t.startWorkout), icon: PhosphorIconsRegular.play, onTap: () {
+                  Navigator.pop(sheet);
+                  fit.startRoutine(r);
+                }),
+              OptionItem(t.shareRoutine, icon: PhosphorIconsRegular.shareNetwork, onTap: () {
+                Navigator.pop(sheet);
+                sharePlan([r]);
+              }),
+              OptionItem(t.duplicateRoutine, icon: PhosphorIconsRegular.copy, onTap: () {
+                Navigator.pop(sheet);
+                fit.duplicateRoutine(r.id);
+              }),
+              OptionItem(t.delete, icon: PhosphorIconsRegular.trash, danger: true, onTap: () async {
+                Navigator.pop(sheet);
+                final ok = await askConfirm(
+                  context,
+                  title: t.deleteRoutine,
+                  body: fit.routineTitle(r),
+                  confirmLabel: t.delete,
+                  danger: true,
+                );
+                if (ok) fit.deleteRoutine(r.id);
+              }),
+            ]),
           ],
         ),
       ),
@@ -260,62 +408,55 @@ class RoutinesScreen extends StatelessWidget {
 
   void _pickRoutine(BuildContext context, int weekday) {
     final gc = context.gc;
-    showModalBottomSheet<void>(
+    final routines = [
+      for (final group in fit.routineGroups) ...fit.routinesInGroup(group),
+      ...fit.routinesInGroup(''),
+    ];
+    showAppSheet<void>(
       context: context,
-      backgroundColor: gc.bgRaised,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (_) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(t.setDay(t.weekday(weekday).toUpperCase()),
-                  style: AppTheme.f(14, weight: FontWeight.w700, color: gc.text, letterSpacing: 0.4)),
-              const SizedBox(height: 14),
-              _sheetItem(context, gc, t.restDayShort, fit.weeklyPlan[weekday] == null, () {
-                fit.assignRoutineToDay(weekday, null);
-                Navigator.pop(context);
-              }),
-              for (final r in [
-                for (final group in fit.routineGroups) ...fit.routinesInGroup(group),
-                ...fit.routinesInGroup(''),
-              ])
-                _sheetItem(
-                    context,
-                    gc,
-                    r.group.isEmpty ? fit.routineTitle(r) : '${r.group} · ${fit.routineTitle(r)}',
-                    fit.weeklyPlan[weekday] == r.id, () {
-                  fit.assignRoutineToDay(weekday, r.id);
-                  Navigator.pop(context);
-                }),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _sheetItem(BuildContext context, GymColors gc, String label, bool selected, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheet) => Container(
+        constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(sheet).height * 0.72),
+        padding: sheetPad(sheet),
         decoration: BoxDecoration(
-          color: selected ? gc.emberSoft : gc.bgRaised2,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: selected ? gc.ember : Colors.transparent),
+          color: gc.bgRaised,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         ),
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Expanded(
-              child: Text(label,
-                  style: AppTheme.f(14, weight: FontWeight.w600, color: selected ? gc.ember : gc.text)),
+            const SheetHandle(),
+            const SizedBox(height: 16),
+            SheetTitle(titleCase(t.setDay(t.weekday(weekday).toUpperCase()))),
+            const SizedBox(height: 14),
+            Flexible(
+              child: OptionGroup(
+                scroll: true,
+                [
+                  OptionItem(
+                    t.restDayShort,
+                    icon: PhosphorIconsRegular.moonStars,
+                    selected: fit.weeklyPlan[weekday] == null,
+                    onTap: () {
+                      fit.assignRoutineToDay(weekday, null);
+                      Navigator.pop(sheet);
+                    },
+                  ),
+                  for (final r in routines)
+                    OptionItem(
+                      fit.routineTitle(r),
+                      detail: r.group.isEmpty ? null : r.group,
+                      selected: fit.weeklyPlan[weekday] == r.id,
+                      onTap: () {
+                        fit.assignRoutineToDay(weekday, r.id);
+                        Navigator.pop(sheet);
+                      },
+                    ),
+                ],
+              ),
             ),
-            if (selected) SvgPathIcon(Ic.checkBold, size: 16, color: gc.ember),
           ],
         ),
       ),

@@ -83,6 +83,25 @@ bool _sameEquipment(Set<String> q, Set<String> c) {
   return qe.intersection(ce).isNotEmpty;
 }
 
+const _modifiers = {
+  'one', 'single', 'arm', 'seated', 'sitted', 'standing', 'lying', 'alternate', 'alternating',
+  'wide', 'close', 'narrow', 'grip', 'straight', 'bent', 'over', 'both', 'two', 'double', 'hand',
+};
+
+bool _fits(Set<String> qCore, Set<String> q, Set<String> c) {
+  if (qCore.isNotEmpty && c.containsAll(qCore)) return true;
+  final cMeaning = c.difference(_equipment);
+  return cMeaning.length >= 2 && cMeaning.difference(_modifiers).isNotEmpty && q.containsAll(cMeaning);
+}
+
+const _legs = {'quads', 'glutes', 'hamstrings', 'calves'};
+
+bool _sameMuscle(String? hint, Exercise e) =>
+    hint == null ||
+    e.primary == hint ||
+    e.secondary.contains(hint) ||
+    (_legs.contains(hint) && _legs.contains(e.primary));
+
 int _score(Set<String> q, Set<String> c) {
   final shared = q.intersection(c);
   if (shared.difference(_equipment).isEmpty) return 0;
@@ -97,7 +116,7 @@ const _muscleHints = <List<String>, String>{
   ['oblique', 'twist', 'side bend', 'wood chop', 'russian']: 'obliques',
   ['crunch', 'sit up', 'plank', 'abdominal', 'leg raise', 'hollow', 'v up']: 'abdomen',
   ['shrug', 'trap ', 'trapezius', 'upright row']: 'trapezius',
-  ['forearm', 'wrist', 'grip', 'farmer']: 'forearm',
+  ['forearm', 'wrist', 'farmer', 'gripper', 'hand grip']: 'forearm',
   ['triceps', 'pushdown', 'skullcrusher', 'kickback', 'dip']: 'triceps',
   ['biceps', 'curl', 'preacher', 'chin up']: 'biceps',
   ['lateral raise', 'shoulder', 'overhead press', 'military', 'arnold', 'face pull', 'delt', 'upright']:
@@ -120,6 +139,10 @@ Exercise? matchExercise(String name, Iterable<Exercise> pool) {
   final key = searchKey(name);
   if (key.isEmpty) return null;
 
+  for (final e in pool) {
+    if (_keyOf(e.name) == key) return e;
+  }
+
   final alias = _aliasIndex[sortedKey(name)];
   if (alias != null) {
     final wanted = searchKey(alias);
@@ -136,6 +159,8 @@ Exercise? matchExercise(String name, Iterable<Exercise> pool) {
   final q = key.split(' ').toSet();
   final qMeaning = q.difference(_equipment);
   if (qMeaning.isEmpty) return null;
+  final qCore = qMeaning.difference(_modifiers);
+  final hint = guessMuscle(name);
 
   Exercise? exact;
   var exactExtra = 1 << 30;
@@ -144,14 +169,14 @@ Exercise? matchExercise(String name, Iterable<Exercise> pool) {
 
   for (final e in pool) {
     final c = nameTokens(e.name).toSet();
-    if (c.isEmpty || !_sameEquipment(q, c)) continue;
+    if (c.isEmpty || !_sameEquipment(q, c) || !_sameMuscle(hint, e)) continue;
     if (c.containsAll(qMeaning)) {
       final extra = c.difference(q).length;
       if (extra < exactExtra) {
         exact = e;
         exactExtra = extra;
       }
-    } else {
+    } else if (_fits(qCore, q, c)) {
       final s = _score(q, c);
       if (s > looseScore) {
         loose = e;
@@ -159,6 +184,5 @@ Exercise? matchExercise(String name, Iterable<Exercise> pool) {
       }
     }
   }
-  if (exact != null) return exact;
-  return looseScore >= 5 ? loose : null;
+  return exact ?? (looseScore >= 3 ? loose : null);
 }

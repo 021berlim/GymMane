@@ -75,6 +75,14 @@ mixin RoutinesState on FitCore, LibraryState {
     notifyListeners();
   }
 
+  void setRoutineColor(String id, int color) {
+    final r = _routine(id);
+    if (r == null) return;
+    r.color = color;
+    _persist();
+    notifyListeners();
+  }
+
   String duplicateRoutine(String id) {
     final source = _routine(id);
     if (source == null) return '';
@@ -82,7 +90,10 @@ mixin RoutinesState on FitCore, LibraryState {
     final made = _routine(copy)!;
     made.exerciseIds.addAll(source.exerciseIds);
     made.sets.addAll(source.sets);
+    made.chained.addAll(source.chained);
+    made.plan.addAll({for (final e in source.plan.entries) e.key: [...e.value]});
     made.group = source.group;
+    made.color = source.color;
     _persist();
     notifyListeners();
     return copy;
@@ -101,6 +112,8 @@ mixin RoutinesState on FitCore, LibraryState {
     if (r == null) return;
     if (r.exerciseIds.remove(exId)) {
       r.sets.remove(exId);
+      r.plan.remove(exId);
+      r.chained.remove(exId);
     } else {
       r.exerciseIds.add(exId);
     }
@@ -108,7 +121,60 @@ mixin RoutinesState on FitCore, LibraryState {
     notifyListeners();
   }
 
-  int routineSets(Routine r, String exId) => r.sets[exId] ?? kDefaultRoutineSets;
+  VoidCallback? removeRoutineExercise(String routineId, String exId) {
+    final r = _routine(routineId);
+    if (r == null) return null;
+    final at = r.exerciseIds.indexOf(exId);
+    if (at < 0) return null;
+    final sets = r.sets[exId];
+    final plan = r.plan[exId];
+    final chained = r.chained.contains(exId);
+    toggleRoutineExercise(routineId, exId);
+    return () {
+      final back = _routine(routineId);
+      if (back == null || back.exerciseIds.contains(exId)) return;
+      back.exerciseIds.insert(at.clamp(0, back.exerciseIds.length), exId);
+      if (sets != null) back.sets[exId] = sets;
+      if (plan != null) back.plan[exId] = plan;
+      if (chained) back.chained.add(exId);
+      _persist();
+      notifyListeners();
+    };
+  }
+
+  int routineSets(Routine r, String exId) {
+    final planned = r.plan[exId];
+    if (planned != null && planned.isNotEmpty) {
+      final working = planned.where((p) => p.kind != SetKind.warmup).length;
+      return working == 0 ? planned.length : working;
+    }
+    return r.sets[exId] ?? (modeOf(exId) == 'cardio' ? 1 : kDefaultRoutineSets);
+  }
+
+  List<PlannedSet> plannedSets(Routine r, String exId) => r.plan[exId] ?? const [];
+
+  void setRoutineSetCount(String routineId, String exId, int n) {
+    final r = _routine(routineId);
+    if (r == null || !r.exerciseIds.contains(exId)) return;
+    r.sets[exId] = n.clamp(1, 12);
+    _persist();
+    notifyListeners();
+  }
+
+  bool hasPlan(Routine r, String exId) => r.plan[exId]?.isNotEmpty ?? false;
+
+  void setPlannedSets(String routineId, String exId, List<PlannedSet> sets) {
+    final r = _routine(routineId);
+    if (r == null || !r.exerciseIds.contains(exId)) return;
+    if (sets.isEmpty) {
+      r.plan.remove(exId);
+    } else {
+      r.plan[exId] = List.unmodifiable(sets.take(20));
+      r.sets[exId] = sets.where((p) => p.kind != SetKind.warmup).length.clamp(1, 20);
+    }
+    _persist();
+    notifyListeners();
+  }
 
   bool chainsToNext(Routine r, String exId) {
     final i = r.exerciseIds.indexOf(exId);
@@ -126,6 +192,25 @@ mixin RoutinesState on FitCore, LibraryState {
   void bumpRoutineSets(String routineId, String exId, int delta) {
     final r = _routine(routineId);
     if (r == null || !r.exerciseIds.contains(exId)) return;
+    final planned = r.plan[exId];
+    if (planned != null && planned.isNotEmpty) {
+      final next = [...planned];
+      if (delta > 0) {
+        for (var i = 0; i < delta && next.length < 20; i++) {
+          next.add(next
+              .lastWhere((s) => s.kind != SetKind.warmup, orElse: () => const PlannedSet())
+              .copyWith(kind: SetKind.normal));
+        }
+      } else {
+        for (var i = 0; i < -delta; i++) {
+          final last = next.lastIndexWhere((s) => s.kind != SetKind.warmup);
+          if (last < 0 || next.where((s) => s.kind != SetKind.warmup).length <= 1) break;
+          next.removeAt(last);
+        }
+      }
+      setPlannedSets(routineId, exId, next);
+      return;
+    }
     r.sets[exId] = (routineSets(r, exId) + delta).clamp(1, 12);
     _persist();
     notifyListeners();

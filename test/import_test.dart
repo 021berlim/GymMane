@@ -257,4 +257,21 @@ void main() {
       expect(logged.durationSec, 45 * 60);
     });
   });
+
+  group('Fitbod', () {
+    const csv = 'Date,Exercise,Reps,Weight(kg),Duration(s),Distance(m),Incline,Resistance,isWarmup,Note,multiplier\n'
+        '2024-03-04 18:02:11 +0000,Barbell Bench Press,10,40.0,0.0,0.0,0.0,0.0,true,,1.0\n'
+        '2024-03-04 18:02:11 +0000,Barbell Bench Press,8,60.0,0.0,0.0,0.0,0.0,false,,1.0\n'
+        '2024-03-04 18:02:11 +0000,Barbell Bench Press,8,62.5,0.0,0.0,0.0,0.0,false,,1.0\n'
+        '2024-03-06 18:10:00 +0000,Barbell Squat,5,100.0,0.0,0.0,0.0,0.0,false,,1.0\n';
+
+    test('detects the export and skips warm-ups', () {
+      expect(detectFormat(csv), ImportFormat.fitbod);
+      expect(needsUnitChoice(csv), isFalse);
+      final r = parseImport(csv);
+      expect(r.sessions.length, 2);
+      final bench = r.sessions.first.exercises.single;
+      expect(bench.sets.map((s) => s.weightKg), [60.0, 62.5]);
+    });
+  });
 }

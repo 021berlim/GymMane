@@ -16,7 +16,8 @@ void main() {
       ]),
     ]);
     final lines = csv.trim().split('\n');
-    expect(lines.first, 'date,exercise,muscle,set,reps,weight_kg,volume_kg,est_1rm_kg');
+    expect(lines.first,
+        'date,exercise,muscle,set,reps,weight_kg,volume_kg,est_1rm_kg,distance_km,duration_s,rpe');
     expect(lines.length, 3);
     expect(lines[1], startsWith('2026-07-14,Barbell Bench Press,chest,1,10,60,600,'));
     expect(lines[2], contains(',2,8,70,560,'));
@@ -29,7 +30,7 @@ void main() {
     final row = csv.trim().split('\n')[1];
     expect(row, contains('"Chest Dip, Assisted"'));
 
-    expect(row.replaceAll(RegExp('"[^"]*"'), 'X').split(',').length, 8);
+    expect(row.replaceAll(RegExp('"[^"]*"'), 'X').split(',').length, 11);
   });
 
   test('a name with quotes is escaped, not mangled', () {
@@ -47,6 +48,15 @@ void main() {
     expect(csv, contains(',10,20,200,'));
   });
 
+  test('cardio and timed sets carry their distance and time', () {
+    final csv = store.exportCsv([
+      _session(DateTime(2026, 9, 18), 'Outdoor Run', [LoggedSet(0, 0, sec: 1800, km: 5.25)]),
+      _session(DateTime(2026, 9, 18), 'Plank', [LoggedSet(0, 0, sec: 60)]),
+    ]);
+    expect(csv, contains(',0,0,0,0,5.25,1800'));
+    expect(csv, contains(',0,0,0,0,,60'));
+  });
+
   test('rows come out oldest first regardless of input order', () {
     final csv = store.exportCsv([
       _session(DateTime(2026, 7, 16), 'B', [LoggedSet(1, 1)]),
@@ -59,6 +69,6 @@ void main() {
 
   test('no sessions still yields a valid header-only file', () {
     expect(store.exportCsv([]).trim(),
-        'date,exercise,muscle,set,reps,weight_kg,volume_kg,est_1rm_kg');
+        'date,exercise,muscle,set,reps,weight_kg,volume_kg,est_1rm_kg,distance_km,duration_s,rpe');
   });
 }
