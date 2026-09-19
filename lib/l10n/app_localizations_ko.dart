@@ -2914,4 +2914,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get addWeekWidget => '이번 주 위젯 추가';
+
+  @override
+  String get gamificationSetting => '메달과 레벨';
 }

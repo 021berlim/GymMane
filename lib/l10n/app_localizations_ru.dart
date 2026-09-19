@@ -3076,4 +3076,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get addWeekWidget => 'Добавить виджет недели';
+
+  @override
+  String get gamificationSetting => 'Медали и уровни';
 }

@@ -1158,5 +1158,7 @@
   "effortHint": "RPE：10 はもう 1 回もできない、8 はあと 2 回できた状態。RIR は残っていた回数。記録したセットは、推定 1RM に RPE 表を使います。",
   "rirTitle": "余力 (RIR)",
   "rirHint": "0 はもう 1 回もできない、2 はあと 2 回できた状態。",
-  "addWeekWidget": "今週のウィジェットを追加"
+  "addWeekWidget": "今週のウィジェットを追加",
+
+  "gamificationSetting": "メダルとレベル"
 }

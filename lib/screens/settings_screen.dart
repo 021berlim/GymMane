@@ -229,6 +229,12 @@ class SettingsScreen extends StatelessWidget {
                     child: _prefRow(gc, PhosphorIconsRegular.sun, t.keepScreenOn,
                         TinySwitch(on: fit.keepScreenOn)),
                   ),
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: fit.toggleGamification,
+                    child: _prefRow(gc, PhosphorIconsRegular.medal, t.gamificationSetting,
+                        TinySwitch(on: fit.gamification)),
+                  ),
                   _choiceRow(
                     context,
                     gc,

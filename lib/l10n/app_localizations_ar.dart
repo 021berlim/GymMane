@@ -2982,4 +2982,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get addWeekWidget => 'إضافة أداة الأسبوع';
+
+  @override
+  String get gamificationSetting => 'الميداليات والمستويات';
 }

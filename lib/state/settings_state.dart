@@ -31,6 +31,7 @@ mixin SettingsState on FitCore, ToolsState, LibraryState {
   bool autoAdvance = true;
   bool keepScreenOn = true;
   bool startCountdown = true;
+  bool gamification = true;
   bool logRpe = false;
   String effortScale = 'rpe';
   int? trainReminderMin;

@@ -1006,5 +1006,7 @@
   "effortHint": "RPE: 10 è non riuscire a farne un’altra; 8, che te ne restavano due. RIR conta le ripetizioni che ti restavano. Se la serie lo ha, l’1RM stimato usa la tabella RPE.",
   "rirTitle": "RISERVA (RIR)",
   "rirHint": "0 è non riuscire a farne un’altra; 2, che te ne restavano due.",
-  "addWeekWidget": "Aggiungi widget della settimana"
+  "addWeekWidget": "Aggiungi widget della settimana",
+
+  "gamificationSetting": "Medaglie e livelli"
 }

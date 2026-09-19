@@ -1158,5 +1158,7 @@
   "effortHint": "RPE：10 表示一次都做不動了，8 表示還能再做兩次。RIR 表示還剩幾次。記錄後，估算 1RM 會使用 RPE 表。",
   "rirTitle": "餘力 (RIR)",
   "rirHint": "0 表示一次都做不動了，2 表示還能再做兩次。",
-  "addWeekWidget": "新增本週小工具"
+  "addWeekWidget": "新增本週小工具",
+
+  "gamificationSetting": "獎牌和等級"
 }

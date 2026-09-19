@@ -1026,5 +1026,7 @@
   "effortHint": "RPE: 10 heißt, keine Wiederholung mehr, 8 heißt, zwei wären noch gegangen. RIR zählt die Wiederholungen, die übrig waren. Hat ein Satz einen Wert, nutzt das geschätzte 1RM die RPE-Tabelle.",
   "rirTitle": "RESERVE (RIR)",
   "rirHint": "0 heißt, keine Wiederholung mehr, 2 heißt, zwei wären noch gegangen.",
-  "addWeekWidget": "Wochen-Widget hinzufügen"
+  "addWeekWidget": "Wochen-Widget hinzufügen",
+
+  "gamificationSetting": "Medaillen und Stufen"
 }

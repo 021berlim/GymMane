@@ -2986,4 +2986,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get addWeekWidget => 'Add week widget';
+
+  @override
+  String get gamificationSetting => 'Medals and levels';
 }

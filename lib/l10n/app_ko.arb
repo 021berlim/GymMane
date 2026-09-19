@@ -1158,5 +1158,7 @@
   "effortHint": "RPE: 10은 한 번도 더 못 하는 상태, 8은 두 번 더 할 수 있던 상태예요. RIR은 남아 있던 반복 수예요. 기록된 세트는 예상 1RM에 RPE 표를 사용해요.",
   "rirTitle": "여력 (RIR)",
   "rirHint": "0은 한 번도 더 못 하는 상태, 2는 두 번 더 할 수 있던 상태예요.",
-  "addWeekWidget": "이번 주 위젯 추가"
+  "addWeekWidget": "이번 주 위젯 추가",
+
+  "gamificationSetting": "메달과 레벨"
 }

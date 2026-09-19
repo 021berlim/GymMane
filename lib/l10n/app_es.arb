@@ -966,5 +966,7 @@
   "effortHint": "RPE: 10 es no poder con una más; 8, que te sobraban dos. RIR cuenta las repeticiones que te quedaban. Si la serie lo lleva, el 1RM estimado usa la tabla de RPE.",
   "rirTitle": "RESERVA (RIR)",
   "rirHint": "0 es no poder con una más; 2, que te sobraban dos.",
-  "addWeekWidget": "Añadir widget de la semana"
+  "addWeekWidget": "Añadir widget de la semana",
+
+  "gamificationSetting": "Medallas y niveles"
 }

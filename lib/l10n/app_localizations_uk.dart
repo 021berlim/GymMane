@@ -2994,4 +2994,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get addWeekWidget => 'Додати віджет тижня';
+
+  @override
+  String get gamificationSetting => 'Медалі та рівні';
 }

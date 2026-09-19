@@ -1122,7 +1122,7 @@ class SessionScreen extends StatelessWidget {
   }
 
   Widget _complete(BuildContext context, GymColors gc) {
-    final prs = fit.summaryPrs;
+    final prs = fit.gamification ? fit.summaryPrs : 0;
     final streak = fit.currentStreak;
     final goalHit = fit.goalPct >= 100;
     final vsLast = fit.summaryVsLast;
@@ -1130,7 +1130,7 @@ class SessionScreen extends StatelessWidget {
     final sets = fit.session?.summarySets ?? 0;
 
     return _Celebrate(
-      active: sets > 0,
+      active: sets > 0 && fit.gamification,
       child: Padding(
         padding: const EdgeInsets.only(top: 24),
         child: Column(

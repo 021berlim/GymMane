@@ -2860,6 +2860,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get addWeekWidget => '添加本周小组件';
+
+  @override
+  String get gamificationSetting => '勋章和等级';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -5741,4 +5744,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get addWeekWidget => '新增本週小工具';
+
+  @override
+  String get gamificationSetting => '獎牌和等級';
 }

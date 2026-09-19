@@ -105,15 +105,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Rise(
-                  index: 1,
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                    _heading(gc, t.awardsTitle, count: '${fit.awardCount}', onMore: fit.goAwards),
-                    const SizedBox(height: 16),
-                    const MedalShelf(size: 66),
-                  ]),
-                ),
-                const SizedBox(height: 30),
+                if (fit.gamification) ...[
+                  Rise(
+                    index: 1,
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                      _heading(gc, t.awardsTitle, count: '${fit.awardCount}', onMore: fit.goAwards),
+                      const SizedBox(height: 16),
+                      const MedalShelf(size: 66),
+                    ]),
+                  ),
+                  const SizedBox(height: 30),
+                ],
                 Rise(
                   index: 2,
                   child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -445,9 +447,12 @@ class _ProfileHeader extends SliverPersistentHeaderDelegate {
   final VoidCallback onShare;
 
   static const _banner = 176.0;
-  static const _identity = 128.0;
   static const _bar = 60.0;
-  static const _identityBlock = 136.0;
+  static const _levelRow = 34.0;
+
+  double get _cut => fit.gamification ? 0 : _levelRow;
+  double get _identity => 128.0 - _cut;
+  double get _identityBlock => 136.0 - _cut;
 
   @override
   double get maxExtent => _banner + _identity;
@@ -628,6 +633,7 @@ class _ProfileHeader extends SliverPersistentHeaderDelegate {
           overflow: TextOverflow.ellipsis,
           style: AppTheme.f(13, weight: FontWeight.w500, color: gc.textSecondary),
         ),
+        if (fit.gamification) ...[
         const SizedBox(height: 8),
         Row(children: [
           Container(
@@ -649,6 +655,7 @@ class _ProfileHeader extends SliverPersistentHeaderDelegate {
             ),
           ),
         ]),
+        ],
       ],
     );
   }

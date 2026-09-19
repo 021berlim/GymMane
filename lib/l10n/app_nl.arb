@@ -1158,5 +1158,7 @@
   "effortHint": "RPE: 10 is er geen meer kunnen doen, 8 is er nog twee over hebben. RIR telt de herhalingen die je nog had. Heeft een set er een, dan gebruikt de geschatte 1RM de RPE-tabel.",
   "rirTitle": "RESERVE (RIR)",
   "rirHint": "0 is er geen meer kunnen doen, 2 is er nog twee over hebben.",
-  "addWeekWidget": "Weekwidget toevoegen"
+  "addWeekWidget": "Weekwidget toevoegen",
+
+  "gamificationSetting": "Medailles en niveaus"
 }

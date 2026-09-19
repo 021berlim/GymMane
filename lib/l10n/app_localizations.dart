@@ -5359,6 +5359,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add week widget'**
   String get addWeekWidget;
+
+  /// No description provided for @gamificationSetting.
+  ///
+  /// In en, this message translates to:
+  /// **'Medals and levels'**
+  String get gamificationSetting;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

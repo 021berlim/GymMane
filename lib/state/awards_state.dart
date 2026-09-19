@@ -90,7 +90,11 @@ mixin AwardsState on FitCore, StatsState, SettingsState {
     for (final id in AwardId.values) {
       if (hasAward(id) || awardValue(id) < awardGoal(id)) continue;
       awards[id.name] = DateTime.now();
-      if (!silent) pendingAwards.add(id);
+      if (!gamification) {
+        awardsSeen.add(id.name);
+      } else if (!silent) {
+        pendingAwards.add(id);
+      }
       won = true;
     }
     if (!won) return;
@@ -102,7 +106,17 @@ mixin AwardsState on FitCore, StatsState, SettingsState {
 
   void backFromAwards() => popRoute(fallback: 'settings');
 
-  AwardId? get nextCelebration => pendingAwards.isEmpty ? null : pendingAwards.first;
+  AwardId? get nextCelebration => !gamification || pendingAwards.isEmpty ? null : pendingAwards.first;
+
+  void toggleGamification() {
+    gamification = !gamification;
+    if (!gamification) {
+      awardsSeen.addAll(awards.keys);
+      pendingAwards.clear();
+    }
+    _persist();
+    notifyListeners();
+  }
 
   void celebrationShown() {
     if (pendingAwards.isEmpty) return;

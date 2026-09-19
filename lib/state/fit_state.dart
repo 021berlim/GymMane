@@ -125,9 +125,8 @@ class FitState extends FitCore
     _seedCalculatorsFromProfile();
     _loading = false;
     refreshAwards(silent: true);
-    pendingAwards
-      ..clear()
-      ..addAll(unseenAwards);
+    pendingAwards.clear();
+    if (gamification) pendingAwards.addAll(unseenAwards);
     notifyListeners();
   }
 
@@ -164,6 +163,7 @@ class FitState extends FitCore
     autoAdvance = data['autoAdvance'] as bool? ?? true;
     keepScreenOn = data['keepAwake'] as bool? ?? true;
     startCountdown = data['countdown'] as bool? ?? true;
+    gamification = data['gamify'] as bool? ?? true;
     logRpe = data['rpe'] as bool? ?? false;
     effortScale = data['effort'] == 'rir' ? 'rir' : 'rpe';
     trainReminderMin = (data['trainAt'] as num?)?.toInt();
@@ -318,6 +318,7 @@ class FitState extends FitCore
         'autoAdvance': autoAdvance,
         'keepAwake': keepScreenOn,
         'countdown': startCountdown,
+        'gamify': gamification,
         'rpe': logRpe,
         'effort': effortScale,
         'demo': demoSize,
@@ -403,6 +404,7 @@ class FitState extends FitCore
     showFocus = true;
     autoAdvance = true;
     startCountdown = true;
+    gamification = true;
     logRpe = false;
     effortScale = 'rpe';
     trainReminderMin = null;
