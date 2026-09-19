@@ -9,7 +9,7 @@
         android:layout_height="match_parent"
         android:adjustViewBounds="true"
         android:scaleType="fitCenter"
-        android:visibility="visible"
+        android:visibility="gone"
         android:contentDescription="GymMane" />
 
     <ImageView
@@ -18,6 +18,6 @@
         android:layout_height="match_parent"
         android:adjustViewBounds="true"
         android:scaleType="fitCenter"
-        android:visibility="gone"
+        android:visibility="visible"
         android:contentDescription="GymMane" />
 </FrameLayout>
