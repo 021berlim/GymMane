@@ -8,6 +8,7 @@ import '../state/fit_state.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/dialogs.dart';
+import '../widgets/glass.dart';
 import '../widgets/ui_kit.dart';
 
 class PlacesScreen extends StatelessWidget {
@@ -296,7 +297,7 @@ class PlacesScreen extends StatelessWidget {
 
   void _editPlates(BuildContext context, GymPlace place) {
     final gc = context.gc;
-    showModalBottomSheet<void>(
+    showAppSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
@@ -393,7 +394,7 @@ class PlacesScreen extends StatelessWidget {
   Future<void> _rename(BuildContext context, GymPlace? place) async {
     final gc = context.gc;
     final controller = TextEditingController(text: place?.name ?? '');
-    final name = await showDialog<String>(
+    final name = await showAppDialog<String>(
       context: context,
       builder: (dctx) => appDialog(
         gc,

@@ -24,7 +24,8 @@ mixin PlacesState on FitCore, LibraryState {
     return place == null ? kEquipment.toSet() : {...place.equipment, 'Bodyweight'};
   }
 
-  bool fitsHere(Exercise ex) => activePlace == null || gearHere.contains(ex.equipment);
+  bool fitsHere(Exercise ex) =>
+      activePlace == null || gearHere.contains(ex.equipment) || isCustom(ex.id);
 
   int placeExerciseCount(GymPlace place) {
     final gear = {...place.equipment, 'Bodyweight'};

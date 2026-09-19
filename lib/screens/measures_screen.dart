@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 import '../l10n/l10n.dart';
@@ -8,6 +7,10 @@ import '../state/fit_state.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/charts.dart';
+import '../widgets/dialogs.dart';
+import '../widgets/glass.dart';
+import '../widgets/rolling_text.dart';
+import '../widgets/ruler_picker.dart';
 import '../widgets/svg_icon.dart';
 import '../widgets/ui_kit.dart';
 
@@ -21,6 +24,7 @@ class MeasuresScreen extends StatelessWidget {
     return SafeArea(
       bottom: false,
       child: SingleChildScrollView(
+        clipBehavior: Clip.none,
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -105,8 +109,13 @@ class _MeasureRow extends StatelessWidget {
               ),
               if (series.length > 1)
                 SizedBox(
-                  width: 84,
-                  child: Sparkline(values: series, height: 34, color: gc.accent),
+                  width: 108,
+                  child: Sparkline(
+                    values: [for (final v in series) fit.toDisplayMeasure(measureKey, v)],
+                    height: 38,
+                    color: gc.accent,
+                    scale: fmt,
+                  ),
                 )
               else
                 Icon(PhosphorIconsRegular.plusCircle, size: 20, color: gc.textTertiary),
@@ -118,7 +127,7 @@ class _MeasureRow extends StatelessWidget {
   }
 }
 
-Future<void> showMeasureSheet(BuildContext context, String key) => showModalBottomSheet<void>(
+Future<void> showMeasureSheet(BuildContext context, String key) => showAppSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -135,105 +144,134 @@ class _MeasureSheet extends StatefulWidget {
 }
 
 class _MeasureSheetState extends State<_MeasureSheet> {
-  late final TextEditingController _value = TextEditingController(
-    text: () {
-      final latest = fit.latestMeasure(widget.measureKey);
-      return latest == null ? '' : fit.measureValue(widget.measureKey, latest.value);
-    }(),
-  );
+  static const _rangesCm = {
+    'neck': (20.0, 70.0, 38.0),
+    'shoulders': (70.0, 180.0, 115.0),
+    'chest': (60.0, 180.0, 100.0),
+    'arm': (15.0, 70.0, 34.0),
+    'forearm': (15.0, 50.0, 28.0),
+    'waist': (40.0, 180.0, 84.0),
+    'hips': (50.0, 180.0, 98.0),
+    'thigh': (30.0, 100.0, 56.0),
+    'calf': (20.0, 70.0, 38.0),
+  };
 
-  @override
-  void dispose() {
-    _value.dispose();
-    super.dispose();
+  String get _key => widget.measureKey;
+  bool get _pct => fit.isPercent(_key);
+  double get _step => _pct ? 0.5 : (fit.isInches ? 0.25 : 0.5);
+  int get _major => _pct ? 10 : (fit.isInches ? 4 : 10);
+
+  (double, double) get _range {
+    if (_pct) return (3, 60);
+    final r = _rangesCm[_key] ?? (10.0, 200.0, 50.0);
+    return (_snap(fit.toDisplayCm(r.$1)), _snap(fit.toDisplayCm(r.$2)));
   }
 
+  double _snap(double v) => (v / _step).round() * _step;
+
+  late double _value = () {
+    final latest = fit.latestMeasure(_key);
+    if (latest != null) return _snap(fit.toDisplayMeasure(_key, latest.value));
+    if (_pct) return 20.0;
+    return _snap(fit.toDisplayCm((_rangesCm[_key] ?? (10.0, 200.0, 50.0)).$3));
+  }();
+
+  String _show(double v) => v.toStringAsFixed(_step < 0.5 ? 2 : 1);
+
   void _save() {
-    final parsed = double.tryParse(_value.text.trim().replaceAll(',', '.'));
-    if (parsed == null || parsed <= 0) return;
-    fit.addMeasure(widget.measureKey, parsed);
+    if (_value <= 0) return;
+    fit.addMeasure(_key, _value);
     Navigator.of(context).pop();
+  }
+
+  Future<void> _type() async {
+    final typed = await askNumber(context, title: t.measureName(_key), initial: _show(_value), decimal: true);
+    if (typed == null || !mounted) return;
+    final (lo, hi) = _range;
+    setState(() => _value = _snap(typed.clamp(lo, hi)));
   }
 
   @override
   Widget build(BuildContext context) {
     final gc = context.gc;
-    final history = fit.measureHistory(widget.measureKey);
+    final history = fit.measureHistory(_key);
+    final (lo, hi) = _range;
 
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: Container(
-        decoration: BoxDecoration(
-          color: gc.bg,
-          border: Border.all(color: gc.border),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: SafeArea(
-          top: false,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SheetHandle(color: gc.border, margin: const EdgeInsets.symmetric(vertical: 12)),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(t.measureName(widget.measureKey).toUpperCase(),
-                        style: AppTheme.d(18,
-                            weight: FontWeight.w700, color: gc.text, letterSpacing: 1)),
-                    const SizedBox(height: 16),
-                    Row(
+    return Container(
+      decoration: BoxDecoration(
+        color: gc.bg,
+        border: Border.all(color: gc.border),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SheetHandle(color: gc.border, margin: const EdgeInsets.symmetric(vertical: 12)),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(children: [
+                    Expanded(
+                      child: Text(t.measureName(_key),
+                          style: AppTheme.f(17, weight: FontWeight.w800, color: gc.text)),
+                    ),
+                    Semantics(
+                      button: true,
+                      label: t.measureName(_key),
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: _type,
+                        child: Padding(
+                          padding: const EdgeInsets.all(8),
+                          child: Icon(PhosphorIconsRegular.keyboard, size: 20, color: gc.textSecondary),
+                        ),
+                      ),
+                    ),
+                  ]),
+                  const SizedBox(height: 6),
+                  Center(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
                       children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _value,
-                            autofocus: true,
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            inputFormatters: [
-                              FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
-                            ],
-                            onSubmitted: (_) => _save(),
-                            cursorColor: gc.accent,
-                            style: AppTheme.d(22, weight: FontWeight.w700, color: gc.text),
-                            decoration: InputDecoration(
-                              hintText: '0',
-                              hintStyle: AppTheme.d(22, weight: FontWeight.w700, color: gc.textTertiary),
-                              suffixText: fit.measureUnit(widget.measureKey),
-                              suffixStyle: AppTheme.d(14, weight: FontWeight.w600, color: gc.textSecondary),
-                              filled: true,
-                              fillColor: gc.bgRaised,
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                              enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: BorderSide(color: gc.border)),
-                              focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: BorderSide(color: gc.accent)),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        SizedBox(
-                          width: 120,
-                          child: PrimaryButton(label: t.save, onTap: _save, height: 52),
-                        ),
+                        RollingText(_show(_value),
+                            style: AppTheme.f(54, weight: FontWeight.w800, color: gc.text, height: 1.1)),
+                        const SizedBox(width: 6),
+                        Text(fit.measureUnit(_key),
+                            style: AppTheme.f(18, weight: FontWeight.w700, color: gc.textSecondary)),
                       ],
                     ),
-                    if (history.isNotEmpty) ...[
-                      const SizedBox(height: 22),
-                      Text(t.measureHistory,
-                          style: AppTheme.d(12,
-                              weight: FontWeight.w600, color: gc.textSecondary, letterSpacing: 2)),
-                      const SizedBox(height: 10),
-                      for (final m in history.take(6)) _historyRow(gc, m),
-                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  RulerPicker(
+                    value: _value.clamp(lo, hi),
+                    min: lo,
+                    max: hi,
+                    step: _step,
+                    majorEvery: _major,
+                    label: (v) => '${v.round()}',
+                    onChanged: (v) => setState(() => _value = v),
+                  ),
+                  const SizedBox(height: 18),
+                  PrimaryButton(label: t.save, onTap: _save, height: 54),
+                  if (history.isNotEmpty) ...[
+                    const SizedBox(height: 22),
+                    Text(t.measureHistory,
+                        style: AppTheme.d(12,
+                            weight: FontWeight.w600, color: gc.textSecondary, letterSpacing: 2)),
+                    const SizedBox(height: 10),
+                    for (final m in history.take(6)) _historyRow(gc, m),
                   ],
-                ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

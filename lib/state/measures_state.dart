@@ -21,6 +21,14 @@ mixin MeasuresState on FitCore {
 
   String cmLabel(double cm) => '${fmt(_round1(toDisplayCm(cm)))} $lengthUnit';
 
+  String heightLabel(double cm) {
+    if (!isInches) return '${fmt(cm.round())} cm';
+    final inches = (cm / _cmPerInch).round();
+    return '${inches ~/ 12}′ ${inches % 12}″';
+  }
+
+  double get heightStep => isInches ? _cmPerInch : 1;
+
   double get cmStep => isInches ? _cmPerInch / 2 : 1;
 
   double get girthStep => isInches ? _cmPerInch / 4 : 0.5;
