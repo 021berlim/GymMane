@@ -35,6 +35,7 @@ Future<void> main() async {
   fit.syncTrainReminder();
 
   final watch = await DeviceKind.isWatch();
+  _onWatch = watch;
   fit.addListener(_sessionSideEffects);
   _sessionSideEffects();
 
@@ -49,8 +50,10 @@ Future<void> main() async {
   WidgetsBinding.instance.addPostFrameCallback((_) => HomeWidgetBridge.update());
 }
 
+bool _onWatch = false;
+
 void _sessionSideEffects() {
-  LiveWorkout.sync();
+  if (!_onWatch) LiveWorkout.sync();
   final live = fit.isSessionActive && fit.session?.manual == false;
   ScreenAwake.keepOn(fit.keepScreenOn && live);
 }
