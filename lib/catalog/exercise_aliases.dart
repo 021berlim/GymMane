@@ -107,6 +107,7 @@ const Map<String, List<String>> kExerciseAliases = {
   'Kettlebell Romanian Deadlift': ['Romanian Deadlift (Kettlebell)'],
   'Knee Push-up': ['Knee Push Up (Bodyweight)'],
   'Landmine Press': ['Landmine Press (Barbell)'],
+  'Leg Extension': ['Knee Extension'],
   'Lever Seated Reverse Fly': ['Rear Delt Reverse Fly (Machine)', 'Reverse Fly (Machine)'],
   'Lever Seated Row': ['Seated Row (Machine)', 'Iso-Lateral Row (Machine)'],
   'Lever Shoulder Press': ['Shoulder Press (Machine)', 'Seated Shoulder Press (Machine)'],

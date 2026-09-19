@@ -370,4 +370,5 @@ const Map<String, String> kOpenGymIds = {
   '1755': 'bZq4bwK',
   '1767': 'K1vlode',
   '0859': 'bd5b860',
+  '4004': 'leg-extension',
 };

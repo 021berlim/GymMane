@@ -8781,6 +8781,22 @@ const List<Exercise> kExercises = [
       'Log the total distance and the time you spent swimming.',
     ],
   ),
+  Exercise(
+    id: 'leg-extension',
+    name: 'Leg Extension',
+    primary: 'quads',
+    secondary: [],
+    equipment: 'Machine',
+    difficulty: 'Beginner',
+    art: 'leg-extension',
+    steps: [
+      'Adjust the backrest and ensure the machine axis of rotation aligns directly with the lateral side of your knee joint.',
+      'Grasp the side handles firmly, pull yourself down into the seat, and engage your core to lock your hips and pelvis in place.',
+      'Exhale as you extend your legs upward in a smooth, controlled motion by contracting your quadriceps.',
+      'Hold the fully extended position for 1–2 seconds at the top of the movement.',
+      'Inhale as you slowly lower the weight back to the starting position over a 2- to 3-second cadence.',
+    ],
+  ),
 ];
 
 const List<ToolMeta> kToolMeta = [
