@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 import '../l10n/l10n.dart';
@@ -8,14 +9,23 @@ import '../models/workout.dart';
 import '../state/fit_state.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import '../widgets/celebration.dart';
 import '../widgets/dialogs.dart';
+import '../widgets/entrance.dart';
 import '../widgets/exercise_media.dart';
+import '../widgets/glass.dart';
+import '../widgets/liquid_notch.dart';
+import '../widgets/set_kind.dart';
 import '../widgets/share_cards.dart';
+import '../widgets/rolling_text.dart';
+import '../widgets/ruler_picker.dart';
 import '../widgets/svg_icon.dart';
+import '../widgets/timer_panel.dart';
 import '../widgets/ui_kit.dart';
 import 'exercises_screen.dart';
 import 'tool_detail_screen.dart';
 import 'share_sheet.dart';
+import 'sticker_screen.dart';
 
 class SessionScreen extends StatelessWidget {
   const SessionScreen({super.key});
@@ -26,6 +36,7 @@ class SessionScreen extends StatelessWidget {
     return SafeArea(
       bottom: false,
       child: SingleChildScrollView(
+        clipBehavior: Clip.none,
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         child: fit.isSessionComplete ? _complete(context, gc) : _active(context, gc),
       ),
@@ -38,135 +49,99 @@ class SessionScreen extends StatelessWidget {
     final exIdx = s.currentIndex;
     final def = fit.exerciseById(ex?.id ?? '') ?? fit.allExercises.first;
     final repsOnly = ex != null && fit.isRepsOnly(ex.id);
+    final locked = fit.sessionLocked && !s.manual;
+    final demo = ex == null ? 'off' : fit.demoSize;
+    final mode = ex == null ? '' : fit.modeOf(ex.id);
+    final second = _secondAction(gc, ex, exIdx, mode, repsOnly);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        s.manual ? _manualBar(gc, s) : _liveBar(gc),
-        const SizedBox(height: 18),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(children: [
-              Text(fit.sessionProgressLabel,
-                  style: AppTheme.f(12, weight: FontWeight.w600, color: gc.textSecondary, letterSpacing: 0.4)),
-              if (fit.inSuperset) ...[
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(color: gc.bgRaised2, borderRadius: BorderRadius.circular(100)),
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(PhosphorIconsRegular.link, size: 11, color: gc.brass),
-                    const SizedBox(width: 5),
-                    Text(t.superset,
-                        style: AppTheme.f(10.5, weight: FontWeight.w700, color: gc.brass, letterSpacing: 0.5)),
-                  ]),
-                ),
-              ],
-            ]),
-            const SizedBox(height: 4),
-            Text(ex == null ? '' : t.catalogName(ex.id, ex.name), style: AppTheme.f(26, weight: FontWeight.w700, color: gc.text)),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(color: gc.emberSoft, borderRadius: BorderRadius.circular(100)),
-              child: Text(muscleLabel(ex?.primary ?? ''),
-                  style: AppTheme.f(12, weight: FontWeight.w600, color: gc.ember)),
-            ),
-            if (ex != null && fit.lastSummaryFor(ex.id) != null) ...[
-              const SizedBox(height: 10),
-              Row(children: [
-                Text(t.last,
-                    style: AppTheme.f(11, weight: FontWeight.w600, color: gc.textTertiary, letterSpacing: 0.4)),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(fit.lastSummaryFor(ex.id)!,
-                      style: AppTheme.f(12, weight: FontWeight.w600, color: gc.textSecondary)),
-                ),
-              ]),
-              if (fit.nextTargetLabel(ex.id) != null) _nextRow(gc, ex.id),
-            ],
-          ],
-        ),
+        s.manual ? _manualBar(gc, s) : _liveBar(gc, locked),
         const SizedBox(height: 14),
-        if (ex != null) ExerciseMedia(ex: def, height: 170, live: true),
+        _progressStrip(context, gc, s, locked),
+        const SizedBox(height: 16),
+        _ExerciseStage(
+          index: exIdx,
+          haptic: true,
+          autoMoves: fit.autoMoves,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (demo == 'small')
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: _exerciseHeader(context, gc, ex)),
+                    const SizedBox(width: 14),
+                    SizedBox(
+                      width: 104,
+                      child: _guard(locked, ExerciseMedia(ex: def, height: 104, radius: 18, live: true)),
+                    ),
+                  ],
+                )
+              else
+                _exerciseHeader(context, gc, ex),
+              if (demo == 'large') ...[
+                const SizedBox(height: 14),
+                _guard(locked, ExerciseMedia(ex: def, height: 170, live: true)),
+              ],
+            ],
+          ),
+        ),
         const SizedBox(height: 18),
-        if (s.restRemaining != null) ...[
-          Container(
-            padding: const EdgeInsets.fromLTRB(10, 10, 12, 10),
+        AnimatedSize(
+          duration: const Duration(milliseconds: 320),
+          curve: Curves.easeOutCubic,
+          alignment: Alignment.topCenter,
+          child: fit.holding && fit.holdEx == exIdx
+              ? Padding(padding: const EdgeInsets.only(bottom: 16), child: _holdCard(gc))
+              : s.restRemaining != null
+                  ? Padding(padding: const EdgeInsets.only(bottom: 16), child: _restCard(gc, s))
+                  : const SizedBox(width: double.infinity),
+        ),
+        _ExerciseStage(
+          index: exIdx,
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(_cardPad, 16, _cardPad, 16),
             decoration: BoxDecoration(
               color: gc.bgRaised,
-              borderRadius: BorderRadius.circular(22),
+              borderRadius: BorderRadius.circular(20),
             ),
-            child: Row(
+            child: Column(
               children: [
-                _restNudge(gc, '−15', t.decrease, () => fit.nudgeRest(-15)),
-                Expanded(
-                  child: Column(
-                    children: [
-                      Text(t.rest.toUpperCase(),
-                          style: AppTheme.f(9.5,
-                              weight: FontWeight.w700,
-                              color: gc.textTertiary,
-                              letterSpacing: 1.5)),
-                      const SizedBox(height: 3),
-                      Text('${s.restRemaining}s',
-                          style: AppTheme.f(30, weight: FontWeight.w800, color: gc.text)),
-                    ],
-                  ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(_rowPad, 0, _rowPad, 10),
+                  child: _setsHeader(gc, mode, repsOnly),
                 ),
-                _restNudge(gc, '+15', t.increase, () => fit.nudgeRest(15)),
-                const SizedBox(width: 4),
-                GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: fit.skipRest,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
-                    decoration:
-                        BoxDecoration(color: gc.bgRaised2, borderRadius: BorderRadius.circular(100)),
-                    child: Text(titleCase(t.skip),
-                        style: AppTheme.f(12.5, weight: FontWeight.w700, color: gc.text)),
+                for (int j = 0; j < (ex?.sets.length ?? 0); j++) ...[
+                  _swipeToDelete(context, gc, exIdx, j, ex!.sets[j], locked,
+                      _setRow(gc, exIdx, j, ex.sets[j], repsOnly, locked)),
+                ],
+                if (!repsOnly && mode.isEmpty && ex != null) _guard(locked, _plateRow(context, gc, ex)),
+                const SizedBox(height: 10),
+                _guard(
+                  locked,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: _rowPad),
+                    child: Row(
+                      children: [
+                        Expanded(child: _dashedAction(gc, t.addSet, () => fit.addSet(exIdx))),
+                        if (second != null) ...[
+                          const SizedBox(width: 8),
+                          Expanded(child: second),
+                        ],
+                      ],
+                    ),
                   ),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 16),
-        ],
-        Container(
-          padding: const EdgeInsets.fromLTRB(_cardPad, 16, _cardPad, 16),
-          decoration: BoxDecoration(
-            color: gc.bgRaised,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(_rowPad, 0, _rowPad, 10),
-                child: _setsHeader(gc, repsOnly),
-              ),
-              for (int j = 0; j < (ex?.sets.length ?? 0); j++)
-                _setRow(gc, exIdx, j, ex!.sets[j], repsOnly),
-              if (!repsOnly && ex != null) _plateRow(context, gc, ex),
-              const SizedBox(height: 10),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: _rowPad),
-                child: Row(
-                  children: [
-                    Expanded(child: _dashedAction(gc, t.addSet, () => fit.addSet(exIdx))),
-                    if (!repsOnly && !fit.hasWarmup(exIdx)) ...[
-                      const SizedBox(width: 8),
-                      Expanded(
-                          child: _dashedAction(
-                              gc, t.addWarmup, () => fit.addWarmupSets(exIdx))),
-                    ],
-                  ],
-                ),
-              ),
-            ],
           ),
         ),
         const SizedBox(height: 22),
-        Row(
+        _guard(
+          locked,
+          Row(
           children: [
             Expanded(
               child: GhostButton(
@@ -194,27 +169,192 @@ class SessionScreen extends StatelessWidget {
               ),
             ),
           ],
+          ),
         ),
         const SizedBox(height: 16),
         Row(children: [
-          _circleBtn(gc, Ic.chevronLeft, fit.prevExercise, enabled: exIdx > 0),
+          _circleBtn(gc, Ic.chevronLeft, fit.prevExercise, enabled: !locked && exIdx > 0),
           const SizedBox(width: 10),
-          Expanded(child: _mainAction(gc, ex, exIdx, s.exercises.length)),
+          Expanded(child: _mainAction(gc, ex, exIdx, s.exercises.length, locked)),
           const SizedBox(width: 10),
-          _circleBtn(gc, Ic.chevronRightBold, () => _goNext(context, ex),
-              enabled: exIdx < s.exercises.length - 1),
+          _circleBtn(gc, Ic.chevronRightBold, fit.nextExercise,
+              enabled: !locked && exIdx < s.exercises.length - 1),
         ]),
         const SizedBox(height: 10),
-        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          if (ex != null && s.exercises.length > 1) ...[
-            _textAction(gc, t.dropExerciseAction,
-                () => _confirmDrop(context, exIdx, t.catalogName(ex.id, ex.name))),
-            Container(width: 1, height: 12, color: gc.border),
-          ],
-          _textAction(gc, t.finishSession, fit.finishSession),
-        ]),
+        _guard(
+          locked,
+          Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            if (ex != null && s.exercises.length > 1) ...[
+              _textAction(gc, t.dropExerciseAction,
+                  () => _confirmDrop(context, exIdx, t.catalogName(ex.id, ex.name))),
+              Container(width: 1, height: 12, color: gc.border),
+            ],
+            _textAction(gc, t.finishSession, fit.finishSession),
+          ]),
+        ),
       ],
     );
+  }
+
+  Widget? _secondAction(GymColors gc, SessionExercise? ex, int exIdx, String mode, bool repsOnly) {
+    if (mode == 'cardio') return null;
+    if (ex != null && repsOnly) {
+      return _dashedAction(gc, t.addWeightAction.toUpperCase(), () => fit.toggleRepsOnly(ex.id));
+    }
+    if (mode.isNotEmpty) return null;
+    if (fit.hasWarmup(exIdx)) {
+      return _dashedAction(gc, t.removeWarmup.toUpperCase(), () => fit.removeWarmupSets(exIdx));
+    }
+    return _dashedAction(gc, t.addWarmup, () => fit.addWarmupSets(exIdx));
+  }
+
+  Widget _exerciseHeader(BuildContext context, GymColors gc, SessionExercise? ex) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (fit.inSuperset) ...[
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(color: gc.bgRaised2, borderRadius: BorderRadius.circular(100)),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Icon(PhosphorIconsRegular.link, size: 11, color: gc.brass),
+              const SizedBox(width: 5),
+              Text(t.superset,
+                  style: AppTheme.f(10.5, weight: FontWeight.w700, color: gc.brass, letterSpacing: 0.5)),
+            ]),
+          ),
+          const SizedBox(height: 8),
+        ],
+        Text(ex == null ? '' : t.catalogName(ex.id, ex.name),
+            style: AppTheme.f(26, weight: FontWeight.w700, color: gc.text)),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(color: gc.emberSoft, borderRadius: BorderRadius.circular(100)),
+          child: Text(muscleLabel(ex?.primary ?? ''),
+              style: AppTheme.f(12, weight: FontWeight.w600, color: gc.ember)),
+        ),
+        if (ex != null && fit.lastSummaryFor(ex.id) != null) ...[
+          const SizedBox(height: 10),
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => showExerciseHistorySheet(context, ex.id),
+            child: Row(children: [
+              Text(t.last,
+                  style: AppTheme.f(11, weight: FontWeight.w600, color: gc.textTertiary, letterSpacing: 0.4)),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(fit.lastSummaryFor(ex.id)!,
+                    style: AppTheme.f(12, weight: FontWeight.w600, color: gc.textSecondary)),
+              ),
+              const SizedBox(width: 4),
+              Icon(PhosphorIconsRegular.caretRight, size: 11, color: gc.textTertiary),
+            ]),
+          ),
+          if (fit.nextTargetLabel(ex.id) != null) _nextRow(gc, ex.id),
+        ],
+      ],
+    );
+  }
+
+  Widget _progressStrip(BuildContext context, GymColors gc, WorkoutSession s, bool locked) {
+    final n = s.exercises.length;
+    return Semantics(
+      button: true,
+      label: t.workoutOverview,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: locked ? null : () => showSessionOverview(context),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(children: [
+              Expanded(
+                child: Text(fit.sessionProgressLabel,
+                    style: AppTheme.f(12, weight: FontWeight.w600, color: gc.textSecondary, letterSpacing: 0.4)),
+              ),
+              if (!locked)
+                Row(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(PhosphorIconsRegular.listBullets, size: 14, color: gc.textSecondary),
+                  const SizedBox(width: 5),
+                  Text(t.allExercisesShort,
+                      style: AppTheme.f(11.5, weight: FontWeight.w600, color: gc.textSecondary)),
+                ]),
+            ]),
+            const SizedBox(height: 9),
+            Row(children: [
+              for (var i = 0; i < n; i++) ...[
+                if (i > 0) SizedBox(width: n > 12 ? 2 : 4),
+                Expanded(
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 320),
+                    curve: Curves.easeOutCubic,
+                    height: i == s.currentIndex ? 6 : 4,
+                    decoration: BoxDecoration(
+                      color: _stripColor(gc, s, i),
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
+                ),
+              ],
+            ]),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Color _stripColor(GymColors gc, WorkoutSession s, int i) {
+    final sets = s.exercises[i].sets;
+    final done = sets.isNotEmpty && sets.every((st) => st.done);
+    if (i == s.currentIndex) return done ? gc.sage : gc.ember;
+    if (done) return gc.sage;
+    if (sets.any((st) => st.done)) return Color.lerp(gc.bgRaised2, gc.sage, 0.45)!;
+    return gc.bgRaised2;
+  }
+
+  Widget _swipeToDelete(BuildContext context, GymColors gc, int exIdx, int j, SessionSet st,
+      bool locked, Widget child) {
+    if (locked) return child;
+    return Dismissible(
+      key: ObjectKey(st),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        margin: const EdgeInsets.only(bottom: 2),
+        padding: const EdgeInsets.only(right: 18),
+        alignment: Alignment.centerRight,
+        decoration: BoxDecoration(
+          color: gc.danger.withValues(alpha: 0.16),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Icon(PhosphorIconsRegular.trash, size: 18, color: gc.danger),
+      ),
+      onDismissed: (_) => _deleteSet(context, exIdx, j),
+      child: child,
+    );
+  }
+
+  void _deleteSet(BuildContext context, int exIdx, int j) {
+    final gone = fit.removeSet(exIdx, j);
+    if (gone == null) return;
+    HapticFeedback.mediumImpact();
+    showNotchToast(
+      context,
+      t.setDeleted,
+      icon: PhosphorIconsFill.trash,
+      accent: context.gc.danger,
+      action: t.undo,
+      onTap: () => fit.insertSet(exIdx, j, gone),
+      duration: const Duration(milliseconds: 3200),
+    );
+  }
+
+  Widget _guard(bool locked, Widget child) => _LockGuard(locked: locked, child: child);
+
+  void _setLock(bool on) {
+    if (fit.sessionLocked == on) return;
+    HapticFeedback.mediumImpact();
+    fit.toggleSessionLock();
   }
 
   Widget _nextRow(GymColors gc, String id) {
@@ -247,28 +387,6 @@ class SessionScreen extends StatelessWidget {
     );
   }
 
-  Widget _restNudge(GymColors gc, String glyph, String semantic, VoidCallback onTap) {
-    return Semantics(
-      button: true,
-      label: semantic,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: SizedBox(
-          width: 48,
-          height: 48,
-          child: Center(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              decoration: BoxDecoration(color: gc.bgRaised2, borderRadius: BorderRadius.circular(8)),
-              child: Text(glyph, style: AppTheme.f(12, weight: FontWeight.w600, color: gc.text)),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Future<void> _confirmDrop(BuildContext context, int exIdx, String name) async {
     final ok = await askConfirm(
       context,
@@ -282,10 +400,12 @@ class SessionScreen extends StatelessWidget {
   static const _numCol = 26.0;
   static const _checkCol = 40.0;
   static const _gap = 10.0;
+  static const _tightGap = 6.0;
+  static const _effortCol = 36.0;
   static const _cardPad = 8.0;
   static const _rowPad = 14.0;
 
-  Widget _setsHeader(GymColors gc, bool repsOnly) {
+  Widget _setsHeader(GymColors gc, String mode, bool repsOnly) {
     final s = AppTheme.f(11, weight: FontWeight.w600, color: gc.textSecondary, letterSpacing: 0.4);
 
     Widget label(String t) => FittedBox(
@@ -293,45 +413,80 @@ class SessionScreen extends StatelessWidget {
           alignment: Alignment.center,
           child: Text(t, maxLines: 1, softWrap: false, style: s),
         );
+    final effort = _showsEffort(mode);
+    final gap = effort ? _tightGap : _gap;
     return Row(children: [
       SizedBox(width: _numCol, child: label(t.setCol)),
-      const SizedBox(width: _gap),
-      Expanded(child: label(t.repsCol)),
-      if (!repsOnly) ...[
-        const SizedBox(width: _gap),
-        Expanded(child: label(t.weightCol(fit.units.toUpperCase()))),
+      for (final h in _headers(mode, repsOnly)) ...[
+        SizedBox(width: gap),
+        Expanded(child: label(h)),
       ],
-      const SizedBox(width: _gap),
+      if (effort) ...[
+        SizedBox(width: gap),
+        SizedBox(width: _effortCol, child: label(fit.usesRir ? 'RIR' : 'RPE')),
+      ],
+      SizedBox(width: gap),
       const SizedBox(width: _checkCol),
     ]);
   }
 
-  Widget _liveBar(GymColors gc) {
+  Widget _liveBar(GymColors gc, bool locked) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
+        if (locked)
+          Flexible(child: _lockedChip(gc))
+        else
+          Row(children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                  color: fit.sessionPaused ? gc.textTertiary : gc.ember, shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              fit.sessionPaused ? t.paused : t.inProgress,
+              style: AppTheme.f(12,
+                  weight: FontWeight.w600,
+                  color: fit.sessionPaused ? gc.textTertiary : gc.ember,
+                  letterSpacing: 0.4),
+            ),
+          ]),
         Row(children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-                color: fit.sessionPaused ? gc.textTertiary : gc.ember, shape: BoxShape.circle),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            fit.sessionPaused ? t.paused : t.inProgress,
-            style: AppTheme.f(12,
-                weight: FontWeight.w600,
-                color: fit.sessionPaused ? gc.textTertiary : gc.ember,
-                letterSpacing: 0.4),
-          ),
-        ]),
-        Row(children: [
-          Text(fit.elapsedLabel,
+          RollingText(fit.elapsedLabel,
               style: AppTheme.f(18,
                   weight: FontWeight.w700, color: fit.sessionPaused ? gc.textSecondary : gc.text)),
-          const SizedBox(width: 10),
-          Semantics(
+          const SizedBox(width: 2),
+          if (!locked)
+            Semantics(
+              button: true,
+              label: t.lockWorkout,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => _setLock(true),
+                child: SizedBox(
+                  width: 44,
+                  height: 48,
+                  child: Center(
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: gc.bgRaised2,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: gc.border),
+                      ),
+                      child: Icon(PhosphorIconsRegular.fingerprint, size: 17, color: gc.text),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          const SizedBox(width: 2),
+          _guard(
+            locked,
+            Semantics(
             button: true,
             label: fit.sessionPaused ? t.resumeWorkout : t.pauseWorkout,
             child: GestureDetector(
@@ -359,10 +514,13 @@ class SessionScreen extends StatelessWidget {
               ),
             ),
           ),
+          ),
         ]),
       ],
     );
   }
+
+  Widget _lockedChip(GymColors gc) => _HoldToUnlock(onUnlock: () => _setLock(false));
 
   Widget _manualBar(GymColors gc, WorkoutSession s) {
     return Row(children: [
@@ -379,7 +537,118 @@ class SessionScreen extends StatelessWidget {
     ]);
   }
 
-  Widget _setRow(GymColors gc, int exIdx, int j, SessionSet st, bool repsOnly) {
+  List<Widget> _cells(GymColors gc, int exIdx, int j, SessionSet st, String mode, bool repsOnly) {
+    final cardio = mode == 'cardio';
+    Widget reps() => _miniStepper(
+          gc,
+          '${st.reps}',
+          () => fit.bumpSessionReps(exIdx, j, -1),
+          () => fit.bumpSessionReps(exIdx, j, 1),
+          22,
+          onEdit: (context) => _ruler(
+            context,
+            title: t.repsTitle,
+            value: st.reps.toDouble(),
+            max: 100,
+            step: 1,
+            majorEvery: 5,
+            onSave: (v) => fit.setSessionReps(exIdx, j, v.round()),
+          ),
+        );
+    Widget weight() => _miniStepper(
+          gc,
+          fit.weightValue(st.weight),
+          () => fit.bumpSessionWeight(exIdx, j, -1),
+          () => fit.bumpSessionWeight(exIdx, j, 1),
+          26,
+          onEdit: (context) => _ruler(
+            context,
+            title: t.weightTitle(fit.units.toUpperCase()),
+            value: fit.toDisplayWeight(st.weight),
+            max: fit.isLb ? 660 : 300,
+            step: fit.isLb ? 1 : 0.5,
+            majorEvery: 10,
+            unit: fit.units,
+            onSave: (v) => fit.setSessionWeightShown(exIdx, j, v),
+          ),
+        );
+    Widget time() => _miniStepper(
+          gc,
+          durationLabel(st.sec ?? 0),
+          () => fit.bumpSessionSeconds(exIdx, j, cardio ? -60 : -15),
+          () => fit.bumpSessionSeconds(exIdx, j, cardio ? 60 : 15),
+          34,
+          onEdit: (context) => cardio
+              ? _ruler(
+                  context,
+                  title: t.timeMinutesTitle,
+                  value: ((st.sec ?? 0) / 60).roundToDouble(),
+                  max: 300,
+                  step: 1,
+                  majorEvery: 5,
+                  unit: 'min',
+                  onSave: (v) => fit.setSessionSeconds(exIdx, j, (v * 60).round()),
+                )
+              : _ruler(
+                  context,
+                  title: t.timeSecondsTitle,
+                  value: (st.sec ?? 0).toDouble(),
+                  max: 900,
+                  step: 5,
+                  majorEvery: 6,
+                  format: (v) => clockLabel(v.round()),
+                  onSave: (v) => fit.setSessionSeconds(exIdx, j, v.round()),
+                ),
+        );
+    Widget distance() => _miniStepper(
+          gc,
+          fit.distanceValue(st.km ?? 0),
+          () => fit.bumpSessionDistance(exIdx, j, -1),
+          () => fit.bumpSessionDistance(exIdx, j, 1),
+          30,
+          onEdit: (context) => _ruler(
+            context,
+            title: t.distanceTitle(fit.distanceUnit),
+            value: fit.toDisplayKm(st.km ?? 0),
+            max: 100,
+            step: 0.1,
+            majorEvery: 10,
+            unit: fit.distanceUnit,
+            onSave: (v) => fit.setSessionDistanceShown(exIdx, j, v),
+          ),
+        );
+    return switch (mode) {
+      'cardio' => [distance(), time()],
+      'time' => [time(), if (!repsOnly) weight()],
+      _ => [reps(), if (!repsOnly) weight()],
+    };
+  }
+
+  List<String> _headers(String mode, bool repsOnly) => switch (mode) {
+        'cardio' => [t.distanceCol(fit.distanceUnit.toUpperCase()), t.timeCol],
+        'time' => [t.timeCol, if (!repsOnly) t.weightCol(fit.units.toUpperCase())],
+        _ => [t.repsCol, if (!repsOnly) t.weightCol(fit.units.toUpperCase())],
+      };
+
+  Widget _setRow(GymColors gc, int exIdx, int j, SessionSet st, bool repsOnly, bool locked) {
+    final mode = fit.modeOf(fit.session?.exercises[exIdx].id ?? '');
+    return Builder(
+      builder: (ctx) => GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onLongPress: locked
+            ? null
+            : () {
+                HapticFeedback.mediumImpact();
+                _kindSheet(ctx, exIdx, j, st.kind);
+              },
+        child: _setRowBody(gc, exIdx, j, st, repsOnly, locked, mode),
+      ),
+    );
+  }
+
+  Widget _setRowBody(GymColors gc, int exIdx, int j, SessionSet st, bool repsOnly, bool locked, String mode) {
+    final effort = _showsEffort(mode);
+    final gap = effort ? _tightGap : _gap;
     return Container(
       margin: const EdgeInsets.only(bottom: 2),
       padding: const EdgeInsets.symmetric(horizontal: _rowPad, vertical: 10),
@@ -396,49 +665,21 @@ class SessionScreen extends StatelessWidget {
               label: t.setType,
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
-                onTap: () => _kindSheet(ctx, exIdx, j, st.kind),
+                onTap: locked ? null : () => _kindSheet(ctx, exIdx, j, st.kind),
                 child: _setBadge(gc, exIdx, j, st),
               ),
             ),
           ),
         ),
-        const SizedBox(width: _gap),
-        Expanded(
-          child: _miniStepper(
-            gc,
-            '${st.reps}',
-            () => fit.bumpSessionReps(exIdx, j, -1),
-            () => fit.bumpSessionReps(exIdx, j, 1),
-            22,
-            onEdit: (context) => _editValue(
-              context,
-              title: t.repsTitle,
-              initial: '${st.reps}',
-              decimal: false,
-              onSave: (v) => fit.setSessionReps(exIdx, j, v.round()),
-            ),
-          ),
-        ),
-        if (!repsOnly) ...[
-          const SizedBox(width: _gap),
-          Expanded(
-            child: _miniStepper(
-              gc,
-              fit.weightValue(st.weight),
-              () => fit.bumpSessionWeight(exIdx, j, -1),
-              () => fit.bumpSessionWeight(exIdx, j, 1),
-              26,
-              onEdit: (context) => _editValue(
-                context,
-                title: t.weightTitle(fit.units.toUpperCase()),
-                initial: fit.weightValue(st.weight),
-                decimal: true,
-                onSave: (v) => fit.setSessionWeightShown(exIdx, j, v),
-              ),
-            ),
-          ),
+        for (final cell in _cells(gc, exIdx, j, st, mode, repsOnly)) ...[
+          SizedBox(width: gap),
+          Expanded(child: cell),
         ],
-        const SizedBox(width: _gap),
+        if (effort) ...[
+          SizedBox(width: gap),
+          SizedBox(width: _effortCol, child: _effortCell(gc, exIdx, j, st, mode, locked)),
+        ],
+        SizedBox(width: gap),
         Semantics(
           button: true,
           checked: st.done,
@@ -468,6 +709,71 @@ class SessionScreen extends StatelessWidget {
         ),
       ]),
     );
+  }
+
+  bool _asksEffort(SessionExercise ex, int j, String mode) {
+    if (!fit.logRpe || mode == 'cardio') return false;
+    final st = ex.sets[j];
+    return st.done && st.counts && st.rpe == null && ex.sets.lastIndexWhere((x) => x.done) == j;
+  }
+
+  bool _showsEffort(String mode) => fit.logRpe && mode != 'cardio';
+
+  Widget _effortCell(GymColors gc, int exIdx, int j, SessionSet st, String mode, bool locked) {
+    final ex = fit.session?.exercises[exIdx];
+    final waiting = ex != null && _asksEffort(ex, j, mode);
+    final rpe = st.rpe;
+    return Builder(
+      builder: (ctx) => Semantics(
+        button: true,
+        label: fit.usesRir ? 'RIR' : 'RPE',
+        value: rpe == null ? null : fmt(fit.usesRir ? 10 - rpe : rpe),
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: locked ? null : () => _editEffort(ctx, exIdx, j, rpe),
+          child: SizedBox(
+            height: 44,
+            child: Center(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOutCubic,
+                height: 30,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: rpe == null ? Colors.transparent : gc.bgRaised2,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: waiting ? gc.ember : (rpe == null ? gc.border : Colors.transparent),
+                    width: waiting ? 1.6 : 1,
+                  ),
+                ),
+                child: Text(
+                  rpe == null ? '–' : fmt(fit.usesRir ? 10 - rpe : rpe),
+                  style: AppTheme.f(14,
+                      weight: FontWeight.w700, color: rpe == null ? gc.textTertiary : gc.text),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _editEffort(BuildContext context, int exIdx, int j, double? rpe) async {
+    final rir = fit.usesRir;
+    final v = await askRuler(context,
+        title: rir ? 'RIR' : 'RPE',
+        value: rir ? 10 - (rpe ?? 8) : rpe ?? 8,
+        min: rir ? 0 : 1,
+        max: rir ? 9 : 10,
+        step: 0.5,
+        majorEvery: 2,
+        format: (v) => fmt(v),
+        hint: rir ? t.rirHint : t.rpeHint,
+        clearLabel: rpe == null ? null : t.none);
+    if (v == null) return;
+    fit.setSessionRpe(exIdx, j, v.isNaN ? null : (rir ? 10 - v : v));
   }
 
   Widget _dashedAction(GymColors gc, String label, VoidCallback onTap) => GestureDetector(
@@ -522,19 +828,9 @@ class SessionScreen extends StatelessWidget {
     );
   }
 
-  Color _kindColor(GymColors gc, SetKind kind) => switch (kind) {
-        SetKind.warmup => gc.warn,
-        SetKind.drop => gc.info,
-        SetKind.failure => gc.danger,
-        SetKind.normal => gc.text,
-      };
+  Color _kindColor(GymColors gc, SetKind kind) => setKindColor(gc, kind);
 
-  String _kindLabel(SetKind kind) => switch (kind) {
-        SetKind.warmup => t.setTypeWarmup,
-        SetKind.drop => t.setTypeDrop,
-        SetKind.failure => t.setTypeFailure,
-        SetKind.normal => t.setTypeNormal,
-      };
+  String _kindLabel(SetKind kind) => setKindLabel(kind);
 
   Widget _setBadge(GymColors gc, int exIdx, int j, SessionSet st) {
     final sets = fit.session?.exercises[exIdx].sets ?? const <SessionSet>[];
@@ -542,14 +838,13 @@ class SessionScreen extends StatelessWidget {
     for (var i = 0; i <= j && i < sets.length; i++) {
       if (sets[i].counts) working++;
     }
+    final tag = setKindTag(st.kind);
     final base = st.kind == SetKind.warmup
-        ? 'W'
-        : switch (st.kind) {
-            SetKind.drop => '$working·D',
-            SetKind.failure => '$working·F',
-            _ => '$working',
-          };
-    final text = st.rpe == null ? base : '$base@${fmt(st.rpe!)}';
+        ? tag
+        : tag.isEmpty
+            ? '$working'
+            : '$working·$tag';
+    final text = st.rpe == null || fit.logRpe ? base : '$base${fit.effortTag(st.rpe!)}';
     return FittedBox(
       fit: BoxFit.scaleDown,
       alignment: Alignment.centerLeft,
@@ -562,7 +857,7 @@ class SessionScreen extends StatelessWidget {
 
   Future<void> _kindSheet(BuildContext context, int exIdx, int j, SetKind current) async {
     final gc = context.gc;
-    await showModalBottomSheet<void>(
+    await showAppSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
@@ -620,38 +915,25 @@ class SessionScreen extends StatelessWidget {
                   ],
                   const SizedBox(height: 14),
                   Text(t.setTypeHint, style: AppTheme.f(11.5, weight: FontWeight.w500, color: gc.textTertiary, height: 1.4)),
-                  if (fit.logRpe) ...[
-                    const SizedBox(height: 20),
-                    Text(t.rpeTitle,
-                        style: AppTheme.f(12,
-                            weight: FontWeight.w600, color: gc.textSecondary, letterSpacing: 0.4)),
-                    const SizedBox(height: 10),
-                    Wrap(spacing: 8, runSpacing: 8, children: [
-                      Pill(
-                        label: t.none,
-                        bg: live?.rpe == null ? gc.ember : gc.bgRaised2,
-                        fg: live?.rpe == null ? gc.onEmber : gc.textSecondary,
-                        onTap: () => setSheet(() => fit.setSessionRpe(exIdx, j, null)),
-                        hPad: 12,
-                        vPad: 7,
-                        fontSize: 12.5,
-                      ),
-                      for (final value in _rpeSteps)
-                        Pill(
-                          label: fmt(value),
-                          bg: live?.rpe == value ? gc.ember : gc.bgRaised2,
-                          fg: live?.rpe == value ? gc.onEmber : gc.textSecondary,
-                          onTap: () => setSheet(() => fit.setSessionRpe(exIdx, j, value)),
-                          hPad: 12,
-                          vPad: 7,
-                          fontSize: 12.5,
-                        ),
-                    ]),
-                    const SizedBox(height: 10),
-                    Text(t.rpeHint, style: AppTheme.f(11.5, weight: FontWeight.w500, color: gc.textTertiary, height: 1.4)),
-                  ],
                   const SizedBox(height: 18),
                   PrimaryButton(label: t.done, onTap: () => Navigator.of(sheet).pop()),
+                  const SizedBox(height: 4),
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {
+                      Navigator.of(sheet).pop();
+                      _deleteSet(context, exIdx, j);
+                    },
+                    child: SizedBox(
+                      height: 48,
+                      child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                        Icon(PhosphorIconsRegular.trash, size: 16, color: gc.danger),
+                        const SizedBox(width: 8),
+                        Text(t.deleteSet,
+                            style: AppTheme.f(14, weight: FontWeight.w600, color: gc.danger)),
+                      ]),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -660,9 +942,6 @@ class SessionScreen extends StatelessWidget {
       ),
     );
   }
-
-  static const _rpeSteps = [6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0];
-
   Widget _miniStepper(
     GymColors gc,
     String value,
@@ -707,8 +986,8 @@ class SessionScreen extends StatelessWidget {
               constraints: BoxConstraints(minWidth: minW),
               padding: const EdgeInsets.symmetric(vertical: 4),
               alignment: Alignment.center,
-              child: Text(value,
-                  style: TextStyle(fontWeight: FontWeight.w600, color: gc.text, fontSize: 14)),
+              child: RollingText(value,
+                  style: AppTheme.f(15, weight: FontWeight.w700, color: gc.text)),
             ),
           ),
           const SizedBox(width: 3),
@@ -719,39 +998,93 @@ class SessionScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _editValue(
+  Future<void> _ruler(
     BuildContext context, {
     required String title,
-    required String initial,
-    required bool decimal,
+    required double value,
+    required double max,
+    required double step,
     required void Function(double) onSave,
+    int majorEvery = 10,
+    String unit = '',
+    String Function(double)? format,
   }) async {
-    final parsed = await askNumber(context, title: title, initial: initial, decimal: decimal);
-    if (parsed != null) onSave(parsed);
+    final v = await askRuler(context,
+        title: title,
+        value: value,
+        min: 0,
+        max: max,
+        step: step,
+        unit: unit,
+        majorEvery: majorEvery,
+        format: format,
+        tickLabel: format);
+    if (v != null) onSave(v);
   }
 
-  Widget _mainAction(GymColors gc, SessionExercise? ex, int exIdx, int total) {
+  Widget _holdCard(GymColors gc) {
+    final count = fit.sessionSetCount;
+    final lead = fit.holdLead;
+    return TimerPanel(
+      label: lead > 0 ? t.getReady : t.holdLabel,
+      remaining: lead > 0 ? lead : fit.holdRemaining ?? 0,
+      total: lead > 0 ? WorkoutState.holdLeadIn : fit.holdTotal,
+      elapsed: fit.elapsedLabel,
+      elapsedLabel: t.elapsedCaps,
+      sets: '${count.done}/${count.total}',
+      setsLabel: t.setsCaps,
+      hint: t.tapToStop,
+      color: gc.accent,
+      onTap: fit.stopHold,
+    );
+  }
+
+  Widget _restCard(GymColors gc, WorkoutSession s) {
+    final count = fit.sessionSetCount;
+    return TimerPanel(
+      label: t.liveResting,
+      remaining: s.restRemaining ?? 0,
+      total: fit.restTotal,
+      elapsed: fit.elapsedLabel,
+      elapsedLabel: t.elapsedCaps,
+      sets: '${count.done}/${count.total}',
+      setsLabel: t.setsCaps,
+      hint: t.tapToSkip,
+      onTap: fit.skipRest,
+      onMinus: () => fit.nudgeRest(-15),
+      onPlus: () => fit.nudgeRest(15),
+    );
+  }
+
+  Widget _mainAction(GymColors gc, SessionExercise? ex, int exIdx, int total, bool locked) {
     final pending = ex == null ? -1 : ex.sets.indexWhere((st) => !st.done);
+    if (pending >= 0 && ex != null && fit.isTimed(ex.id)) {
+      if (fit.holding && fit.holdEx == exIdx) {
+        return PrimaryButton(
+          label: '${t.stopLabel} · ${durationLabel(fit.holdRemaining ?? 0)}',
+          onTap: fit.stopHold,
+          height: 56,
+        );
+      }
+      return PrimaryButton(
+        label: t.startHold(durationLabel(ex.sets[pending].sec ?? 30)),
+        icon: Ic.play,
+        onTap: () => fit.startHold(exIdx, pending),
+        height: 56,
+      );
+    }
     if (pending >= 0) {
       return PrimaryButton(label: t.setDone, onTap: () => fit.toggleSet(exIdx, pending), height: 56);
     }
+    if (fit.pendingAfter(exIdx) != null) {
+      return PrimaryButton(label: t.nextExercise, onTap: fit.goNextPending, height: 56);
+    }
     if (exIdx < total - 1) {
-      return PrimaryButton(label: t.nextExercise, onTap: fit.nextExercise, height: 56);
+      return _guard(
+          locked, PrimaryButton(label: t.nextExercise, onTap: fit.nextExercise, height: 56));
     }
-    return PrimaryButton(label: t.finishSession, onTap: fit.finishSession, height: 56);
-  }
-
-  Future<void> _goNext(BuildContext context, SessionExercise? ex) async {
-    if (ex != null && ex.sets.isNotEmpty && !ex.sets.any((st) => st.done)) {
-      final ok = await askConfirm(
-        context,
-        title: t.skipExercise,
-        body: t.skipExerciseBody(t.catalogName(ex.id, ex.name)),
-        confirmLabel: t.skip2,
-      );
-      if (!ok) return;
-    }
-    fit.nextExercise();
+    return _guard(
+        locked, PrimaryButton(label: t.finishSession, onTap: fit.finishSession, height: 56));
   }
 
   Widget _textAction(GymColors gc, String label, VoidCallback onTap) => Semantics(
@@ -794,59 +1127,89 @@ class SessionScreen extends StatelessWidget {
     final goalHit = fit.goalPct >= 100;
     final vsLast = fit.summaryVsLast;
     final vol = fit.summaryVolumeKg;
+    final sets = fit.session?.summarySets ?? 0;
 
-    return Padding(
-      padding: const EdgeInsets.only(top: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _finishHero(gc, prs: prs, streak: streak, goalHit: goalHit),
-          const SizedBox(height: 18),
-          Row(children: [
-            Expanded(child: _sumCard(gc, t.duration, fit.summaryDurationLabel)),
-            const SizedBox(width: 10),
-            Expanded(child: _sumCard(gc, t.setsCaps, '${fit.session?.summarySets ?? 0}')),
-            const SizedBox(width: 10),
-            Expanded(child: _sumCard(gc, t.volume, fit.volumeLabel(vol))),
-          ]),
-          const SizedBox(height: 10),
-          if (vsLast != null && vsLast > 0) _vsLastCard(gc, vol, vsLast) else _firstTimeCard(gc),
-          const SizedBox(height: 18),
-          Row(children: [
-            Expanded(child: PrimaryButton(label: t.saveAndExit, onTap: fit.saveAndExit)),
-            const SizedBox(width: 10),
-            Semantics(
-              button: true,
-              label: t.share,
-              child: GestureDetector(
-                onTap: () => showShareSheet(context, initial: ShareKind.streak),
-                child: Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: gc.bgRaised,
-                    shape: BoxShape.circle,
+    return _Celebrate(
+      active: sets > 0,
+      child: Padding(
+        padding: const EdgeInsets.only(top: 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Rise(index: 0, child: _finishHero(gc, prs: prs, streak: streak, goalHit: goalHit)),
+            const SizedBox(height: 18),
+            Rise(
+              index: 1,
+              child: Row(children: [
+                Expanded(child: _sumCard(gc, t.duration, fit.summaryDurationLabel)),
+                const SizedBox(width: 10),
+                Expanded(child: _countUp(sets.toDouble(), (v) => _sumCard(gc, t.setsCaps, '${v.round()}'))),
+                const SizedBox(width: 10),
+                Expanded(child: _countUp(vol, (v) => _sumCard(gc, t.volume, fit.volumeLabel(v)))),
+              ]),
+            ),
+            const SizedBox(height: 10),
+            Rise(
+              index: 2,
+              child: vsLast != null && vsLast > 0 ? _vsLastCard(gc, vol, vsLast) : _firstTimeCard(gc),
+            ),
+            const SizedBox(height: 18),
+            Rise(
+              index: 3,
+              child: Row(children: [
+                Expanded(child: PrimaryButton(label: t.saveAndExit, onTap: fit.saveAndExit)),
+                const SizedBox(width: 10),
+                Semantics(
+                  button: true,
+                  label: t.share,
+                  child: GestureDetector(
+                    onTap: () => showShareSheet(context, initial: ShareKind.streak),
+                    child: Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(color: gc.bgRaised, shape: BoxShape.circle),
+                      child: Icon(PhosphorIconsRegular.shareNetwork, size: 20, color: gc.text),
+                    ),
                   ),
-                  child: Icon(PhosphorIconsRegular.shareNetwork, size: 20, color: gc.text),
+                ),
+              ]),
+            ),
+            if (sets > 0 && fit.sessions.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Rise(
+                index: 4,
+                child: GhostButton(
+                  label: t.stickerOpen,
+                  icon: PhosphorIconsRegular.imageSquare,
+                  onTap: () => showStickerEditor(context, fit.sessions.last, prs: prs),
                 ),
               ),
+            ],
+            const SizedBox(height: 10),
+            Rise(
+              index: 5,
+              child: GhostButton(
+                label: t.saveAsRoutine,
+                icon: PhosphorIconsRegular.listChecks,
+                onTap: () {
+                  if (fit.saveSessionAsRoutine().isEmpty) return;
+                  showNotchToast(context, t.savedAsRoutine,
+                      icon: PhosphorIconsFill.listChecks, accent: gc.sage);
+                },
+              ),
             ),
-          ]),
-          const SizedBox(height: 10),
-          GhostButton(
-            label: t.saveAsRoutine,
-            icon: PhosphorIconsRegular.listChecks,
-            onTap: () {
-              if (fit.saveSessionAsRoutine().isEmpty) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(t.savedAsRoutine), behavior: SnackBarBehavior.floating),
-              );
-            },
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
+
+  Widget _countUp(double to, Widget Function(double v) builder) => TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0, end: to),
+        duration: const Duration(milliseconds: 1100),
+        curve: Curves.easeOutCubic,
+        builder: (context, v, _) => builder(v),
+      );
 
   Widget _finishHero(GymColors gc, {required int prs, required int streak, required bool goalHit}) {
     return ClipRRect(
@@ -968,7 +1331,7 @@ class SessionScreen extends StatelessWidget {
 void showAddToSessionSheet(BuildContext context) {
   final gc = context.gc;
   final search = TextEditingController();
-  showModalBottomSheet<void>(
+  showAppSheet<void>(
     context: context,
     isScrollControlled: true,
     backgroundColor: gc.bgRaised,
@@ -1085,4 +1448,461 @@ Widget _addRow(BuildContext sheetCtx, GymColors gc, Exercise ex) {
       ),
     ),
   );
+}
+
+class _ExerciseStage extends StatefulWidget {
+  const _ExerciseStage({required this.index, required this.child, this.haptic = false, this.autoMoves});
+
+  final int index;
+  final Widget child;
+  final bool haptic;
+  final int? autoMoves;
+
+  @override
+  State<_ExerciseStage> createState() => _ExerciseStageState();
+}
+
+class _ExerciseStageState extends State<_ExerciseStage> {
+  double _dir = 1;
+
+  @override
+  void didUpdateWidget(_ExerciseStage old) {
+    super.didUpdateWidget(old);
+    if (old.index == widget.index) return;
+    _dir = widget.index > old.index ? 1 : -1;
+    if (!widget.haptic) return;
+    HapticFeedback.selectionClick();
+    if (widget.autoMoves != old.autoMoves) _announce();
+  }
+
+  void _announce() {
+    final ex = fit.currentExercise;
+    if (ex == null) return;
+    final gc = context.gc;
+    final where = fit.inSuperset ? '${t.superset} · ${fit.sessionProgressLabel}' : fit.sessionProgressLabel;
+    HapticFeedback.mediumImpact();
+    showNotchToast(context, t.catalogName(ex.id, ex.name),
+        subtitle: where,
+        icon: fit.inSuperset ? PhosphorIconsBold.link : PhosphorIconsBold.arrowRight,
+        accent: fit.inSuperset ? gc.brass : gc.ember,
+        duration: const Duration(milliseconds: 1900));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final current = widget.index;
+    final dir = _dir;
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 520),
+      switchInCurve: const Interval(0.3, 1, curve: Curves.easeOutCubic),
+      switchOutCurve: const Interval(0.55, 1, curve: Curves.easeInCubic),
+      transitionBuilder: (child, animation) {
+        final incoming = (child.key as ValueKey?)?.value == current;
+        final from = Offset(incoming ? 0.5 * dir : -0.5 * dir, 0);
+        return FadeTransition(
+          opacity: animation,
+          child: SlideTransition(
+            position: Tween<Offset>(begin: from, end: Offset.zero).animate(animation),
+            child: ScaleTransition(
+              scale: Tween<double>(begin: 0.94, end: 1).animate(animation),
+              child: child,
+            ),
+          ),
+        );
+      },
+      layoutBuilder: (currentChild, previousChildren) => Stack(
+        alignment: Alignment.topCenter,
+        children: [
+          ...previousChildren,
+          ?currentChild,
+        ],
+      ),
+      child: KeyedSubtree(key: ValueKey(current), child: widget.child),
+    );
+  }
+}
+
+void showSessionOverview(BuildContext context) {
+  final gc = context.gc;
+  showAppSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (sheet) => AnimatedBuilder(
+      animation: fit,
+      builder: (sheet, _) {
+        final s = fit.session;
+        if (s == null || s.complete) return const SizedBox.shrink();
+        return Container(
+          padding: sheetPad(sheet),
+          constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(sheet).height * 0.86),
+          decoration: BoxDecoration(
+            color: gc.bgRaised,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SheetHandle(),
+              const SizedBox(height: 18),
+              Text(titleCase(t.workoutOverview),
+                  style: AppTheme.f(19, weight: FontWeight.w800, color: gc.text)),
+              const SizedBox(height: 4),
+              Text('${t.exerciseCount(s.exercises.length)} · ${fit.elapsedLabel}',
+                  style: AppTheme.f(12.5, weight: FontWeight.w500, color: gc.textSecondary)),
+              const SizedBox(height: 16),
+              Flexible(
+                child: ReorderableListView.builder(
+                  shrinkWrap: true,
+                  buildDefaultDragHandles: false,
+                  itemCount: s.exercises.length,
+                  onReorder: fit.reorderSessionExercise,
+                  proxyDecorator: (child, _, _) => Material(color: Colors.transparent, child: child),
+                  itemBuilder: (context, i) => _overviewRow(sheet, gc, s, i),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(t.dragToReorder,
+                  textAlign: TextAlign.center,
+                  style: AppTheme.f(11, weight: FontWeight.w500, color: gc.textTertiary)),
+            ],
+          ),
+        );
+      },
+    ),
+  );
+}
+
+Widget _overviewRow(BuildContext sheet, GymColors gc, WorkoutSession s, int i) {
+  final e = s.exercises[i];
+  final def = fit.exerciseById(e.id);
+  final done = e.sets.where((st) => st.done).length;
+  final all = e.sets.isNotEmpty && done == e.sets.length;
+  final current = i == s.currentIndex;
+  final linked = e.linkedNext || (i > 0 && s.exercises[i - 1].linkedNext);
+  return Container(
+    key: ObjectKey(e),
+    margin: const EdgeInsets.only(bottom: 8),
+    decoration: BoxDecoration(
+      color: current ? gc.bgRaised2 : Colors.transparent,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(
+          color: current ? gc.ember.withValues(alpha: 0.6) : gc.border.withValues(alpha: 0.6)),
+    ),
+    child: GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        fit.goToExercise(i);
+        Navigator.of(sheet).pop();
+      },
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(10, 8, 4, 8),
+        child: Row(children: [
+          Container(
+            width: 26,
+            height: 26,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: all ? gc.sage : (current ? gc.ember : gc.bgRaised2),
+              shape: BoxShape.circle,
+            ),
+            child: all
+                ? SvgPathIcon(Ic.checkBold, size: 12, color: Colors.white)
+                : Text('${i + 1}',
+                    style: AppTheme.f(11.5,
+                        weight: FontWeight.w700, color: current ? gc.onEmber : gc.textSecondary)),
+          ),
+          const SizedBox(width: 10),
+          if (def != null) ...[
+            SizedBox(width: 40, child: ExerciseMedia(ex: def, height: 40, radius: 10, bordered: false)),
+            const SizedBox(width: 10),
+          ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(t.catalogName(e.id, e.name),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTheme.f(14, weight: FontWeight.w600, color: gc.text)),
+                const SizedBox(height: 2),
+                Row(children: [
+                  Text(t.setsDoneOf(done, e.sets.length),
+                      style: AppTheme.f(11.5,
+                          weight: FontWeight.w500, color: all ? gc.sage : gc.textSecondary)),
+                  if (current) ...[
+                    Text(' · ', style: AppTheme.f(11.5, color: gc.textTertiary)),
+                    Text(t.nowLabel,
+                        style: AppTheme.f(11.5, weight: FontWeight.w700, color: gc.ember)),
+                  ],
+                  if (linked) ...[
+                    const SizedBox(width: 6),
+                    Icon(PhosphorIconsRegular.link, size: 12, color: gc.brass),
+                  ],
+                ]),
+              ],
+            ),
+          ),
+          ReorderableDragStartListener(
+            index: i,
+            child: SizedBox(
+              width: 40,
+              height: 44,
+              child: Icon(PhosphorIconsRegular.dotsSixVertical, size: 18, color: gc.textTertiary),
+            ),
+          ),
+        ]),
+      ),
+    ),
+  );
+}
+
+void showExerciseHistorySheet(BuildContext context, String exerciseId) {
+  final gc = context.gc;
+  final history = fit.exerciseHistory(exerciseId).take(8).toList();
+  final ex = fit.exerciseById(exerciseId);
+  showAppSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (sheet) => Container(
+      padding: sheetPad(sheet),
+      constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(sheet).height * 0.8),
+      decoration: BoxDecoration(
+        color: gc.bgRaised,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SheetHandle(),
+            const SizedBox(height: 18),
+            Text(ex == null ? '' : exerciseName(ex),
+                style: AppTheme.f(19, weight: FontWeight.w800, color: gc.text)),
+            const SizedBox(height: 4),
+            Text(titleCase(t.history),
+                style: AppTheme.f(12.5, weight: FontWeight.w500, color: gc.textSecondary)),
+            const SizedBox(height: 14),
+            if (history.isEmpty)
+              Text(t.noHistory, style: AppTheme.f(13, weight: FontWeight.w500, color: gc.textSecondary)),
+            for (var i = 0; i < history.length; i++)
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  border: i < history.length - 1
+                      ? Border(bottom: BorderSide(color: gc.border.withValues(alpha: 0.55)))
+                      : null,
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: 92,
+                      child: Text(t.shortDate(history[i].date),
+                          style: AppTheme.f(13, weight: FontWeight.w600, color: gc.text)),
+                    ),
+                    Expanded(
+                      child: Text(fit.setsSummary(history[i].ex.sets),
+                          style: AppTheme.f(12.5,
+                              weight: FontWeight.w500, color: gc.textSecondary, height: 1.4)),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+void _showLockHint(BuildContext context) {
+  HapticFeedback.heavyImpact();
+  showNotchToast(
+    context,
+    t.screenLocked,
+    subtitle: t.lockedHint,
+    icon: PhosphorIconsFill.fingerprint,
+    accent: context.gc.accent,
+  );
+}
+
+class _LockGuard extends StatefulWidget {
+  const _LockGuard({required this.locked, required this.child});
+
+  final bool locked;
+  final Widget child;
+
+  @override
+  State<_LockGuard> createState() => _LockGuardState();
+}
+
+class _LockGuardState extends State<_LockGuard> {
+  DateTime? _last;
+  int _taps = 0;
+
+  void _tap() {
+    final now = DateTime.now();
+    if (_last == null || now.difference(_last!) > const Duration(milliseconds: 1500)) _taps = 0;
+    _last = now;
+    if (++_taps >= 2) {
+      _taps = 0;
+      _showLockHint(context);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: widget.locked ? HitTestBehavior.opaque : HitTestBehavior.deferToChild,
+      onTap: widget.locked ? _tap : null,
+      child: IgnorePointer(
+        ignoring: widget.locked,
+        child: AnimatedOpacity(
+          opacity: widget.locked ? 0.35 : 1,
+          duration: const Duration(milliseconds: 220),
+          child: widget.child,
+        ),
+      ),
+    );
+  }
+}
+
+class _HoldToUnlock extends StatefulWidget {
+  const _HoldToUnlock({required this.onUnlock});
+
+  final VoidCallback onUnlock;
+
+  @override
+  State<_HoldToUnlock> createState() => _HoldToUnlockState();
+}
+
+class _HoldToUnlockState extends State<_HoldToUnlock> with SingleTickerProviderStateMixin {
+  late final AnimationController _hold = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 650),
+    reverseDuration: const Duration(milliseconds: 220),
+  )..addStatusListener((s) {
+      if (s == AnimationStatus.completed) {
+        HapticFeedback.mediumImpact();
+        widget.onUnlock();
+      }
+    });
+  DateTime? _last;
+  int _taps = 0;
+
+  void _down() {
+    HapticFeedback.selectionClick();
+    _hold.forward();
+  }
+
+  void _up() {
+    if (_hold.isCompleted) return;
+    _hold.reverse();
+    final now = DateTime.now();
+    if (_last == null || now.difference(_last!) > const Duration(milliseconds: 1500)) _taps = 0;
+    _last = now;
+    if (++_taps >= 2) {
+      _taps = 0;
+      _showLockHint(context);
+    }
+  }
+
+  @override
+  void dispose() {
+    _hold.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final gc = context.gc;
+    return Semantics(
+      button: true,
+      label: t.unlockWorkout,
+      hint: t.holdToUnlock,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapDown: (_) => _down(),
+        onTapUp: (_) => _up(),
+        onTapCancel: _up,
+        child: AnimatedBuilder(
+          animation: _hold,
+          builder: (context, _) {
+            final v = _hold.value;
+            return Transform.scale(
+              scale: 1 - 0.04 * v,
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(6, 6, 14, 6),
+                decoration: BoxDecoration(
+                  color: gc.emberSoft,
+                  borderRadius: BorderRadius.circular(100),
+                ),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  SizedBox(
+                    width: 26,
+                    height: 26,
+                    child: Stack(alignment: Alignment.center, children: [
+                      SizedBox.expand(
+                        child: CircularProgressIndicator(
+                          value: v,
+                          strokeWidth: 2.4,
+                          strokeCap: StrokeCap.round,
+                          color: gc.ember,
+                          backgroundColor: gc.ember.withValues(alpha: 0.15),
+                        ),
+                      ),
+                      Icon(PhosphorIconsFill.fingerprint, size: 14, color: gc.ember),
+                    ]),
+                  ),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      t.holdToUnlock,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTheme.f(12, weight: FontWeight.w800, color: gc.ember),
+                    ),
+                  ),
+                ]),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _Celebrate extends StatefulWidget {
+  const _Celebrate({required this.active, required this.child});
+
+  final bool active;
+  final Widget child;
+
+  @override
+  State<_Celebrate> createState() => _CelebrateState();
+}
+
+class _CelebrateState extends State<_Celebrate> {
+  static Object? _shownFor;
+
+  @override
+  void initState() {
+    super.initState();
+    final s = fit.session;
+    if (!widget.active || s == null || identical(_shownFor, s)) return;
+    _shownFor = s;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final gc = context.gc;
+      celebrate(context, colors: [gc.accent, gc.brass, gc.sage, gc.text]);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }

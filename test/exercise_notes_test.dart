@@ -25,6 +25,7 @@ void main() {
   late String exId;
 
   Future<void> tapVisible(WidgetTester tester, Finder f) async {
+    await tester.pumpAndSettle();
     await tester.ensureVisible(f);
     await tester.pumpAndSettle();
     await tester.tap(f);
