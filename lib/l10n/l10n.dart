@@ -15,20 +15,33 @@ const Map<String, Map<String, List<String>>> _catalogSteps = {'es': kExerciseSte
 String appLanguage = 'en';
 AppLocalizations t = lookupAppLocalizations(const Locale('en'));
 
-List<String> get appLanguages =>
-    AppLocalizations.supportedLocales.map((l) => l.languageCode).toList();
+String _codeOf(Locale l) => l.scriptCode == null ? l.languageCode : '${l.languageCode}_${l.scriptCode}';
 
-String languageNameOf(String code) => lookupAppLocalizations(Locale(code)).languageName;
+List<String> get appLanguages => AppLocalizations.supportedLocales.map(_codeOf).toList();
+
+Locale localeOf(String code) {
+  final parts = code.split('_');
+  return parts.length > 1
+      ? Locale.fromSubtags(languageCode: parts.first, scriptCode: parts[1])
+      : Locale(code);
+}
+
+String languageNameOf(String code) => lookupAppLocalizations(localeOf(code)).languageName;
+
+String get intlLocale => appLanguage == 'zh_Hant' ? 'zh_TW' : appLanguage;
 
 String resolveLanguage(String code) {
-  final base = code.toLowerCase().split(RegExp('[-_]')).first;
+  if (appLanguages.contains(code)) return code;
+  final parts = code.toLowerCase().split(RegExp('[-_]'));
+  final base = parts.first;
+  if (base == 'zh' && parts.skip(1).any(const {'hant', 'tw', 'hk', 'mo'}.contains)) return 'zh_Hant';
   return appLanguages.contains(base) ? base : 'en';
 }
 
 void setAppLanguage(String code) {
   appLanguage = resolveLanguage(code);
-  t = lookupAppLocalizations(Locale(appLanguage));
-  Intl.defaultLocale = appLanguage;
+  t = lookupAppLocalizations(localeOf(appLanguage));
+  Intl.defaultLocale = intlLocale;
 }
 
 bool _dateSymbolsReady = false;
@@ -38,7 +51,7 @@ DateFormat _dates(DateFormat Function(String locale) build) {
     initializeDateFormatting();
     _dateSymbolsReady = true;
   }
-  return build(appLanguage);
+  return build(intlLocale);
 }
 
 extension GymL10n on AppLocalizations {
@@ -90,6 +103,8 @@ extension GymL10n on AppLocalizations {
         'fullbody' => tplFullbody,
         'ppl' => tplPpl,
         'upperlower' => tplUpperlower,
+        'abcd' => tplAbcd,
+        'abcde' => tplAbcde,
         'stronglifts' => tplStronglifts,
         'startingstrength' => tplStartingstrength,
         _ => tplHome,

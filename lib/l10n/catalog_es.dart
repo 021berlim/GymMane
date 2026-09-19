@@ -542,6 +542,14 @@ const Map<String, String> kExerciseNameEs = {
   'rNGclsi': 'L-sit en anillas',
   'rNGdsup': 'Sostén en anillas',
   'rNGemus': 'Muscle-up en anillas',
+  'plank-hold': 'Plancha',
+  'side-plank-hold': 'Plancha lateral',
+  'dead-hang-hold': 'Colgarse de la barra',
+  'outdoor-run': 'Correr',
+  'outdoor-cycling': 'Bici',
+  'outdoor-walk': 'Caminar',
+  'outdoor-hike': 'Senderismo',
+  'swim': 'Natación',
 };
 
 const Map<String, List<String>> kExerciseStepsEs = {
@@ -4315,5 +4323,55 @@ const Map<String, List<String>> kExerciseStepsEs = {
     'Inclínate hacia delante y pasa los hombros por encima de las anillas.',
     'Empuja para salir del fondo hasta bloquear los brazos en el apoyo.',
     'Baja por el mismo camino, controlando cada paso.',
+  ],
+  'plank-hold': [
+    'Apoya los antebrazos en el suelo con los codos bajo los hombros.',
+    'Lleva los pies atrás hasta que el cuerpo forme una línea recta de la cabeza a los talones.',
+    'Aprieta los glúteos y el abdomen.',
+    'Mantén la cadera nivelada, sin hundirla ni subirla.',
+    'Respira con calma y aguanta el tiempo que hayas puesto.',
+  ],
+  'side-plank-hold': [
+    'Túmbate de lado con el codo bajo el hombro y las piernas juntas.',
+    'Sube la cadera hasta que el cuerpo quede en línea recta.',
+    'Mantén la cadera de arriba encima de la de abajo, sin girarte hacia delante.',
+    'Aguanta respirando con calma y cambia de lado.',
+  ],
+  'dead-hang-hold': [
+    'Agarra la barra de dominadas en prono, con las manos al ancho de los hombros.',
+    'Levanta los pies y cuélgate con los brazos estirados.',
+    'Deja que los hombros se estiren manteniendo el abdomen algo firme.',
+    'Aguanta el tiempo que hayas puesto y baja con control.',
+  ],
+  'outdoor-run': [
+    'Empieza con cinco minutos de trote suave para calentar.',
+    'Corre erguido, con los hombros sueltos y el cuerpo algo inclinado hacia delante.',
+    'Apoya bajo la cadera, con zancadas cortas y rápidas.',
+    'Lleva un ritmo al que puedas hablar, salvo que toque series.',
+    'Acaba con unos minutos andando.',
+  ],
+  'outdoor-cycling': [
+    'Ajusta el sillín para que la rodilla quede algo flexionada abajo del todo.',
+    'Empieza con un desarrollo suave los primeros minutos.',
+    'Mantén una cadencia fluida en vez de aplastar los pedales.',
+    'Cambia de marcha antes de las subidas para que el esfuerzo sea constante.',
+  ],
+  'outdoor-walk': [
+    'Camina erguido, con los hombros sueltos y balanceando los brazos.',
+    'Pisa de talón a punta en cada paso.',
+    'Elige un ritmo que te acelere la respiración sin dejarte sin aire.',
+  ],
+  'outdoor-hike': [
+    'Lleva calzado con buen agarre y agua.',
+    'Acorta el paso en las subidas fuertes y mantén un ritmo constante.',
+    'Inclínate un poco hacia la pendiente al subir y flexiona las rodillas al bajar.',
+    'Haz pausas cortas antes de estar agotado, no después.',
+  ],
+  'swim': [
+    'Calienta con unos largos suaves.',
+    'Mantén el cuerpo alargado y plano, con la cabeza alineada con la espalda.',
+    'Estira el brazo en cada brazada y empuja el agua hacia atrás hasta la cadera.',
+    'Respira de lado al ritmo de las brazadas.',
+    'Apunta la distancia total y el tiempo que has nadado.',
   ],
 };

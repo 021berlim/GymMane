@@ -5,11 +5,20 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart' as intl;
 
+import 'app_localizations_ar.dart';
+import 'app_localizations_de.dart';
 import 'app_localizations_en.dart';
 import 'app_localizations_es.dart';
+import 'app_localizations_fr.dart';
 import 'app_localizations_it.dart';
+import 'app_localizations_ja.dart';
+import 'app_localizations_ko.dart';
+import 'app_localizations_nl.dart';
+import 'app_localizations_pl.dart';
 import 'app_localizations_pt.dart';
 import 'app_localizations_ru.dart';
+import 'app_localizations_tr.dart';
+import 'app_localizations_uk.dart';
 import 'app_localizations_zh.dart';
 
 // ignore_for_file: type=lint
@@ -95,12 +104,22 @@ abstract class AppLocalizations {
 
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
+    Locale('ar'),
+    Locale('de'),
     Locale('en'),
     Locale('es'),
+    Locale('fr'),
     Locale('it'),
+    Locale('ja'),
+    Locale('ko'),
+    Locale('nl'),
+    Locale('pl'),
     Locale('pt'),
     Locale('ru'),
+    Locale('tr'),
+    Locale('uk'),
     Locale('zh'),
+    Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant'),
   ];
 
   /// This language, written in itself. Shown in the language picker.
@@ -3337,6 +3356,66 @@ abstract class AppLocalizations {
   /// **'Move on automatically'**
   String get autoAdvance;
 
+  /// No description provided for @keepScreenOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep the screen on while training'**
+  String get keepScreenOn;
+
+  /// No description provided for @lockWorkout.
+  ///
+  /// In en, this message translates to:
+  /// **'Lock the screen'**
+  String get lockWorkout;
+
+  /// No description provided for @unlockWorkout.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock'**
+  String get unlockWorkout;
+
+  /// No description provided for @lockedCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'LOCKED'**
+  String get lockedCaps;
+
+  /// No description provided for @holdToUnlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold to unlock'**
+  String get holdToUnlock;
+
+  /// No description provided for @liveChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'Ongoing workout'**
+  String get liveChannel;
+
+  /// No description provided for @liveChannelWhy.
+  ///
+  /// In en, this message translates to:
+  /// **'Shows the current exercise, set and rest timer while you train'**
+  String get liveChannelWhy;
+
+  /// No description provided for @liveSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Set {n} of {total}'**
+  String liveSet(int n, int total);
+
+  /// No description provided for @liveResting.
+  ///
+  /// In en, this message translates to:
+  /// **'Resting'**
+  String get liveResting;
+
+  /// No description provided for @liveAllDone.
+  ///
+  /// In en, this message translates to:
+  /// **'All sets done'**
+  String get liveAllDone;
+
   /// No description provided for @autoAdvanceHint.
   ///
   /// In en, this message translates to:
@@ -4512,6 +4591,774 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'My places'**
   String get placesLabel;
+
+  /// No description provided for @undo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get undo;
+
+  /// No description provided for @deleteSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete set'**
+  String get deleteSet;
+
+  /// No description provided for @setDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Set deleted'**
+  String get setDeleted;
+
+  /// No description provided for @removeWarmup.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove warm-up'**
+  String get removeWarmup;
+
+  /// No description provided for @addWeightAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add weight'**
+  String get addWeightAction;
+
+  /// No description provided for @workoutOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'This workout'**
+  String get workoutOverview;
+
+  /// No description provided for @allExercisesShort.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get allExercisesShort;
+
+  /// No description provided for @setsDoneOf.
+  ///
+  /// In en, this message translates to:
+  /// **'{done}/{total} sets'**
+  String setsDoneOf(int done, int total);
+
+  /// No description provided for @nowLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Now'**
+  String get nowLabel;
+
+  /// No description provided for @deleteWorkout.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete workout'**
+  String get deleteWorkout;
+
+  /// No description provided for @deleteWorkoutBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This workout and all its sets will be removed from your history.'**
+  String get deleteWorkoutBody;
+
+  /// No description provided for @themeAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto'**
+  String get themeAuto;
+
+  /// No description provided for @themeAutoHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Follows your phone'**
+  String get themeAutoHint;
+
+  /// No description provided for @demoSizeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Exercise demo while training'**
+  String get demoSizeTitle;
+
+  /// No description provided for @demoLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'Large'**
+  String get demoLarge;
+
+  /// No description provided for @demoSmall.
+  ///
+  /// In en, this message translates to:
+  /// **'Small'**
+  String get demoSmall;
+
+  /// No description provided for @demoOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden'**
+  String get demoOff;
+
+  /// No description provided for @alarmStyleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'When rest ends'**
+  String get alarmStyleTitle;
+
+  /// No description provided for @alarmStyleLoud.
+  ///
+  /// In en, this message translates to:
+  /// **'Always ring'**
+  String get alarmStyleLoud;
+
+  /// No description provided for @alarmStyleQuiet.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow silent mode'**
+  String get alarmStyleQuiet;
+
+  /// No description provided for @alarmStyleVibrate.
+  ///
+  /// In en, this message translates to:
+  /// **'Vibrate only'**
+  String get alarmStyleVibrate;
+
+  /// No description provided for @alarmStyleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Always ring uses the alarm volume, even on silent. Follow silent mode uses the notification volume and just vibrates when your phone is muted.'**
+  String get alarmStyleHint;
+
+  /// No description provided for @suggestedPicks.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested for you'**
+  String get suggestedPicks;
+
+  /// No description provided for @moreOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'More options'**
+  String get moreOptions;
+
+  /// No description provided for @suggestInWorkouts.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggest in quick workouts'**
+  String get suggestInWorkouts;
+
+  /// No description provided for @suggestInWorkoutsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Off keeps it out of the picks made for you. You can still add it by hand.'**
+  String get suggestInWorkoutsHint;
+
+  /// No description provided for @dontSuggest.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t suggest it again'**
+  String get dontSuggest;
+
+  /// No description provided for @noLongerSuggested.
+  ///
+  /// In en, this message translates to:
+  /// **'It won\'t be suggested again'**
+  String get noLongerSuggested;
+
+  /// No description provided for @onbPlaceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Where do you train?'**
+  String get onbPlaceTitle;
+
+  /// No description provided for @onbPlaceWhy.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick every place you train. We\'ll only suggest what you can do in each one.'**
+  String get onbPlaceWhy;
+
+  /// No description provided for @onbPlaceGear.
+  ///
+  /// In en, this message translates to:
+  /// **'What do you have there?'**
+  String get onbPlaceGear;
+
+  /// No description provided for @distanceCol.
+  ///
+  /// In en, this message translates to:
+  /// **'DISTANCE ({unit})'**
+  String distanceCol(String unit);
+
+  /// No description provided for @timeCol.
+  ///
+  /// In en, this message translates to:
+  /// **'TIME'**
+  String get timeCol;
+
+  /// No description provided for @timeMinutesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Time (minutes)'**
+  String get timeMinutesTitle;
+
+  /// No description provided for @timeSecondsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Time (seconds)'**
+  String get timeSecondsTitle;
+
+  /// No description provided for @distanceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Distance ({unit})'**
+  String distanceTitle(String unit);
+
+  /// No description provided for @holdLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold'**
+  String get holdLabel;
+
+  /// No description provided for @stopLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get stopLabel;
+
+  /// No description provided for @startHold.
+  ///
+  /// In en, this message translates to:
+  /// **'Start · {time}'**
+  String startHold(String time);
+
+  /// No description provided for @exerciseTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Log by'**
+  String get exerciseTypeLabel;
+
+  /// No description provided for @typeReps.
+  ///
+  /// In en, this message translates to:
+  /// **'Reps & weight'**
+  String get typeReps;
+
+  /// No description provided for @typeTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get typeTime;
+
+  /// No description provided for @typeCardio.
+  ///
+  /// In en, this message translates to:
+  /// **'Distance & time'**
+  String get typeCardio;
+
+  /// No description provided for @exerciseTypeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Cardio like running or swimming logs distance and time. Holds like a plank log time.'**
+  String get exerciseTypeHint;
+
+  /// No description provided for @howToLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'How to (optional)'**
+  String get howToLabel;
+
+  /// No description provided for @howToHint.
+  ///
+  /// In en, this message translates to:
+  /// **'One step per line'**
+  String get howToHint;
+
+  /// No description provided for @editExercise.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit exercise'**
+  String get editExercise;
+
+  /// No description provided for @saveChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Save changes'**
+  String get saveChanges;
+
+  /// No description provided for @noStepsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No steps yet. Write your own so you remember how you do it.'**
+  String get noStepsYet;
+
+  /// No description provided for @addSteps.
+  ///
+  /// In en, this message translates to:
+  /// **'Write the steps'**
+  String get addSteps;
+
+  /// No description provided for @setTypeRestPause.
+  ///
+  /// In en, this message translates to:
+  /// **'Rest-pause'**
+  String get setTypeRestPause;
+
+  /// No description provided for @planFormatNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the exercise names exactly as they appear in the list. \"sets\", \"reps\", \"weight\" (in the unit given), \"rest\" in seconds and \"days\" are optional. \"superset\": true links an exercise with the next one. For several weeks, group the routines inside \"weeks\" like the second example.'**
+  String get planFormatNotes;
+
+  /// No description provided for @planSets.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan sets'**
+  String get planSets;
+
+  /// No description provided for @planSetsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the type, reps and weight of each set. Leave the weight on Auto to start from your last session.'**
+  String get planSetsHint;
+
+  /// No description provided for @autoValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto'**
+  String get autoValue;
+
+  /// No description provided for @clearPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear plan'**
+  String get clearPlan;
+
+  /// No description provided for @planChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan'**
+  String get planChip;
+
+  /// No description provided for @shareRoutine.
+  ///
+  /// In en, this message translates to:
+  /// **'Share routine'**
+  String get shareRoutine;
+
+  /// No description provided for @shareWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Share my week'**
+  String get shareWeek;
+
+  /// No description provided for @shareWeekHint.
+  ///
+  /// In en, this message translates to:
+  /// **'All your routines and the day each one is on.'**
+  String get shareWeekHint;
+
+  /// No description provided for @shareMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} — open the file with GymMane to add it.'**
+  String shareMessage(String name);
+
+  /// No description provided for @importRoutines.
+  ///
+  /// In en, this message translates to:
+  /// **'Import routines'**
+  String get importRoutines;
+
+  /// No description provided for @importPasteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste a routine here: one shared from GymMane, an AI answer, JSON or CSV.'**
+  String get importPasteHint;
+
+  /// No description provided for @pasteAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste'**
+  String get pasteAction;
+
+  /// No description provided for @routineCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{n, plural, =1{1 routine} other{{n} routines}}'**
+  String routineCount(int n);
+
+  /// No description provided for @useTheirSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Also use its weekly schedule'**
+  String get useTheirSchedule;
+
+  /// No description provided for @useTheirScheduleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The days it brings replace what you have planned on them.'**
+  String get useTheirScheduleHint;
+
+  /// No description provided for @addToMyRoutines.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to my routines'**
+  String get addToMyRoutines;
+
+  /// No description provided for @routinesAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'{n, plural, =1{1 routine added} other{{n} routines added}}'**
+  String routinesAdded(int n);
+
+  /// No description provided for @nothingToImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing here GymMane can import'**
+  String get nothingToImport;
+
+  /// No description provided for @aiStepCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy the request. It carries your exercise list and the format GymMane reads.'**
+  String get aiStepCopy;
+
+  /// No description provided for @aiStepAsk.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste it into any AI and say what you want: days per week, goal, how many weeks.'**
+  String get aiStepAsk;
+
+  /// No description provided for @aiStepPaste.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste its answer below and import it. No file needed.'**
+  String get aiStepPaste;
+
+  /// No description provided for @copyForAi.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy for the AI'**
+  String get copyForAi;
+
+  /// No description provided for @copiedDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied'**
+  String get copiedDone;
+
+  /// No description provided for @aiPasteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste the AI\'s answer here'**
+  String get aiPasteHint;
+
+  /// No description provided for @importAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Import'**
+  String get importAction;
+
+  /// No description provided for @showFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'See the format'**
+  String get showFormat;
+
+  /// No description provided for @shareAsFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Share as a file'**
+  String get shareAsFile;
+
+  /// No description provided for @recoveryTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery'**
+  String get recoveryTab;
+
+  /// No description provided for @recoveryOverall.
+  ///
+  /// In en, this message translates to:
+  /// **'Body {pct}% recovered'**
+  String recoveryOverall(int pct);
+
+  /// No description provided for @recoveryAllFresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything is recovered. Good day to train anything.'**
+  String get recoveryAllFresh;
+
+  /// No description provided for @recoveryStill.
+  ///
+  /// In en, this message translates to:
+  /// **'Still recovering: {muscles}'**
+  String recoveryStill(String muscles);
+
+  /// No description provided for @recoveryTired.
+  ///
+  /// In en, this message translates to:
+  /// **'Fatigued'**
+  String get recoveryTired;
+
+  /// No description provided for @recoveryFresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Fresh'**
+  String get recoveryFresh;
+
+  /// No description provided for @recoveryHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a muscle to see how recovered it is. Recent sets weigh more, and harder ones (by RPE) more still.'**
+  String get recoveryHint;
+
+  /// No description provided for @recoveryPct.
+  ///
+  /// In en, this message translates to:
+  /// **'{pct}% recovered'**
+  String recoveryPct(int pct);
+
+  /// No description provided for @readyInHours.
+  ///
+  /// In en, this message translates to:
+  /// **'ready in ~{h} h'**
+  String readyInHours(int h);
+
+  /// No description provided for @tplAbcd.
+  ///
+  /// In en, this message translates to:
+  /// **'Four days: chest and triceps, back and biceps, legs, shoulders and abs.'**
+  String get tplAbcd;
+
+  /// No description provided for @tplAbcde.
+  ///
+  /// In en, this message translates to:
+  /// **'Five days, one muscle group each: chest, back, legs, shoulders, arms.'**
+  String get tplAbcde;
+
+  /// No description provided for @elapsedCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'ELAPSED'**
+  String get elapsedCaps;
+
+  /// No description provided for @tapToSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to skip'**
+  String get tapToSkip;
+
+  /// No description provided for @tapToStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to stop'**
+  String get tapToStop;
+
+  /// No description provided for @screenLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Screen locked'**
+  String get screenLocked;
+
+  /// No description provided for @lockedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Press and hold the fingerprint at the top to unlock'**
+  String get lockedHint;
+
+  /// No description provided for @liveDoneSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Set done'**
+  String get liveDoneSet;
+
+  /// No description provided for @liveSkipRest.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip rest'**
+  String get liveSkipRest;
+
+  /// No description provided for @livePause.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get livePause;
+
+  /// No description provided for @liveResume.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume'**
+  String get liveResume;
+
+  /// No description provided for @liveNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get liveNext;
+
+  /// No description provided for @liveUpNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Up next: {name}'**
+  String liveUpNext(String name);
+
+  /// No description provided for @stickerOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Share on a photo'**
+  String get stickerOpen;
+
+  /// No description provided for @stickerNoPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'No photo'**
+  String get stickerNoPhoto;
+
+  /// No description provided for @stickerWorkout.
+  ///
+  /// In en, this message translates to:
+  /// **'Workout'**
+  String get stickerWorkout;
+
+  /// No description provided for @stickerStreak.
+  ///
+  /// In en, this message translates to:
+  /// **'Streak'**
+  String get stickerStreak;
+
+  /// No description provided for @stickerDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get stickerDate;
+
+  /// No description provided for @stickerHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag to move it, pinch to resize or turn it'**
+  String get stickerHint;
+
+  /// No description provided for @stickerSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved to your gallery'**
+  String get stickerSaved;
+
+  /// No description provided for @stickerWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'This week'**
+  String get stickerWeek;
+
+  /// No description provided for @getReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Get ready'**
+  String get getReady;
+
+  /// No description provided for @stickerGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Gallery'**
+  String get stickerGallery;
+
+  /// No description provided for @stickerCamera.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera'**
+  String get stickerCamera;
+
+  /// No description provided for @shareIntroTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Share this routine'**
+  String get shareIntroTitle;
+
+  /// No description provided for @shareIntroBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Send it to your partner, a friend or your family. They get a small file that opens in GymMane and adds it in one tap, with its sets and weights.'**
+  String get shareIntroBody;
+
+  /// No description provided for @removedFromRoutine.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed from the routine'**
+  String get removedFromRoutine;
+
+  /// No description provided for @radarTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This month'**
+  String get radarTitle;
+
+  /// No description provided for @radarHint.
+  ///
+  /// In en, this message translates to:
+  /// **'See which areas need more work'**
+  String get radarHint;
+
+  /// No description provided for @radarEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Train this month to see your balance'**
+  String get radarEmpty;
+
+  /// No description provided for @radarBalanced.
+  ///
+  /// In en, this message translates to:
+  /// **'Good balance so far'**
+  String get radarBalanced;
+
+  /// No description provided for @radarFocus.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs more: {list}'**
+  String radarFocus(String list);
+
+  /// No description provided for @countdownReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Get ready'**
+  String get countdownReady;
+
+  /// No description provided for @countdownSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to start now'**
+  String get countdownSkip;
+
+  /// No description provided for @countdownSetting.
+  ///
+  /// In en, this message translates to:
+  /// **'Countdown before starting'**
+  String get countdownSetting;
+
+  /// No description provided for @effortSetting.
+  ///
+  /// In en, this message translates to:
+  /// **'Log effort per set'**
+  String get effortSetting;
+
+  /// No description provided for @effortHint.
+  ///
+  /// In en, this message translates to:
+  /// **'RPE: 10 means nothing left, 8 means two reps to spare. RIR counts the reps you had left. When a set has it, the estimated 1RM uses the RPE chart.'**
+  String get effortHint;
+
+  /// No description provided for @rirTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'RESERVE (RIR)'**
+  String get rirTitle;
+
+  /// No description provided for @rirHint.
+  ///
+  /// In en, this message translates to:
+  /// **'0 is nothing left in the tank, 2 is two reps to spare.'**
+  String get rirHint;
+
+  /// No description provided for @addWeekWidget.
+  ///
+  /// In en, this message translates to:
+  /// **'Add week widget'**
+  String get addWeekWidget;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
@@ -4523,26 +5370,71 @@ class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> 
   }
 
   @override
-  bool isSupported(Locale locale) =>
-      <String>['en', 'es', 'it', 'pt', 'ru', 'zh'].contains(locale.languageCode);
+  bool isSupported(Locale locale) => <String>[
+    'ar',
+    'de',
+    'en',
+    'es',
+    'fr',
+    'it',
+    'ja',
+    'ko',
+    'nl',
+    'pl',
+    'pt',
+    'ru',
+    'tr',
+    'uk',
+    'zh',
+  ].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
 }
 
 AppLocalizations lookupAppLocalizations(Locale locale) {
+  // Lookup logic when language+script codes are specified.
+  switch (locale.languageCode) {
+    case 'zh':
+      {
+        switch (locale.scriptCode) {
+          case 'Hant':
+            return AppLocalizationsZhHant();
+        }
+        break;
+      }
+  }
+
   // Lookup logic when only language code is specified.
   switch (locale.languageCode) {
+    case 'ar':
+      return AppLocalizationsAr();
+    case 'de':
+      return AppLocalizationsDe();
     case 'en':
       return AppLocalizationsEn();
     case 'es':
       return AppLocalizationsEs();
+    case 'fr':
+      return AppLocalizationsFr();
     case 'it':
       return AppLocalizationsIt();
+    case 'ja':
+      return AppLocalizationsJa();
+    case 'ko':
+      return AppLocalizationsKo();
+    case 'nl':
+      return AppLocalizationsNl();
+    case 'pl':
+      return AppLocalizationsPl();
     case 'pt':
       return AppLocalizationsPt();
     case 'ru':
       return AppLocalizationsRu();
+    case 'tr':
+      return AppLocalizationsTr();
+    case 'uk':
+      return AppLocalizationsUk();
     case 'zh':
       return AppLocalizationsZh();
   }

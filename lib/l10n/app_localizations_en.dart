@@ -1856,6 +1856,38 @@ class AppLocalizationsEn extends AppLocalizations {
   String get autoAdvance => 'Move on automatically';
 
   @override
+  String get keepScreenOn => 'Keep the screen on while training';
+
+  @override
+  String get lockWorkout => 'Lock the screen';
+
+  @override
+  String get unlockWorkout => 'Unlock';
+
+  @override
+  String get lockedCaps => 'LOCKED';
+
+  @override
+  String get holdToUnlock => 'Hold to unlock';
+
+  @override
+  String get liveChannel => 'Ongoing workout';
+
+  @override
+  String get liveChannelWhy => 'Shows the current exercise, set and rest timer while you train';
+
+  @override
+  String liveSet(int n, int total) {
+    return 'Set $n of $total';
+  }
+
+  @override
+  String get liveResting => 'Resting';
+
+  @override
+  String get liveAllDone => 'All sets done';
+
+  @override
   String get autoAdvanceHint => 'When the last set of an exercise is ticked, the workout moves on.';
 
   @override
@@ -2529,4 +2561,429 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get placesLabel => 'My places';
+
+  @override
+  String get undo => 'Undo';
+
+  @override
+  String get deleteSet => 'Delete set';
+
+  @override
+  String get setDeleted => 'Set deleted';
+
+  @override
+  String get removeWarmup => 'Remove warm-up';
+
+  @override
+  String get addWeightAction => 'Add weight';
+
+  @override
+  String get workoutOverview => 'This workout';
+
+  @override
+  String get allExercisesShort => 'All';
+
+  @override
+  String setsDoneOf(int done, int total) {
+    return '$done/$total sets';
+  }
+
+  @override
+  String get nowLabel => 'Now';
+
+  @override
+  String get deleteWorkout => 'Delete workout';
+
+  @override
+  String get deleteWorkoutBody => 'This workout and all its sets will be removed from your history.';
+
+  @override
+  String get themeAuto => 'Auto';
+
+  @override
+  String get themeAutoHint => 'Follows your phone';
+
+  @override
+  String get demoSizeTitle => 'Exercise demo while training';
+
+  @override
+  String get demoLarge => 'Large';
+
+  @override
+  String get demoSmall => 'Small';
+
+  @override
+  String get demoOff => 'Hidden';
+
+  @override
+  String get alarmStyleTitle => 'When rest ends';
+
+  @override
+  String get alarmStyleLoud => 'Always ring';
+
+  @override
+  String get alarmStyleQuiet => 'Follow silent mode';
+
+  @override
+  String get alarmStyleVibrate => 'Vibrate only';
+
+  @override
+  String get alarmStyleHint =>
+      'Always ring uses the alarm volume, even on silent. Follow silent mode uses the notification volume and just vibrates when your phone is muted.';
+
+  @override
+  String get suggestedPicks => 'Suggested for you';
+
+  @override
+  String get moreOptions => 'More options';
+
+  @override
+  String get suggestInWorkouts => 'Suggest in quick workouts';
+
+  @override
+  String get suggestInWorkoutsHint =>
+      'Off keeps it out of the picks made for you. You can still add it by hand.';
+
+  @override
+  String get dontSuggest => 'Don\'t suggest it again';
+
+  @override
+  String get noLongerSuggested => 'It won\'t be suggested again';
+
+  @override
+  String get onbPlaceTitle => 'Where do you train?';
+
+  @override
+  String get onbPlaceWhy => 'Pick every place you train. We\'ll only suggest what you can do in each one.';
+
+  @override
+  String get onbPlaceGear => 'What do you have there?';
+
+  @override
+  String distanceCol(String unit) {
+    return 'DISTANCE ($unit)';
+  }
+
+  @override
+  String get timeCol => 'TIME';
+
+  @override
+  String get timeMinutesTitle => 'Time (minutes)';
+
+  @override
+  String get timeSecondsTitle => 'Time (seconds)';
+
+  @override
+  String distanceTitle(String unit) {
+    return 'Distance ($unit)';
+  }
+
+  @override
+  String get holdLabel => 'Hold';
+
+  @override
+  String get stopLabel => 'Stop';
+
+  @override
+  String startHold(String time) {
+    return 'Start · $time';
+  }
+
+  @override
+  String get exerciseTypeLabel => 'Log by';
+
+  @override
+  String get typeReps => 'Reps & weight';
+
+  @override
+  String get typeTime => 'Time';
+
+  @override
+  String get typeCardio => 'Distance & time';
+
+  @override
+  String get exerciseTypeHint =>
+      'Cardio like running or swimming logs distance and time. Holds like a plank log time.';
+
+  @override
+  String get howToLabel => 'How to (optional)';
+
+  @override
+  String get howToHint => 'One step per line';
+
+  @override
+  String get editExercise => 'Edit exercise';
+
+  @override
+  String get saveChanges => 'Save changes';
+
+  @override
+  String get noStepsYet => 'No steps yet. Write your own so you remember how you do it.';
+
+  @override
+  String get addSteps => 'Write the steps';
+
+  @override
+  String get setTypeRestPause => 'Rest-pause';
+
+  @override
+  String get planFormatNotes =>
+      'Use the exercise names exactly as they appear in the list. \"sets\", \"reps\", \"weight\" (in the unit given), \"rest\" in seconds and \"days\" are optional. \"superset\": true links an exercise with the next one. For several weeks, group the routines inside \"weeks\" like the second example.';
+
+  @override
+  String get planSets => 'Plan sets';
+
+  @override
+  String get planSetsHint =>
+      'Choose the type, reps and weight of each set. Leave the weight on Auto to start from your last session.';
+
+  @override
+  String get autoValue => 'Auto';
+
+  @override
+  String get clearPlan => 'Clear plan';
+
+  @override
+  String get planChip => 'Plan';
+
+  @override
+  String get shareRoutine => 'Share routine';
+
+  @override
+  String get shareWeek => 'Share my week';
+
+  @override
+  String get shareWeekHint => 'All your routines and the day each one is on.';
+
+  @override
+  String shareMessage(String name) {
+    return '$name — open the file with GymMane to add it.';
+  }
+
+  @override
+  String get importRoutines => 'Import routines';
+
+  @override
+  String get importPasteHint => 'Paste a routine here: one shared from GymMane, an AI answer, JSON or CSV.';
+
+  @override
+  String get pasteAction => 'Paste';
+
+  @override
+  String routineCount(int n) {
+    String _temp0 = intl.Intl.pluralLogic(n, locale: localeName, other: '$n routines', one: '1 routine');
+    return '$_temp0';
+  }
+
+  @override
+  String get useTheirSchedule => 'Also use its weekly schedule';
+
+  @override
+  String get useTheirScheduleHint => 'The days it brings replace what you have planned on them.';
+
+  @override
+  String get addToMyRoutines => 'Add to my routines';
+
+  @override
+  String routinesAdded(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n routines added',
+      one: '1 routine added',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get nothingToImport => 'Nothing here GymMane can import';
+
+  @override
+  String get aiStepCopy => 'Copy the request. It carries your exercise list and the format GymMane reads.';
+
+  @override
+  String get aiStepAsk => 'Paste it into any AI and say what you want: days per week, goal, how many weeks.';
+
+  @override
+  String get aiStepPaste => 'Paste its answer below and import it. No file needed.';
+
+  @override
+  String get copyForAi => 'Copy for the AI';
+
+  @override
+  String get copiedDone => 'Copied';
+
+  @override
+  String get aiPasteHint => 'Paste the AI\'s answer here';
+
+  @override
+  String get importAction => 'Import';
+
+  @override
+  String get showFormat => 'See the format';
+
+  @override
+  String get shareAsFile => 'Share as a file';
+
+  @override
+  String get recoveryTab => 'Recovery';
+
+  @override
+  String recoveryOverall(int pct) {
+    return 'Body $pct% recovered';
+  }
+
+  @override
+  String get recoveryAllFresh => 'Everything is recovered. Good day to train anything.';
+
+  @override
+  String recoveryStill(String muscles) {
+    return 'Still recovering: $muscles';
+  }
+
+  @override
+  String get recoveryTired => 'Fatigued';
+
+  @override
+  String get recoveryFresh => 'Fresh';
+
+  @override
+  String get recoveryHint =>
+      'Tap a muscle to see how recovered it is. Recent sets weigh more, and harder ones (by RPE) more still.';
+
+  @override
+  String recoveryPct(int pct) {
+    return '$pct% recovered';
+  }
+
+  @override
+  String readyInHours(int h) {
+    return 'ready in ~$h h';
+  }
+
+  @override
+  String get tplAbcd => 'Four days: chest and triceps, back and biceps, legs, shoulders and abs.';
+
+  @override
+  String get tplAbcde => 'Five days, one muscle group each: chest, back, legs, shoulders, arms.';
+
+  @override
+  String get elapsedCaps => 'ELAPSED';
+
+  @override
+  String get tapToSkip => 'Tap to skip';
+
+  @override
+  String get tapToStop => 'Tap to stop';
+
+  @override
+  String get screenLocked => 'Screen locked';
+
+  @override
+  String get lockedHint => 'Press and hold the fingerprint at the top to unlock';
+
+  @override
+  String get liveDoneSet => 'Set done';
+
+  @override
+  String get liveSkipRest => 'Skip rest';
+
+  @override
+  String get livePause => 'Pause';
+
+  @override
+  String get liveResume => 'Resume';
+
+  @override
+  String get liveNext => 'Next';
+
+  @override
+  String liveUpNext(String name) {
+    return 'Up next: $name';
+  }
+
+  @override
+  String get stickerOpen => 'Share on a photo';
+
+  @override
+  String get stickerNoPhoto => 'No photo';
+
+  @override
+  String get stickerWorkout => 'Workout';
+
+  @override
+  String get stickerStreak => 'Streak';
+
+  @override
+  String get stickerDate => 'Date';
+
+  @override
+  String get stickerHint => 'Drag to move it, pinch to resize or turn it';
+
+  @override
+  String get stickerSaved => 'Saved to your gallery';
+
+  @override
+  String get stickerWeek => 'This week';
+
+  @override
+  String get getReady => 'Get ready';
+
+  @override
+  String get stickerGallery => 'Gallery';
+
+  @override
+  String get stickerCamera => 'Camera';
+
+  @override
+  String get shareIntroTitle => 'Share this routine';
+
+  @override
+  String get shareIntroBody =>
+      'Send it to your partner, a friend or your family. They get a small file that opens in GymMane and adds it in one tap, with its sets and weights.';
+
+  @override
+  String get removedFromRoutine => 'Removed from the routine';
+
+  @override
+  String get radarTitle => 'This month';
+
+  @override
+  String get radarHint => 'See which areas need more work';
+
+  @override
+  String get radarEmpty => 'Train this month to see your balance';
+
+  @override
+  String get radarBalanced => 'Good balance so far';
+
+  @override
+  String radarFocus(String list) {
+    return 'Needs more: $list';
+  }
+
+  @override
+  String get countdownReady => 'Get ready';
+
+  @override
+  String get countdownSkip => 'Tap to start now';
+
+  @override
+  String get countdownSetting => 'Countdown before starting';
+
+  @override
+  String get effortSetting => 'Log effort per set';
+
+  @override
+  String get effortHint =>
+      'RPE: 10 means nothing left, 8 means two reps to spare. RIR counts the reps you had left. When a set has it, the estimated 1RM uses the RPE chart.';
+
+  @override
+  String get rirTitle => 'RESERVE (RIR)';
+
+  @override
+  String get rirHint => '0 is nothing left in the tank, 2 is two reps to spare.';
+
+  @override
+  String get addWeekWidget => 'Add week widget';
 }

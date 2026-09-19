@@ -1,6 +1,3 @@
-// Italian exercise catalogue: names for every factory exercise and
-// step-by-step instructions. Missing entries fall back to English
-// (see l10n.dart) — but the Italian catalogue is complete.
 
 const Map<String, String> kExerciseNameIt = {
   'EIeI8Vf': 'Panca piana con bilanciere',
@@ -532,6 +529,14 @@ const Map<String, String> kExerciseNameIt = {
   'kettlebell-overhead-tricep-extension': 'Estensione tricipiti sopra la testa con kettlebell',
   'kettlebell-russian-twist': 'Twist russo con kettlebell',
   'kettlebell-side-bend': 'Piegamenti laterali con kettlebell',
+  'plank-hold': 'Plank',
+  'side-plank-hold': 'Plank laterale',
+  'dead-hang-hold': 'Dead hang',
+  'outdoor-run': 'Corsa',
+  'outdoor-cycling': 'Bici',
+  'outdoor-walk': 'Camminata',
+  'outdoor-hike': 'Escursionismo',
+  'swim': 'Nuoto',
 };
 
 const Map<String, List<String>> kExerciseStepsIt = {
@@ -4207,5 +4212,55 @@ const Map<String, List<String>> kExerciseStepsIt = {
     'Piegati di lato verso il lato carico lasciando scivolare la kettlebell lungo la gamba',
     'Risali tirando con il lato opposto della vita',
     'Finisci la serie, poi cambia mano',
+  ],
+  'plank-hold': [
+    'Appoggia gli avambracci a terra con i gomiti sotto le spalle.',
+    'Porta i piedi indietro finché il corpo forma una linea dritta dalla testa ai talloni.',
+    'Stringi glutei e addominali.',
+    'Tieni il bacino in linea, senza farlo cedere né alzarlo.',
+    'Respira con calma e resisti per il tempo impostato.',
+  ],
+  'side-plank-hold': [
+    'Sdraiati su un fianco con il gomito sotto la spalla e le gambe sovrapposte.',
+    'Solleva il bacino finché il corpo forma una linea dritta.',
+    'Tieni l\'anca di sopra allineata a quella di sotto, senza ruotare in avanti.',
+    'Resisti respirando con calma, poi cambia lato.',
+  ],
+  'dead-hang-hold': [
+    'Afferra la sbarra con presa prona, mani alla larghezza delle spalle.',
+    'Stacca i piedi e resta appeso a braccia tese.',
+    'Lascia allungare le spalle tenendo l\'addome leggermente contratto.',
+    'Resisti per il tempo impostato, poi scendi con controllo.',
+  ],
+  'outdoor-run': [
+    'Inizia con cinque minuti di corsa leggera per scaldarti.',
+    'Corri dritto, con le spalle rilassate e il busto appena in avanti.',
+    'Appoggia sotto il bacino con passi corti e rapidi.',
+    'Tieni un ritmo a cui riusciresti a parlare, tranne nei giorni di ripetute.',
+    'Chiudi con qualche minuto di camminata.',
+  ],
+  'outdoor-cycling': [
+    'Regola la sella in modo che il ginocchio resti un po’ piegato in fondo alla pedalata.',
+    'Parti con un rapporto leggero per i primi minuti.',
+    'Mantieni una cadenza fluida invece di schiacciare i pedali.',
+    'Cambia rapporto prima delle salite per tenere lo sforzo costante.',
+  ],
+  'outdoor-walk': [
+    'Cammina dritto, con le spalle rilassate e le braccia che oscillano.',
+    'Rulla ogni passo dal tallone alla punta.',
+    'Scegli un ritmo che acceleri il respiro senza lasciarti senza fiato.',
+  ],
+  'outdoor-hike': [
+    'Indossa scarpe con buona presa e porta acqua.',
+    'Accorcia il passo nelle salite ripide e tieni un ritmo costante.',
+    'In salita inclinati un po’ verso il pendio, in discesa piega le ginocchia.',
+    'Fai brevi pause prima di essere sfinito, non dopo.',
+  ],
+  'swim': [
+    'Scaldati con qualche vasca tranquilla.',
+    'Tieni il corpo lungo e piatto, con la testa in linea con la schiena.',
+    'Allunga il braccio a ogni bracciata e spingi l\'acqua indietro oltre il bacino.',
+    'Respira di lato a ritmo con le bracciate.',
+    'Segna la distanza totale e il tempo passato a nuotare.',
   ],
 };
