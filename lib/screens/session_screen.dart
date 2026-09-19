@@ -1174,10 +1174,19 @@ class SessionScreen extends StatelessWidget {
                 ),
               ]),
             ),
+            const SizedBox(height: 10),
+            Rise(
+              index: 4,
+              child: GhostButton(
+                label: t.keepTraining,
+                icon: PhosphorIconsRegular.arrowCounterClockwise,
+                onTap: fit.continueSession,
+              ),
+            ),
             if (sets > 0 && fit.sessions.isNotEmpty) ...[
               const SizedBox(height: 10),
               Rise(
-                index: 4,
+                index: 5,
                 child: GhostButton(
                   label: t.stickerOpen,
                   icon: PhosphorIconsRegular.imageSquare,
@@ -1187,7 +1196,7 @@ class SessionScreen extends StatelessWidget {
             ],
             const SizedBox(height: 10),
             Rise(
-              index: 5,
+              index: 6,
               child: GhostButton(
                 label: t.saveAsRoutine,
                 icon: PhosphorIconsRegular.listChecks,
