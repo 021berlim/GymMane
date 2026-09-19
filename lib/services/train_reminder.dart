@@ -47,6 +47,7 @@ class TrainReminder {
   }) async {
     if (!enabled) return;
     await cancel();
+    final mode = await reminderMode(_plugin);
     final now = DateTime.now();
     var slot = 0;
     for (var i = skipToday ? 1 : 0; i < _horizonDays && slot < _slots; i++) {
@@ -60,7 +61,7 @@ class TrainReminder {
           body: t.notifTrainBody,
           scheduledDate: atLocal(day),
           notificationDetails: NotificationDetails(android: _android, iOS: _darwin),
-          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          androidScheduleMode: mode,
         );
         slot++;
       } catch (e) {
@@ -69,6 +70,14 @@ class TrainReminder {
       }
     }
   }
+}
+
+Future<AndroidScheduleMode> reminderMode(FlutterLocalNotificationsPlugin plugin) async {
+  try {
+    final android = plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    if (await android?.canScheduleExactNotifications() ?? false) return AndroidScheduleMode.exactAllowWhileIdle;
+  } catch (_) {}
+  return AndroidScheduleMode.inexactAllowWhileIdle;
 }
 
 tz.TZDateTime atLocal(DateTime wallClock) {

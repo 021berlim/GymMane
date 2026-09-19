@@ -44,7 +44,7 @@ class ProgressReminder {
         body: t.notifPhotoBody(intervalDays),
         scheduledDate: when,
         notificationDetails: NotificationDetails(android: _android, iOS: _darwin),
-        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        androidScheduleMode: await reminderMode(_plugin),
       );
     } catch (e) {
       debugPrint('No se pudo programar el recordatorio de fotos: $e');
