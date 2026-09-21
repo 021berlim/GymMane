@@ -75,6 +75,51 @@ class ScreenTitle extends StatelessWidget {
       Text(text, style: AppTheme.d(size, weight: FontWeight.w700, color: context.gc.text, letterSpacing: spacing));
 }
 
+class ScreenHeader extends StatelessWidget {
+  const ScreenHeader({
+    super.key,
+    required this.title,
+    required this.onBack,
+    this.subtitle,
+    this.titleSize = 20,
+    this.titleSpacing = 2,
+    this.actions = const [],
+  });
+
+  final String title;
+  final VoidCallback onBack;
+  final String? subtitle;
+  final double titleSize;
+  final double titleSpacing;
+  final List<Widget> actions;
+
+  @override
+  Widget build(BuildContext context) {
+    final gc = context.gc;
+    return Row(
+      children: [
+        RoundBtn(icon: Ic.chevronLeft, onTap: onBack),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ScreenTitle(title, size: titleSize, spacing: titleSpacing),
+              if (subtitle != null) ...[
+                const SizedBox(height: 2),
+                Text(subtitle!,
+                    style: AppTheme.s(12.5,
+                        weight: FontWeight.w500, color: gc.textSecondary)),
+              ],
+            ],
+          ),
+        ),
+        ...actions,
+      ],
+    );
+  }
+}
+
 class Kicker extends StatelessWidget {
   const Kicker(this.text, {super.key, required this.color, this.size = 12, this.spacing = 3});
   final String text;

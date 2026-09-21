@@ -42,6 +42,7 @@ mixin RoutinesState on FitCore, LibraryState {
     final id = 'r${DateTime.now().microsecondsSinceEpoch}_${++_routineSeq}';
     routines.add(Routine(id, name.trim(), []));
     _persist();
+    refreshAwards();
     notifyListeners();
     return id;
   }

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui' show PlatformDispatcher;
 
@@ -17,6 +18,7 @@ import '../models/profile.dart';
 import '../models/workout.dart';
 import '../services/alarm_store.dart';
 import '../services/local_store.dart';
+import '../services/sqlite_store.dart';
 import '../services/media_store.dart';
 import '../services/rest_alarm.dart';
 import '../services/exercise_match.dart';
@@ -25,6 +27,7 @@ import '../services/recommendation_service.dart';
 import '../services/goal_progress_calculator.dart';
 import '../services/ofensiva_calculator.dart';
 
+part 'awards_state.dart';
 part 'fit_core.dart';
 part 'library_state.dart';
 part 'routines_state.dart';
@@ -34,7 +37,7 @@ part 'tools_state.dart';
 part 'workout_state.dart';
 
 class FitState extends FitCore
-    with ToolsState, SettingsState, LibraryState, StatsState, RoutinesState, WorkoutState {
+    with ToolsState, SettingsState, LibraryState, StatsState, AwardsState, RoutinesState, WorkoutState {
   void loadFromStore() {
     _loading = true;
     try {
@@ -110,6 +113,17 @@ class FitState extends FitCore
         }
 
         _restoreLiveSession(data);
+
+        awards
+          ..clear()
+          ..addAll(((data['awards'] as Map?) ?? const {}).map((k, v) =>
+              MapEntry(k as String, DateTime.tryParse(v as String? ?? '') ?? DateTime.now())));
+        awardsSeen
+          ..clear()
+          ..addAll(((data['awardsSeen'] as List?) ?? const []).cast<String>());
+        if (data.containsKey('gamification')) {
+          gamification = data['gamification'] != 'false';
+        }
       }
     } catch (e, stack) {
       debugPrint('FitState.loadFromStore fallo: $e\n$stack');
@@ -117,6 +131,9 @@ class FitState extends FitCore
       _seedCalculatorsFromProfile();
       _checkManufacturer();
       _loading = false;
+      refreshAwards(silent: true);
+      pendingAwards.clear();
+      if (gamification) pendingAwards.addAll(unseenAwards);
       notifyListeners();
     }
   }
@@ -179,6 +196,9 @@ class FitState extends FitCore
         'bodyweight': bodyweight.map((b) => b.toJson()).toList(),
         'goals': goals.map((g) => g.toJson()).toList(),
         'celebratedGoalKeys': _celebratedGoalKeys.toList(),
+        'awards': awards.map((k, v) => MapEntry(k, v.toIso8601String())),
+        'awardsSeen': awardsSeen.toList(),
+        'gamification': gamification.toString(),
         if (session != null && !session!.complete) ...{
           'live': session!.toJson(),
           'liveStart': _runningSince?.toIso8601String(),
@@ -206,6 +226,9 @@ class FitState extends FitCore
     favorites.clear();
     sessionPicks.clear();
     selectedMuscles.clear();
+    awards.clear();
+    awardsSeen.clear();
+    pendingAwards.clear();
     profile = Profile();
     onboarded = false;
     SharedPreferences.getInstance().then((p) => p.remove('onboarded')).catchError((_) => false);
@@ -267,12 +290,27 @@ class FitState extends FitCore
       ..clear()
       ..addAll(((map['bodyweight'] as List?) ?? [])
           .map((e) => BodyweightEntry.fromJson((e as Map).cast<String, dynamic>())));
+    _loadAwards(map);
     _seedCalculatorsFromProfile();
     _loading = false;
     _persist();
     _refreshWidgets();
     notifyListeners();
     return true;
+  }
+
+  void _loadAwards(Map<String, dynamic> map) {
+    awards
+      ..clear()
+      ..addAll(((map['awards'] as Map?) ?? const {}).map((k, v) =>
+          MapEntry(k as String, DateTime.tryParse(v as String? ?? '') ?? DateTime.now())));
+    awardsSeen
+      ..clear()
+      ..addAll(((map['awardsSeen'] as List?) ?? const []).cast<String>());
+    if (map.containsKey('gamification')) {
+      gamification = map['gamification'] != 'false';
+    }
+    pendingAwards.clear();
   }
 
   static String _normName(String s) =>
@@ -340,6 +378,10 @@ class FitState extends FitCore
     switch (route) {
       case 'exercise-detail':
         closeExerciseDetail();
+      case 'awards':
+        backFromAwards();
+      case 'preferences':
+        backFromPreferences();
       case 'about':
         backFromAbout();
       case 'tools':

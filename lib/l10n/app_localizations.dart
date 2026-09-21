@@ -2780,6 +2780,480 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'REPS'**
   String get tabReps;
+
+  /// No description provided for @profile.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get profile;
+
+  /// No description provided for @editProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit profile'**
+  String get editProfile;
+
+  /// No description provided for @pickBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Badge'**
+  String get pickBadge;
+
+  /// No description provided for @badgeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your badge'**
+  String get badgeTitle;
+
+  /// No description provided for @badgeName.
+  ///
+  /// In en, this message translates to:
+  /// **'{id, select, gold{Gold} blue{Blue} green{Green} other{Badge}}'**
+  String badgeName(String id);
+
+  /// No description provided for @memberSince.
+  ///
+  /// In en, this message translates to:
+  /// **'Member since {date}'**
+  String memberSince(String date);
+
+  /// No description provided for @coverLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'COVER'**
+  String get coverLabel;
+
+  /// No description provided for @removeCover.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove cover'**
+  String get removeCover;
+
+  /// No description provided for @statWorkouts.
+  ///
+  /// In en, this message translates to:
+  /// **'Workouts'**
+  String get statWorkouts;
+
+  /// No description provided for @statTrained.
+  ///
+  /// In en, this message translates to:
+  /// **'Trained'**
+  String get statTrained;
+
+  /// No description provided for @statSets.
+  ///
+  /// In en, this message translates to:
+  /// **'Sets'**
+  String get statSets;
+
+  /// No description provided for @statLifted.
+  ///
+  /// In en, this message translates to:
+  /// **'Lifted'**
+  String get statLifted;
+
+  /// No description provided for @statStreak.
+  ///
+  /// In en, this message translates to:
+  /// **'Streak'**
+  String get statStreak;
+
+  /// No description provided for @statDays.
+  ///
+  /// In en, this message translates to:
+  /// **'days'**
+  String get statDays;
+
+  /// No description provided for @unitHours.
+  ///
+  /// In en, this message translates to:
+  /// **'h'**
+  String get unitHours;
+
+  /// No description provided for @unitDays.
+  ///
+  /// In en, this message translates to:
+  /// **'d'**
+  String get unitDays;
+
+  /// No description provided for @levelShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Level {n}'**
+  String levelShort(int n);
+
+  /// No description provided for @levelToNext.
+  ///
+  /// In en, this message translates to:
+  /// **'{n, plural, =1{1 workout to level {next}} other{{n} workouts to level {next}}}'**
+  String levelToNext(int n, int next);
+
+  /// No description provided for @yearTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your year'**
+  String get yearTitle;
+
+  /// No description provided for @yearBestMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Best month'**
+  String get yearBestMonth;
+
+  /// No description provided for @yearMonths.
+  ///
+  /// In en, this message translates to:
+  /// **'months'**
+  String get yearMonths;
+
+  /// No description provided for @awardsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Medals'**
+  String get awardsTitle;
+
+  /// No description provided for @awardsEarned.
+  ///
+  /// In en, this message translates to:
+  /// **'Earned'**
+  String get awardsEarned;
+
+  /// No description provided for @awardsLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Locked'**
+  String get awardsLocked;
+
+  /// No description provided for @awardWon.
+  ///
+  /// In en, this message translates to:
+  /// **'Earned'**
+  String get awardWon;
+
+  /// No description provided for @awardWonOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Earned on {date}'**
+  String awardWonOn(String date);
+
+  /// No description provided for @awardProgressLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} of {goal}'**
+  String awardProgressLabel(String value, String goal);
+
+  /// No description provided for @awardSpinHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag the medal to spin it'**
+  String get awardSpinHint;
+
+  /// No description provided for @awardUnlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'New achievement unlocked'**
+  String get awardUnlocked;
+
+  /// No description provided for @awardNice.
+  ///
+  /// In en, this message translates to:
+  /// **'Awesome!'**
+  String get awardNice;
+
+  /// No description provided for @awardSaveImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Save image'**
+  String get awardSaveImage;
+
+  /// No description provided for @awardSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved to your gallery'**
+  String get awardSaved;
+
+  /// No description provided for @gamificationSetting.
+  ///
+  /// In en, this message translates to:
+  /// **'Medals and levels'**
+  String get gamificationSetting;
+
+  /// No description provided for @shareFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The card could not be built'**
+  String get shareFailed;
+
+  /// No description provided for @addCover.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a cover'**
+  String get addCover;
+
+  /// No description provided for @handleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Username'**
+  String get handleLabel;
+
+  /// No description provided for @snapshots.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos'**
+  String get snapshots;
+
+  /// No description provided for @snapNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Take photo'**
+  String get snapNow;
+
+  /// No description provided for @photosCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Gallery'**
+  String get photosCard;
+
+  /// No description provided for @awardFirstStepName.
+  ///
+  /// In en, this message translates to:
+  /// **'First step'**
+  String get awardFirstStepName;
+
+  /// No description provided for @awardFirstStepLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to FIT//IRON. This one is on the house.'**
+  String get awardFirstStepLine;
+
+  /// No description provided for @awardFirstWorkoutName.
+  ///
+  /// In en, this message translates to:
+  /// **'First workout'**
+  String get awardFirstWorkoutName;
+
+  /// No description provided for @awardFirstWorkoutLine.
+  ///
+  /// In en, this message translates to:
+  /// **'The first one is logged. That is the hard one.'**
+  String get awardFirstWorkoutLine;
+
+  /// No description provided for @awardFirstRoutineName.
+  ///
+  /// In en, this message translates to:
+  /// **'First routine'**
+  String get awardFirstRoutineName;
+
+  /// No description provided for @awardFirstRoutineLine.
+  ///
+  /// In en, this message translates to:
+  /// **'You have a plan to come back to.'**
+  String get awardFirstRoutineLine;
+
+  /// No description provided for @awardFirstRecordName.
+  ///
+  /// In en, this message translates to:
+  /// **'First record'**
+  String get awardFirstRecordName;
+
+  /// No description provided for @awardFirstRecordLine.
+  ///
+  /// In en, this message translates to:
+  /// **'You beat your best lift on an exercise.'**
+  String get awardFirstRecordLine;
+
+  /// No description provided for @awardStreak3Name.
+  ///
+  /// In en, this message translates to:
+  /// **'Three in a row'**
+  String get awardStreak3Name;
+
+  /// No description provided for @awardStreak3Line.
+  ///
+  /// In en, this message translates to:
+  /// **'Three days straight. This is how it starts.'**
+  String get awardStreak3Line;
+
+  /// No description provided for @awardStreak7Name.
+  ///
+  /// In en, this message translates to:
+  /// **'Seven days'**
+  String get awardStreak7Name;
+
+  /// No description provided for @awardStreak7Line.
+  ///
+  /// In en, this message translates to:
+  /// **'A full week without missing a day.'**
+  String get awardStreak7Line;
+
+  /// No description provided for @awardStreak30Name.
+  ///
+  /// In en, this message translates to:
+  /// **'Thirty days'**
+  String get awardStreak30Name;
+
+  /// No description provided for @awardStreak30Line.
+  ///
+  /// In en, this message translates to:
+  /// **'A month straight. This is a habit now.'**
+  String get awardStreak30Line;
+
+  /// No description provided for @awardStreak100Name.
+  ///
+  /// In en, this message translates to:
+  /// **'One hundred days'**
+  String get awardStreak100Name;
+
+  /// No description provided for @awardStreak100Line.
+  ///
+  /// In en, this message translates to:
+  /// **'A hundred days in a row. That is not motivation any more, that is who you are.'**
+  String get awardStreak100Line;
+
+  /// No description provided for @awardWorkouts10Name.
+  ///
+  /// In en, this message translates to:
+  /// **'Ten workouts'**
+  String get awardWorkouts10Name;
+
+  /// No description provided for @awardWorkouts10Line.
+  ///
+  /// In en, this message translates to:
+  /// **'The first ten are the ones that decide it.'**
+  String get awardWorkouts10Line;
+
+  /// No description provided for @awardWorkouts50Name.
+  ///
+  /// In en, this message translates to:
+  /// **'Fifty workouts'**
+  String get awardWorkouts50Name;
+
+  /// No description provided for @awardWorkouts50Line.
+  ///
+  /// In en, this message translates to:
+  /// **'Fifty sessions behind you.'**
+  String get awardWorkouts50Line;
+
+  /// No description provided for @awardWorkouts100Name.
+  ///
+  /// In en, this message translates to:
+  /// **'One hundred workouts'**
+  String get awardWorkouts100Name;
+
+  /// No description provided for @awardWorkouts100Line.
+  ///
+  /// In en, this message translates to:
+  /// **'A hundred sessions logged, start to finish.'**
+  String get awardWorkouts100Line;
+
+  /// No description provided for @awardWorkouts365Name.
+  ///
+  /// In en, this message translates to:
+  /// **'Three hundred and sixty-five'**
+  String get awardWorkouts365Name;
+
+  /// No description provided for @awardWorkouts365Line.
+  ///
+  /// In en, this message translates to:
+  /// **'A workout for every day of a year, logged one by one.'**
+  String get awardWorkouts365Line;
+
+  /// No description provided for @awardTonne1Name.
+  ///
+  /// In en, this message translates to:
+  /// **'One tonne'**
+  String get awardTonne1Name;
+
+  /// No description provided for @awardTonne1Line.
+  ///
+  /// In en, this message translates to:
+  /// **'A thousand kilos lifted across your sets.'**
+  String get awardTonne1Line;
+
+  /// No description provided for @awardTonnes10Name.
+  ///
+  /// In en, this message translates to:
+  /// **'Ten tonnes'**
+  String get awardTonnes10Name;
+
+  /// No description provided for @awardTonnes10Line.
+  ///
+  /// In en, this message translates to:
+  /// **'Ten thousand kilos have gone through your hands.'**
+  String get awardTonnes10Line;
+
+  /// No description provided for @awardTonnes100Name.
+  ///
+  /// In en, this message translates to:
+  /// **'One hundred tonnes'**
+  String get awardTonnes100Name;
+
+  /// No description provided for @awardTonnes100Line.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything you have lifted adds up to 100,000 kg.'**
+  String get awardTonnes100Line;
+
+  /// No description provided for @awardSets100Name.
+  ///
+  /// In en, this message translates to:
+  /// **'One hundred sets'**
+  String get awardSets100Name;
+
+  /// No description provided for @awardSets100Line.
+  ///
+  /// In en, this message translates to:
+  /// **'A hundred sets finished, one at a time.'**
+  String get awardSets100Line;
+
+  /// No description provided for @awardSets1000Name.
+  ///
+  /// In en, this message translates to:
+  /// **'A thousand sets'**
+  String get awardSets1000Name;
+
+  /// No description provided for @awardSets1000Line.
+  ///
+  /// In en, this message translates to:
+  /// **'One set at a time, a thousand of them.'**
+  String get awardSets1000Line;
+
+  /// No description provided for @awardHours10Name.
+  ///
+  /// In en, this message translates to:
+  /// **'Ten hours'**
+  String get awardHours10Name;
+
+  /// No description provided for @awardHours10Line.
+  ///
+  /// In en, this message translates to:
+  /// **'Ten hours of training on the clock.'**
+  String get awardHours10Line;
+
+  /// No description provided for @awardHours50Name.
+  ///
+  /// In en, this message translates to:
+  /// **'Fifty hours'**
+  String get awardHours50Name;
+
+  /// No description provided for @awardHours50Line.
+  ///
+  /// In en, this message translates to:
+  /// **'Fifty hours inside the gym.'**
+  String get awardHours50Line;
+
+  /// No description provided for @awardHours100Name.
+  ///
+  /// In en, this message translates to:
+  /// **'One hundred hours'**
+  String get awardHours100Name;
+
+  /// No description provided for @awardHours100Line.
+  ///
+  /// In en, this message translates to:
+  /// **'A hundred hours under the bar, stopwatch in hand.'**
+  String get awardHours100Line;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

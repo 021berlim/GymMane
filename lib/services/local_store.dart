@@ -1,4 +1,7 @@
 import 'dart:convert';
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 
 import '../models/workout.dart';
 import 'sqlite_store.dart';
@@ -24,6 +27,9 @@ class Store {
 
   Future<void> save(Map<String, dynamic> data) async {
     _cachedState = Map<String, dynamic>.from(data);
+    if (kIsWeb || (Platform.environment.containsKey('FLUTTER_TEST') && !SqliteStore.instance.isOpen)) {
+      return;
+    }
     await SqliteStore.instance.saveFullState(data);
   }
 

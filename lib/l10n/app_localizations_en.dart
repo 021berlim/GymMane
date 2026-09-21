@@ -1489,4 +1489,266 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tabReps => 'REPS';
+
+  @override
+  String get profile => 'Profile';
+
+  @override
+  String get editProfile => 'Edit profile';
+
+  @override
+  String get pickBadge => 'Badge';
+
+  @override
+  String get badgeTitle => 'Your badge';
+
+  @override
+  String badgeName(String id) {
+    String _temp0 = intl.Intl.selectLogic(id, {
+      'gold': 'Gold',
+      'blue': 'Blue',
+      'green': 'Green',
+      'other': 'Badge',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String memberSince(String date) {
+    return 'Member since $date';
+  }
+
+  @override
+  String get coverLabel => 'COVER';
+
+  @override
+  String get removeCover => 'Remove cover';
+
+  @override
+  String get statWorkouts => 'Workouts';
+
+  @override
+  String get statTrained => 'Trained';
+
+  @override
+  String get statSets => 'Sets';
+
+  @override
+  String get statLifted => 'Lifted';
+
+  @override
+  String get statStreak => 'Streak';
+
+  @override
+  String get statDays => 'days';
+
+  @override
+  String get unitHours => 'h';
+
+  @override
+  String get unitDays => 'd';
+
+  @override
+  String levelShort(int n) {
+    return 'Level $n';
+  }
+
+  @override
+  String levelToNext(int n, int next) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n workouts to level $next',
+      one: '1 workout to level $next',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get yearTitle => 'Your year';
+
+  @override
+  String get yearBestMonth => 'Best month';
+
+  @override
+  String get yearMonths => 'months';
+
+  @override
+  String get awardsTitle => 'Medals';
+
+  @override
+  String get awardsEarned => 'Earned';
+
+  @override
+  String get awardsLocked => 'Locked';
+
+  @override
+  String get awardWon => 'Earned';
+
+  @override
+  String awardWonOn(String date) {
+    return 'Earned on $date';
+  }
+
+  @override
+  String awardProgressLabel(String value, String goal) {
+    return '$value of $goal';
+  }
+
+  @override
+  String get awardSpinHint => 'Drag the medal to spin it';
+
+  @override
+  String get awardUnlocked => 'New achievement unlocked';
+
+  @override
+  String get awardNice => 'Awesome!';
+
+  @override
+  String get awardSaveImage => 'Save image';
+
+  @override
+  String get awardSaved => 'Saved to your gallery';
+
+  @override
+  String get gamificationSetting => 'Medals and levels';
+
+  @override
+  String get shareFailed => 'The card could not be built';
+
+  @override
+  String get addCover => 'Add a cover';
+
+  @override
+  String get handleLabel => 'Username';
+
+  @override
+  String get snapshots => 'Photos';
+
+  @override
+  String get snapNow => 'Take photo';
+
+  @override
+  String get photosCard => 'Gallery';
+
+  @override
+  String get awardFirstStepName => 'First step';
+
+  @override
+  String get awardFirstStepLine => 'Welcome to FIT//IRON. This one is on the house.';
+
+  @override
+  String get awardFirstWorkoutName => 'First workout';
+
+  @override
+  String get awardFirstWorkoutLine => 'The first one is logged. That is the hard one.';
+
+  @override
+  String get awardFirstRoutineName => 'First routine';
+
+  @override
+  String get awardFirstRoutineLine => 'You have a plan to come back to.';
+
+  @override
+  String get awardFirstRecordName => 'First record';
+
+  @override
+  String get awardFirstRecordLine => 'You beat your best lift on an exercise.';
+
+  @override
+  String get awardStreak3Name => 'Three in a row';
+
+  @override
+  String get awardStreak3Line => 'Three days straight. This is how it starts.';
+
+  @override
+  String get awardStreak7Name => 'Seven days';
+
+  @override
+  String get awardStreak7Line => 'A full week without missing a day.';
+
+  @override
+  String get awardStreak30Name => 'Thirty days';
+
+  @override
+  String get awardStreak30Line => 'A month straight. This is a habit now.';
+
+  @override
+  String get awardStreak100Name => 'One hundred days';
+
+  @override
+  String get awardStreak100Line =>
+      'A hundred days in a row. That is not motivation any more, that is who you are.';
+
+  @override
+  String get awardWorkouts10Name => 'Ten workouts';
+
+  @override
+  String get awardWorkouts10Line => 'The first ten are the ones that decide it.';
+
+  @override
+  String get awardWorkouts50Name => 'Fifty workouts';
+
+  @override
+  String get awardWorkouts50Line => 'Fifty sessions behind you.';
+
+  @override
+  String get awardWorkouts100Name => 'One hundred workouts';
+
+  @override
+  String get awardWorkouts100Line => 'A hundred sessions logged, start to finish.';
+
+  @override
+  String get awardWorkouts365Name => 'Three hundred and sixty-five';
+
+  @override
+  String get awardWorkouts365Line => 'A workout for every day of a year, logged one by one.';
+
+  @override
+  String get awardTonne1Name => 'One tonne';
+
+  @override
+  String get awardTonne1Line => 'A thousand kilos lifted across your sets.';
+
+  @override
+  String get awardTonnes10Name => 'Ten tonnes';
+
+  @override
+  String get awardTonnes10Line => 'Ten thousand kilos have gone through your hands.';
+
+  @override
+  String get awardTonnes100Name => 'One hundred tonnes';
+
+  @override
+  String get awardTonnes100Line => 'Everything you have lifted adds up to 100,000 kg.';
+
+  @override
+  String get awardSets100Name => 'One hundred sets';
+
+  @override
+  String get awardSets100Line => 'A hundred sets finished, one at a time.';
+
+  @override
+  String get awardSets1000Name => 'A thousand sets';
+
+  @override
+  String get awardSets1000Line => 'One set at a time, a thousand of them.';
+
+  @override
+  String get awardHours10Name => 'Ten hours';
+
+  @override
+  String get awardHours10Line => 'Ten hours of training on the clock.';
+
+  @override
+  String get awardHours50Name => 'Fifty hours';
+
+  @override
+  String get awardHours50Line => 'Fifty hours inside the gym.';
+
+  @override
+  String get awardHours100Name => 'One hundred hours';
+
+  @override
+  String get awardHours100Line => 'A hundred hours under the bar, stopwatch in hand.';
 }

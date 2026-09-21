@@ -185,6 +185,12 @@ extension GymL10n on AppLocalizations {
 
   String shortDateYear(DateTime d) => _dates(DateFormat.yMMMd).format(d);
 
+  String monthInitial(int m) =>
+      _dates((l) => DateFormat('', l)).dateSymbols.NARROWMONTHS[m - 1];
+
+  String monthName(int m) =>
+      _capitalize(_dates(DateFormat.MMMM).format(DateTime(2024, m)));
+
   String monthYear(DateTime d) => _capitalize(_dates(DateFormat.yMMMM).format(d));
 
   String catalogName(String id, String fallback) => _catalogNames[appLanguage]?[id] ?? fallback;

@@ -40,6 +40,7 @@ mixin StatsState on FitCore, ToolsState, LibraryState {
   }
 
   int get athleteLevel => 1 + totalSessions ~/ 10;
+  int get sessionsToNextLevel => 10 - totalSessions % 10;
 
   BodyweightEntry? get latestBodyweight =>
       bodyweight.isEmpty ? null : bodyweight.reduce((a, b) => a.date.isAfter(b.date) ? a : b);
@@ -99,6 +100,55 @@ mixin StatsState on FitCore, ToolsState, LibraryState {
 
   bool get hasData => sessions.isNotEmpty;
   int get totalSessions => sessions.length;
+
+  (String, String) get trainedSpan {
+    final secs = sessions.fold<int>(0, (n, s) => n + s.durationSec);
+    final hours = secs ~/ 3600;
+    if (hours < 48) return ('$hours', t.unitHours);
+    return ('${hours ~/ 24}', t.unitDays);
+  }
+
+  (String, String) liftedSpanOf(double kg) {
+    final shown = toDisplayWeight(kg);
+    if (shown < 1000) return (shown.round().toString(), units);
+    final k = shown / 1000;
+    return (k >= 10 ? k.round().toString() : k.toStringAsFixed(1), units == 'kg' ? 't' : 'k $units');
+  }
+
+  (String, String) get liftedSpan => liftedSpanOf(totalVolumeKg);
+
+  int get totalSets => sessions.fold(0, (n, s) => n + s.setCount);
+
+  double get totalVolumeKg => sessions.fold(0.0, (a, s) => a + s.volume);
+
+  Duration get totalTime => Duration(seconds: sessions.fold(0, (n, s) => n + s.durationSec));
+
+  int get statsYear => DateTime.now().year;
+
+  List<int> get sessionsByMonth {
+    final out = List.filled(12, 0);
+    for (final s in sessions) {
+      if (s.date.year == statsYear) out[s.date.month - 1]++;
+    }
+    return out;
+  }
+
+  double get volumeThisYearKg => sessions
+      .where((s) => s.date.year == statsYear)
+      .fold(0.0, (a, s) => a + s.volume);
+
+  int get sessionsThisYear => sessionsByMonth.fold(0, (a, b) => a + b);
+
+  int get monthsTrainedThisYear => sessionsByMonth.where((n) => n > 0).length;
+
+  int get bestMonthThisYear {
+    final months = sessionsByMonth;
+    var best = 0;
+    for (var i = 1; i < 12; i++) {
+      if (months[i] > months[best]) best = i;
+    }
+    return months[best] == 0 ? 0 : best + 1;
+  }
 
   double get volume30dKg {
     final now = DateTime.now();

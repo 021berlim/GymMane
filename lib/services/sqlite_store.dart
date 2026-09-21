@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -12,6 +13,7 @@ class SqliteStore {
   static final SqliteStore instance = SqliteStore._();
 
   Database? _db;
+  bool get isOpen => _db != null && _db!.isOpen;
 
   Future<Database> get _ensureDb async {
     if (_db == null || !_db!.isOpen) {
@@ -57,6 +59,11 @@ class SqliteStore {
         },
         onCreate: _onCreate,
       );
+      for (final col in ['handle', 'badge', 'banner', 'since']) {
+        try {
+          await _db!.execute('ALTER TABLE profiles ADD COLUMN $col TEXT');
+        } catch (_) {}
+      }
       await _migrateLegacyDataIfNeeded();
     } catch (e, stack) {
       debugPrint('SqliteStore.init fallo: $e\n$stack');
@@ -65,9 +72,27 @@ class SqliteStore {
 
   Future<void> _migrateLegacyDataIfNeeded() async {
     try {
-      final db = await _ensureDb;
+      final db = _db ?? await _ensureDb;
       final check = await db.query('app_settings', where: "key = 'migrated_v1'");
       if (check.isNotEmpty) return;
+
+      if (Platform.environment.containsKey('FLUTTER_TEST')) {
+        try {
+          final prefs = await SharedPreferences.getInstance().timeout(
+            const Duration(milliseconds: 50),
+            onTimeout: () => throw TimeoutException('test env timeout'),
+          );
+          final raw = prefs.getString('fitiron_v1');
+          if (raw != null && raw.isNotEmpty) {
+            final decoded = jsonDecode(raw);
+            if (decoded is Map<String, dynamic>) {
+              await saveFullState(decoded);
+              await prefs.remove('fitiron_v1');
+            }
+          }
+        } catch (_) {}
+        return;
+      }
 
       final prefs = await SharedPreferences.getInstance();
       final raw = prefs.getString('fitiron_v1');
@@ -130,7 +155,11 @@ class SqliteStore {
         activity REAL NOT NULL,
         weekly_goal INTEGER NOT NULL,
         photo TEXT NOT NULL,
-        training_focus TEXT NOT NULL
+        training_focus TEXT NOT NULL,
+        handle TEXT,
+        badge TEXT,
+        banner TEXT,
+        since TEXT
       )
     ''');
 
@@ -260,6 +289,10 @@ class SqliteStore {
           'goal': pRow['weekly_goal'],
           'photo': pRow['photo'],
           'focus': pRow['training_focus'],
+          if (pRow['handle'] != null) 'handle': pRow['handle'],
+          if (pRow['badge'] != null) 'badge': pRow['badge'],
+          if (pRow['banner'] != null) 'banner': pRow['banner'],
+          if (pRow['since'] != null) 'since': pRow['since'],
         };
       }
     } catch (e) {
@@ -336,6 +369,20 @@ class SqliteStore {
       }
       if (settingsMap.containsKey('livePaused')) {
         result['livePaused'] = settingsMap['livePaused'] == 'true';
+      }
+
+      if (settingsMap.containsKey('awards')) {
+        try {
+          result['awards'] = jsonDecode(settingsMap['awards']!);
+        } catch (_) {}
+      }
+      if (settingsMap.containsKey('awardsSeen')) {
+        try {
+          result['awardsSeen'] = jsonDecode(settingsMap['awardsSeen']!);
+        } catch (_) {}
+      }
+      if (settingsMap.containsKey('gamification')) {
+        result['gamification'] = settingsMap['gamification'];
       }
     } catch (e) {
       debugPrint('SqliteStore app_settings query error: $e');
@@ -546,6 +593,10 @@ class SqliteStore {
           'weekly_goal': (pMap['goal'] as num?)?.toInt() ?? 4,
           'photo': (pMap['photo'] as String?) ?? '',
           'training_focus': (pMap['focus'] as String?) ?? 'health',
+          'handle': (pMap['handle'] as String?) ?? '',
+          'badge': (pMap['badge'] as String?) ?? 'blue',
+          'banner': (pMap['banner'] as String?) ?? '',
+          'since': (pMap['since'] as String?) ?? '',
         });
       }
 
@@ -579,6 +630,10 @@ class SqliteStore {
       if (data.containsKey('liveStart')) await saveSetting('liveStart', data['liveStart']);
       if (data.containsKey('liveElapsed')) await saveSetting('liveElapsed', data['liveElapsed'].toString());
       if (data.containsKey('livePaused')) await saveSetting('livePaused', data['livePaused'].toString());
+
+      if (data.containsKey('awards')) await saveSetting('awards', data['awards']);
+      if (data.containsKey('awardsSeen')) await saveSetting('awardsSeen', data['awardsSeen']);
+      if (data.containsKey('gamification')) await saveSetting('gamification', data['gamification'].toString());
 
       // Mark migration done
       await saveSetting('migrated_v1', 'true');

@@ -438,7 +438,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get days180 => '6M';
 
   @override
-  String get days365 => '1Y';
+  String get days365 => '1A';
 
   @override
   String get heatLow => 'Sin tocar';
@@ -509,11 +509,11 @@ class AppLocalizationsEs extends AppLocalizations {
   String get bodyweightHistory => 'HISTORIAL';
 
   @override
-  String get workoutProgression => 'WORKOUT PROGRESSION';
+  String get workoutProgression => 'PROGRESIÓN DEL ENTRENAMIENTO';
 
   @override
   String avgDiff(String diff) {
-    return 'Average: $diff';
+    return 'Promedio: $diff';
   }
 
   @override
@@ -817,28 +817,28 @@ class AppLocalizationsEs extends AppLocalizations {
   String get alarmChangedDefault => 'De vuelta al sonido de fábrica';
 
   @override
-  String get enablePhotosLabel => 'Progress photos';
+  String get enablePhotosLabel => 'Fotos de progreso';
 
   @override
-  String get enablePhotosHint => 'Take photos before or after your workout';
+  String get enablePhotosHint => 'Haz fotos antes o después del entrenamiento';
 
   @override
-  String get photoTimingLabel => 'When to take photos';
+  String get photoTimingLabel => 'Cuándo hacer fotos';
 
   @override
-  String get photoTimingBefore => 'Before';
+  String get photoTimingBefore => 'Antes';
 
   @override
-  String get photoTimingAfter => 'After';
+  String get photoTimingAfter => 'Después';
 
   @override
-  String get photoTimingBoth => 'Both';
+  String get photoTimingBoth => 'Ambos';
 
   @override
-  String get onbPhotosTitle => 'Progress photos?';
+  String get onbPhotosTitle => '¿Fotos de progreso?';
 
   @override
-  String get onbPhotosWhy => 'Compare your body before and after each workout visually.';
+  String get onbPhotosWhy => 'Compara visualmente tu cuerpo antes y después de cada entrenamiento.';
 
   @override
   String get homeWidgets => 'PANTALLA DE INICIO';
@@ -974,22 +974,22 @@ class AppLocalizationsEs extends AppLocalizations {
   String get takePhoto => 'Hacer una foto';
 
   @override
-  String get photoBefore => 'Photo before';
+  String get photoBefore => 'Foto antes';
 
   @override
-  String get photoAfter => 'Photo after';
+  String get photoAfter => 'Foto después';
 
   @override
-  String get photoGallery => 'PHOTO GALLERY';
+  String get photoGallery => 'GALERÍA DE FOTOS';
 
   @override
-  String get noPhotosYet => 'No photos recorded yet.';
+  String get noPhotosYet => 'Aún no hay fotos registradas.';
 
   @override
-  String get confirmPhoto => 'Use this photo';
+  String get confirmPhoto => 'Usar esta foto';
 
   @override
-  String get retakePhoto => 'Retake photo';
+  String get retakePhoto => 'Repetir foto';
 
   @override
   String get chooseGallery => 'Elegir de la galería';
@@ -1388,25 +1388,25 @@ class AppLocalizationsEs extends AppLocalizations {
   String get onbUnitsTitle => '¿Kilos o libras?';
 
   @override
-  String get onbFocusTitle => 'What is your main goal?';
+  String get onbFocusTitle => '¿Cuál es tu objetivo principal?';
 
   @override
-  String get onbFocusWhy => 'We\'ll suggest exercises that match what you\'re trying to achieve.';
+  String get onbFocusWhy => 'Te sugeriremos ejercicios acordes a lo que buscas conseguir.';
 
   @override
-  String get focusHypertrophy => 'Hypertrophy';
+  String get focusHypertrophy => 'Hipertrofia';
 
   @override
-  String get focusStrength => 'Strength';
+  String get focusStrength => 'Fuerza';
 
   @override
-  String get focusWeightLoss => 'Weight Loss';
+  String get focusWeightLoss => 'Pérdida de peso';
 
   @override
-  String get focusEndurance => 'Endurance';
+  String get focusEndurance => 'Resistencia';
 
   @override
-  String get focusHealth => 'General Health';
+  String get focusHealth => 'Salud general';
 
   @override
   String get next => 'SIGUIENTE';
@@ -1490,4 +1490,265 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get tabReps => 'REPS';
+
+  @override
+  String get profile => 'Perfil';
+
+  @override
+  String get editProfile => 'Editar perfil';
+
+  @override
+  String get pickBadge => 'Insignia';
+
+  @override
+  String get badgeTitle => 'Tu insignia';
+
+  @override
+  String badgeName(String id) {
+    String _temp0 = intl.Intl.selectLogic(id, {
+      'gold': 'Dorada',
+      'blue': 'Azul',
+      'green': 'Verde',
+      'other': 'Insignia',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String memberSince(String date) {
+    return 'Miembro desde $date';
+  }
+
+  @override
+  String get coverLabel => 'PORTADA';
+
+  @override
+  String get removeCover => 'Quitar portada';
+
+  @override
+  String get statWorkouts => 'Entrenos';
+
+  @override
+  String get statTrained => 'Entrenado';
+
+  @override
+  String get statSets => 'Series';
+
+  @override
+  String get statLifted => 'Levantado';
+
+  @override
+  String get statStreak => 'Racha';
+
+  @override
+  String get statDays => 'días';
+
+  @override
+  String get unitHours => 'h';
+
+  @override
+  String get unitDays => 'd';
+
+  @override
+  String levelShort(int n) {
+    return 'Nivel $n';
+  }
+
+  @override
+  String levelToNext(int n, int next) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n entrenos para el nivel $next',
+      one: '1 entreno para el nivel $next',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get yearTitle => 'Tu año';
+
+  @override
+  String get yearBestMonth => 'Mejor mes';
+
+  @override
+  String get yearMonths => 'meses';
+
+  @override
+  String get awardsTitle => 'Medallas';
+
+  @override
+  String get awardsEarned => 'Conseguidas';
+
+  @override
+  String get awardsLocked => 'Por conseguir';
+
+  @override
+  String get awardWon => 'Conseguida';
+
+  @override
+  String awardWonOn(String date) {
+    return 'Conseguida el $date';
+  }
+
+  @override
+  String awardProgressLabel(String value, String goal) {
+    return '$value de $goal';
+  }
+
+  @override
+  String get awardSpinHint => 'Arrastra la medalla para girarla';
+
+  @override
+  String get awardUnlocked => 'Nuevo logro desbloqueado';
+
+  @override
+  String get awardNice => '¡Genial!';
+
+  @override
+  String get awardSaveImage => 'Guardar imagen';
+
+  @override
+  String get awardSaved => 'Guardada en tu galería';
+
+  @override
+  String get gamificationSetting => 'Medallas y niveles';
+
+  @override
+  String get shareFailed => 'No se ha podido montar la lámina';
+
+  @override
+  String get addCover => 'Pon una portada';
+
+  @override
+  String get handleLabel => 'Nombre de usuario';
+
+  @override
+  String get snapshots => 'Fotos';
+
+  @override
+  String get snapNow => 'Hacer foto';
+
+  @override
+  String get photosCard => 'Galería';
+
+  @override
+  String get awardFirstStepName => 'Primer paso';
+
+  @override
+  String get awardFirstStepLine => 'Bienvenido a FIT//IRON. Esta te la regala la casa.';
+
+  @override
+  String get awardFirstWorkoutName => 'Primer entreno';
+
+  @override
+  String get awardFirstWorkoutLine => 'El primero ya está guardado. Ese es el difícil.';
+
+  @override
+  String get awardFirstRoutineName => 'Primera rutina';
+
+  @override
+  String get awardFirstRoutineLine => 'Ya tienes un plan al que volver.';
+
+  @override
+  String get awardFirstRecordName => 'Primer récord';
+
+  @override
+  String get awardFirstRecordLine => 'Has superado tu mejor marca en un ejercicio.';
+
+  @override
+  String get awardStreak3Name => 'Tres seguidos';
+
+  @override
+  String get awardStreak3Line => 'Tres días seguidos. Así empieza todo.';
+
+  @override
+  String get awardStreak7Name => 'Siete días';
+
+  @override
+  String get awardStreak7Line => 'Una semana entera sin fallar un día.';
+
+  @override
+  String get awardStreak30Name => 'Treinta días';
+
+  @override
+  String get awardStreak30Line => 'Un mes seguido. Esto ya es costumbre.';
+
+  @override
+  String get awardStreak100Name => 'Cien días';
+
+  @override
+  String get awardStreak100Line => 'Cien días seguidos. Eso ya no es motivación, eres tú.';
+
+  @override
+  String get awardWorkouts10Name => 'Diez entrenos';
+
+  @override
+  String get awardWorkouts10Line => 'Los diez primeros son los que deciden.';
+
+  @override
+  String get awardWorkouts50Name => 'Cincuenta entrenos';
+
+  @override
+  String get awardWorkouts50Line => 'Cincuenta sesiones a tus espaldas.';
+
+  @override
+  String get awardWorkouts100Name => 'Cien entrenos';
+
+  @override
+  String get awardWorkouts100Line => 'Cien sesiones registradas de principio a fin.';
+
+  @override
+  String get awardWorkouts365Name => 'Trescientos sesenta y cinco';
+
+  @override
+  String get awardWorkouts365Line => 'Un entreno por cada día del año, registrados uno a uno.';
+
+  @override
+  String get awardTonne1Name => 'Una tonelada';
+
+  @override
+  String get awardTonne1Line => 'Mil kilos levantados entre todas tus series.';
+
+  @override
+  String get awardTonnes10Name => 'Diez toneladas';
+
+  @override
+  String get awardTonnes10Line => 'Diez mil kilos te han pasado por las manos.';
+
+  @override
+  String get awardTonnes100Name => 'Cien toneladas';
+
+  @override
+  String get awardTonnes100Line => 'Todo lo que has levantado suma 100.000 kg.';
+
+  @override
+  String get awardSets100Name => 'Cien series';
+
+  @override
+  String get awardSets100Line => 'Cien series completadas, una a una.';
+
+  @override
+  String get awardSets1000Name => 'Mil series';
+
+  @override
+  String get awardSets1000Line => 'Serie a serie, hasta mil.';
+
+  @override
+  String get awardHours10Name => 'Diez horas';
+
+  @override
+  String get awardHours10Line => 'Diez horas de entreno con el cronómetro en marcha.';
+
+  @override
+  String get awardHours50Name => 'Cincuenta horas';
+
+  @override
+  String get awardHours50Line => 'Cincuenta horas dentro del gimnasio.';
+
+  @override
+  String get awardHours100Name => 'Cien horas';
+
+  @override
+  String get awardHours100Line => 'Cien horas bajo la barra, cronómetro en mano.';
 }

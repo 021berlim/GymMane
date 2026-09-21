@@ -483,6 +483,7 @@ mixin WorkoutState on FitCore, SettingsState, LibraryState, StatsState, Routines
       summaryVsLast = null;
     }
     _checkCelebration();
+    refreshAwards();
     persistNow();
     _refreshWidgets();
     notifyListeners();

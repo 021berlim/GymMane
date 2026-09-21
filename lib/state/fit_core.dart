@@ -54,6 +54,9 @@ abstract class FitCore extends ChangeNotifier {
 
   void _persist() {
     if (_loading) return;
+    if (Platform.environment.containsKey('FLUTTER_TEST') && !SqliteStore.instance.isOpen) {
+      return;
+    }
     _saveDebounce?.cancel();
     _saveDebounce = Timer(const Duration(milliseconds: 400), () => unawaited(persistNow()));
   }
@@ -78,7 +81,27 @@ abstract class FitCore extends ChangeNotifier {
 
   void goGallery() => _setRoute('gallery', reset: true);
 
+  final List<String> _routeHistory = [];
+
+  void pushRoute(String r) {
+    _routeHistory.add(route);
+    _setRoute(r);
+  }
+
+  void popRoute({String fallback = 'home'}) {
+    if (_routeHistory.isNotEmpty) {
+      _setRoute(_routeHistory.removeLast());
+    } else {
+      _setRoute(fallback);
+    }
+  }
+
+  void goPreferences() => pushRoute('preferences');
+  void backFromPreferences() => popRoute(fallback: 'settings');
+  void refreshAwards({bool silent = false}) {}
+
   void _setRoute(String r, {bool reset = false}) {
+    if (reset) _routeHistory.clear();
     route = r;
     if (reset) prevRoute = r;
     notifyListeners();

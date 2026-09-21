@@ -154,6 +154,17 @@ class SettingsScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   _prefRow(
                     gc,
+                    PhosphorIconsRegular.medal,
+                    t.gamificationSetting,
+                    Switch(
+                      value: fit.gamification,
+                      onChanged: fit.setGamification,
+                      activeThumbColor: gc.accent,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _prefRow(
+                    gc,
                     PhosphorIconsRegular.camera,
                     t.enablePhotosLabel,
                     Switch(
@@ -684,14 +695,7 @@ class SettingsScreen extends StatelessWidget {
     return noExt.length > 28 ? '${noExt.substring(0, 27)}…' : noExt;
   }
 
-  void _editProfile(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (_) => const _ProfileSheet(),
-    );
-  }
+  void _editProfile(BuildContext context) => showProfileSheet(context);
 
   void _snack(BuildContext context, String msg) {
     AppToast.showSuccess(context, msg);
@@ -882,6 +886,25 @@ class _AlarmSoundSheet extends StatelessWidget {
   }
 }
 
+const List<String> kProfileBadges = ['gold', 'blue', 'green'];
+
+Color badgeColor(String id) => switch (id) {
+  'blue' => const Color(0xFF4A9EEB),
+  'green' => const Color(0xFF54B979),
+  _ => const Color(0xFFE8B84B),
+};
+
+const AssetImage kDefaultBanner = AssetImage('assets/img/banner_default.jpg');
+
+void showProfileSheet(BuildContext context) {
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.transparent,
+    isScrollControlled: true,
+    builder: (_) => const _ProfileSheet(),
+  );
+}
+
 class _ProfileSheet extends StatefulWidget {
   const _ProfileSheet();
   @override
@@ -890,10 +913,12 @@ class _ProfileSheet extends StatefulWidget {
 
 class _ProfileSheetState extends State<_ProfileSheet> {
   late final TextEditingController _name = TextEditingController(text: fit.profile.name);
+  late final TextEditingController _handle = TextEditingController(text: fit.profile.handle);
 
   @override
   void dispose() {
     _name.dispose();
+    _handle.dispose();
     super.dispose();
   }
 
@@ -929,6 +954,8 @@ class _ProfileSheetState extends State<_ProfileSheet> {
             Text(t.autofills, textAlign: TextAlign.center, style: AppTheme.s(13, color: gc.textSecondary)),
             const SizedBox(height: 20),
             Center(child: _photoPicker(gc)),
+            const SizedBox(height: 18),
+            _coverPicker(gc),
             const SizedBox(height: 20),
             _label(gc, t.nameLabel),
             const SizedBox(height: 8),
@@ -946,6 +973,32 @@ class _ProfileSheetState extends State<_ProfileSheet> {
               ),
             ),
             const SizedBox(height: 16),
+            _label(gc, t.handleLabel),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _handle,
+              style: AppTheme.s(15, weight: FontWeight.w600, color: gc.text),
+              cursorColor: gc.accent,
+              onChanged: fit.setProfileHandle,
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: gc.bgRaised2,
+                hintText: fit.profileHandle,
+                hintStyle: AppTheme.s(15, weight: FontWeight.w600, color: gc.textTertiary),
+                prefixIcon: Padding(
+                  padding: const EdgeInsets.only(left: 16, right: 6),
+                  child: Text('@',
+                      style: AppTheme.s(15, weight: FontWeight.w700, color: gc.textSecondary)),
+                ),
+                prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 14),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+              ),
+            ),
+            const SizedBox(height: 16),
+            _row(gc, t.pickBadge, _badgeDots(gc)),
+            const SizedBox(height: 12),
             _row(gc, t.sexLabel, SegToggle([
               SegOption(t.male, p.sex == 'male', () => _up(() => fit.updateProfile(sex: 'male'))),
               SegOption(t.female, p.sex == 'female', () => _up(() => fit.updateProfile(sex: 'female'))),
@@ -1024,6 +1077,70 @@ class _ProfileSheetState extends State<_ProfileSheet> {
     );
   }
 
+  Widget _coverPicker(GymColors gc) {
+    final bytes = fit.profileBanner;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _label(gc, t.coverLabel),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: _pickBanner,
+          child: Container(
+            height: 96,
+            decoration: BoxDecoration(
+              color: gc.bgRaised2,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: gc.border),
+              image: DecorationImage(
+                image: bytes == null ? kDefaultBanner : MemoryImage(bytes) as ImageProvider,
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Center(
+          child: GestureDetector(
+            onTap: bytes == null
+                ? _pickBanner
+                : () async {
+                    final ok = await showConfirmDeleteModal(
+                      context: context,
+                      title: t.removeCover,
+                    );
+                    if (ok) _up(fit.clearProfileBanner);
+                  },
+            child: Text(
+              bytes == null ? t.addCover : t.removeCover,
+              style: AppTheme.s(12, weight: FontWeight.w600, color: gc.textSecondary),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _pickBanner() async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetCtx) => _SourceSheet(),
+    );
+    if (source == null) return;
+
+    final shot = await ImagePicker().pickImage(
+      source: source,
+      maxWidth: 1600,
+      maxHeight: 900,
+      imageQuality: 82,
+    );
+    if (shot == null) return;
+    final bytes = await shot.readAsBytes();
+    if (!mounted) return;
+    _up(() => fit.setProfileBanner(bytes));
+  }
+
   Future<void> _pickPhoto() async {
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
@@ -1042,6 +1159,35 @@ class _ProfileSheetState extends State<_ProfileSheet> {
     final bytes = await shot.readAsBytes();
     if (!mounted) return;
     _up(() => fit.setProfilePhoto(bytes));
+  }
+
+  Widget _badgeDots(GymColors gc) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final id in kProfileBadges) ...[
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => _up(() => fit.setProfileBadge(id)),
+            child: Semantics(
+              button: true,
+              selected: fit.profile.badge == id,
+              label: t.badgeName(id),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 5),
+                child: Icon(
+                  PhosphorIconsFill.sealCheck,
+                  size: fit.profile.badge == id ? 26 : 22,
+                  color: fit.profile.badge == id
+                      ? badgeColor(id)
+                      : badgeColor(id).withValues(alpha: 0.32),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
   }
 
   Widget _label(GymColors gc, String t) =>

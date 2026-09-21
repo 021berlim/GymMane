@@ -119,8 +119,66 @@ mixin SettingsState on FitCore, ToolsState {
     notifyListeners();
   }
 
+  Uint8List? _bannerBytes;
+  String? _bannerCacheKey;
+
+  Uint8List? get profileBanner {
+    final raw = profile.banner;
+    if (raw.isEmpty) return null;
+    if (_bannerCacheKey != raw) {
+      try {
+        _bannerBytes = base64Decode(raw);
+      } catch (_) {
+        _bannerBytes = null;
+      }
+      _bannerCacheKey = raw;
+    }
+    return _bannerBytes;
+  }
+
+  void setProfileBanner(Uint8List bytes) {
+    profile.banner = base64Encode(bytes);
+    _persist();
+    notifyListeners();
+  }
+
+  void clearProfileBanner() {
+    profile.banner = '';
+    _persist();
+    notifyListeners();
+  }
+
+  void setProfileBadge(String badge) {
+    profile.badge = profile.badge == badge ? '' : badge;
+    _persist();
+    notifyListeners();
+  }
+
+  void setProfileHandle(String handle) {
+    profile.handle = handle.trim().replaceAll(RegExp(r'[^A-Za-z0-9_.]'), '');
+    _persist();
+    notifyListeners();
+  }
+
+  bool get hasOwnIdentity =>
+      profile.handle.isNotEmpty || (profile.name.isNotEmpty && profile.name != kDefaultName);
+
+  String get displayName => profile.name.isEmpty ? kDefaultName : profile.name;
+
+  String get profileHandle {
+    final own = profile.handle;
+    if (own.isNotEmpty) return own;
+    final from = displayName.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+    return from.isEmpty ? kDefaultHandle : from;
+  }
+
+  DateTime get memberSince => profile.since ?? DateTime.now();
+
+  bool gamification = true;
+
   void completeOnboarding() {
     onboarded = true;
+    refreshAwards();
     persistNow();
     notifyListeners();
   }

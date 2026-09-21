@@ -1495,4 +1495,265 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get tabReps => 'REPS';
+
+  @override
+  String get profile => 'Perfil';
+
+  @override
+  String get editProfile => 'Editar perfil';
+
+  @override
+  String get pickBadge => 'Selo';
+
+  @override
+  String get badgeTitle => 'Seu selo';
+
+  @override
+  String badgeName(String id) {
+    String _temp0 = intl.Intl.selectLogic(id, {
+      'gold': 'Dourado',
+      'blue': 'Azul',
+      'green': 'Verde',
+      'other': 'Selo',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String memberSince(String date) {
+    return 'Membro desde $date';
+  }
+
+  @override
+  String get coverLabel => 'CAPA';
+
+  @override
+  String get removeCover => 'Remover capa';
+
+  @override
+  String get statWorkouts => 'Treinos';
+
+  @override
+  String get statTrained => 'Treinado';
+
+  @override
+  String get statSets => 'Séries';
+
+  @override
+  String get statLifted => 'Levantado';
+
+  @override
+  String get statStreak => 'Sequência';
+
+  @override
+  String get statDays => 'dias';
+
+  @override
+  String get unitHours => 'h';
+
+  @override
+  String get unitDays => 'd';
+
+  @override
+  String levelShort(int n) {
+    return 'Nível $n';
+  }
+
+  @override
+  String levelToNext(int n, int next) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n treinos para o nível $next',
+      one: '1 treino para o nível $next',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get yearTitle => 'Seu ano';
+
+  @override
+  String get yearBestMonth => 'Melhor mês';
+
+  @override
+  String get yearMonths => 'meses';
+
+  @override
+  String get awardsTitle => 'Medalhas';
+
+  @override
+  String get awardsEarned => 'Conquistadas';
+
+  @override
+  String get awardsLocked => 'A conquistar';
+
+  @override
+  String get awardWon => 'Conquistada';
+
+  @override
+  String awardWonOn(String date) {
+    return 'Conquistada em $date';
+  }
+
+  @override
+  String awardProgressLabel(String value, String goal) {
+    return '$value de $goal';
+  }
+
+  @override
+  String get awardSpinHint => 'Arraste a medalha para girá-la';
+
+  @override
+  String get awardUnlocked => 'Nova conquista desbloqueada';
+
+  @override
+  String get awardNice => 'Boa!';
+
+  @override
+  String get awardSaveImage => 'Salvar imagem';
+
+  @override
+  String get awardSaved => 'Salva na sua galeria';
+
+  @override
+  String get gamificationSetting => 'Medalhas e níveis';
+
+  @override
+  String get shareFailed => 'Não foi possível gerar a imagem';
+
+  @override
+  String get addCover => 'Adicionar capa';
+
+  @override
+  String get handleLabel => 'Nome de usuário';
+
+  @override
+  String get snapshots => 'Fotos';
+
+  @override
+  String get snapNow => 'Tirar foto';
+
+  @override
+  String get photosCard => 'Galeria';
+
+  @override
+  String get awardFirstStepName => 'Primeiro passo';
+
+  @override
+  String get awardFirstStepLine => 'Bem-vindo ao FIT//IRON. Esta é por conta da casa.';
+
+  @override
+  String get awardFirstWorkoutName => 'Primeiro treino';
+
+  @override
+  String get awardFirstWorkoutLine => 'O primeiro já está registrado. Esse é o difícil.';
+
+  @override
+  String get awardFirstRoutineName => 'Primeira rotina';
+
+  @override
+  String get awardFirstRoutineLine => 'Você tem um plano ao qual voltar.';
+
+  @override
+  String get awardFirstRecordName => 'Primeiro recorde';
+
+  @override
+  String get awardFirstRecordLine => 'Superou sua melhor marca em um exercício.';
+
+  @override
+  String get awardStreak3Name => 'Três seguidos';
+
+  @override
+  String get awardStreak3Line => 'Três dias seguidos. É assim que começa.';
+
+  @override
+  String get awardStreak7Name => 'Sete dias';
+
+  @override
+  String get awardStreak7Line => 'Uma semana inteira sem falhar um dia.';
+
+  @override
+  String get awardStreak30Name => 'Trinta dias';
+
+  @override
+  String get awardStreak30Line => 'Um mês seguido. Agora já é hábito.';
+
+  @override
+  String get awardStreak100Name => 'Cem dias';
+
+  @override
+  String get awardStreak100Line => 'Cem dias seguidos. Isso já não é motivação, é quem você é.';
+
+  @override
+  String get awardWorkouts10Name => 'Dez treinos';
+
+  @override
+  String get awardWorkouts10Line => 'Os dez primeiros são os que decidem.';
+
+  @override
+  String get awardWorkouts50Name => 'Cinquenta treinos';
+
+  @override
+  String get awardWorkouts50Line => 'Cinquenta sessões nas suas costas.';
+
+  @override
+  String get awardWorkouts100Name => 'Cem treinos';
+
+  @override
+  String get awardWorkouts100Line => 'Cem sessões registradas do início ao fim.';
+
+  @override
+  String get awardWorkouts365Name => 'Trezentos e sessenta e cinco';
+
+  @override
+  String get awardWorkouts365Line => 'Um treino para cada dia do ano, registrados um a um.';
+
+  @override
+  String get awardTonne1Name => 'Uma tonelada';
+
+  @override
+  String get awardTonne1Line => 'Mil quilos levantados entre todas as suas séries.';
+
+  @override
+  String get awardTonnes10Name => 'Dez toneladas';
+
+  @override
+  String get awardTonnes10Line => 'Dez mil quilos já passaram pelas suas mãos.';
+
+  @override
+  String get awardTonnes100Name => 'Cem toneladas';
+
+  @override
+  String get awardTonnes100Line => 'Tudo o que você levantou soma 100.000 kg.';
+
+  @override
+  String get awardSets100Name => 'Cem séries';
+
+  @override
+  String get awardSets100Line => 'Cem séries concluídas, uma a uma.';
+
+  @override
+  String get awardSets1000Name => 'Mil séries';
+
+  @override
+  String get awardSets1000Line => 'Série a série, até mil.';
+
+  @override
+  String get awardHours10Name => 'Dez horas';
+
+  @override
+  String get awardHours10Line => 'Dez horas de treino cronometradas.';
+
+  @override
+  String get awardHours50Name => 'Cinquenta horas';
+
+  @override
+  String get awardHours50Line => 'Cinquenta horas dentro da academia.';
+
+  @override
+  String get awardHours100Name => 'Cem horas';
+
+  @override
+  String get awardHours100Line => 'Cem horas debaixo da barra, cronômetro na mão.';
 }

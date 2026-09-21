@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
@@ -6,11 +7,13 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../l10n/l10n.dart';
 import '../screens/about_screen.dart';
+import '../screens/awards_screen.dart';
 import '../screens/exercise_detail_screen.dart';
 import '../screens/exercises_screen.dart';
 import '../screens/gallery_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/onboarding_screen.dart';
+import '../screens/profile_screen.dart';
 import '../screens/progress_screen.dart';
 import '../screens/routine_edit_screen.dart';
 import '../screens/routines_screen.dart';
@@ -19,12 +22,13 @@ import '../screens/settings_screen.dart';
 import '../screens/tool_detail_screen.dart';
 import '../screens/tools_screen.dart';
 import '../screens/train_screen.dart';
+import '../services/update_service.dart';
 import '../state/fit_state.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_background.dart';
+import '../widgets/award_celebration.dart';
 import '../widgets/update_dialog.dart';
-import '../services/update_service.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
@@ -34,12 +38,40 @@ class AppShell extends StatefulWidget {
 }
 
 class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
+  static const _firstAwardWait = Duration(milliseconds: 1200);
+  static const _nextAwardWait = Duration(milliseconds: 2000);
+  Timer? _awardWait;
+  AwardId? _celebrating;
+  bool _celebratedOne = false;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     fit.refreshAlarmPermission();
+    fit.addListener(_queueCelebration);
+    _queueCelebration();
     _checkForUpdate();
+  }
+
+  void _queueCelebration() {
+    if (fit.nextCelebration == null) {
+      _celebratedOne = false;
+      return;
+    }
+    if (_celebrating != null || _awardWait != null || fit.route == 'session') return;
+    _awardWait = Timer(_celebratedOne ? _nextAwardWait : _firstAwardWait, () {
+      _awardWait = null;
+      final next = fit.nextCelebration;
+      if (!mounted || next == null || fit.route == 'session') return;
+      setState(() => _celebrating = next);
+    });
+  }
+
+  void _closeCelebration() {
+    setState(() => _celebrating = null);
+    _celebratedOne = true;
+    fit.celebrationShown();
   }
 
   /// Checks GitHub Releases for a newer APK (Android-only, fail-silent).
@@ -59,6 +91,8 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    fit.removeListener(_queueCelebration);
+    _awardWait?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -103,6 +137,14 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
                 Positioned.fill(child: _animatedScreen()),
                 if (fit.showNav)
                   Positioned(left: 18, right: 18, bottom: 18, child: _NavBar()),
+                if (fit.route != 'session' && _celebrating != null)
+                  Positioned.fill(
+                    child: AwardCelebration(
+                      key: ValueKey(_celebrating),
+                      id: _celebrating!,
+                      onClose: _closeCelebration,
+                    ),
+                  ),
               ],
             ),
           ),
@@ -181,7 +223,11 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
       case 'tools-detail':
         return ToolDetailScreen();
       case 'settings':
-        return SettingsScreen();
+        return const ProfileScreen();
+      case 'preferences':
+        return const SettingsScreen();
+      case 'awards':
+        return const AwardsScreen();
       case 'about':
         return AboutScreen();
       case 'routines':
@@ -203,7 +249,8 @@ class _NavBar extends StatelessWidget {
   static const _routes = ['home', 'progress', 'exercises', 'settings'];
 
   int get _selectedIndex {
-    final i = _routes.indexOf(fit.route);
+    final route = (fit.route == 'preferences' || fit.route == 'awards') ? 'settings' : fit.route;
+    final i = _routes.indexOf(route);
     return i < 0 ? 0 : i;
   }
 
@@ -263,7 +310,7 @@ class _NavBar extends StatelessWidget {
                     _item(context, 1, PhosphorIconsRegular.chartLineUp, PhosphorIconsFill.chartLineUp, t.progress, fit.goProgress),
                     _fab(context),
                     _item(context, 2, PhosphorIconsRegular.barbell, PhosphorIconsFill.barbell, t.exercises, fit.goExercises),
-                    _item(context, 3, PhosphorIconsRegular.gearSix, PhosphorIconsFill.gearSix, t.settings, fit.goSettings),
+                    _item(context, 3, PhosphorIconsRegular.userCircle, PhosphorIconsFill.userCircle, t.profile, fit.goSettings),
                   ],
                 ),
               ],
