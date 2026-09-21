@@ -37,8 +37,9 @@ mixin RoutinesState on FitCore, LibraryState {
     return id == null ? null : _routine(id);
   }
 
+  static int _routineSeq = 0;
   String createRoutine([String name = '']) {
-    final id = 'r${DateTime.now().microsecondsSinceEpoch}';
+    final id = 'r${DateTime.now().microsecondsSinceEpoch}_${++_routineSeq}';
     routines.add(Routine(id, name.trim(), []));
     _persist();
     notifyListeners();
