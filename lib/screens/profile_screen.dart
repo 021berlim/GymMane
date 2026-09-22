@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -63,6 +64,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return AnimatedBuilder(
       animation: fit,
       builder: (context, _) {
+        final recentPhotos = _recentPhotos();
+        final photoTotal = _photoCount();
+
         return CustomScrollView(
           slivers: [
             SliverPersistentHeader(
@@ -77,13 +81,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 6, 0, 0),
+                padding: const EdgeInsets.fromLTRB(16, 2, 0, 0),
                 child: _stats(gc),
               ),
             ),
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 24, 20, 110),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -92,26 +96,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           _heading(gc, t.awardsTitle, count: '${fit.awardCount}', onMore: fit.goAwards),
-                          const SizedBox(height: 16),
-                          const MedalShelf(size: 66),
+                          const SizedBox(height: 6),
+                          const MedalShelf(size: 40),
                         ],
                       ),
-                      const SizedBox(height: 30),
+                      const SizedBox(height: 10),
                     ],
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        _heading(gc, t.snapshots, onMore: fit.goGallery),
-                        const SizedBox(height: 16),
-                        _photoCards(gc),
+                        _heading(gc, t.snapshots, count: photoTotal == 0 ? null : '$photoTotal', onMore: fit.goGallery),
+                        const SizedBox(height: 6),
+                        _PhotoCarousel(
+                          photos: recentPhotos,
+                          gc: gc,
+                          onTap: fit.goGallery,
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 10),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         _heading(gc, t.yearTitle),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 6),
                         _year(gc),
                       ],
                     ),
@@ -133,10 +141,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final lifted = fit.liftedSpanOf(fit.volumeThisYearKg);
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
       decoration: BoxDecoration(
         color: gc.bgRaised,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: gc.border),
       ),
       child: Column(
@@ -152,26 +160,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 10),
           SizedBox(
-            height: 58,
+            height: 34,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 for (var m = 1; m <= 12; m++) ...[
-                  if (m > 1) const SizedBox(width: 5),
+                  if (m > 1) const SizedBox(width: 4),
                   Expanded(
                     child: TweenAnimationBuilder<double>(
                       tween: Tween(begin: 0, end: peak > 0 ? months[m - 1] / peak : 0.0),
                       duration: Duration(milliseconds: 650 + m * 35),
                       curve: Curves.easeOutCubic,
                       builder: (context, v, _) => Container(
-                        height: 6 + 52 * v,
+                        height: 4 + 30 * v,
                         decoration: BoxDecoration(
                           color: m == thisMonth
                               ? gc.ember
                               : (months[m - 1] > 0 ? gc.textTertiary : gc.bgRaised2),
-                          borderRadius: BorderRadius.circular(5),
+                          borderRadius: BorderRadius.circular(4),
                         ),
                       ),
                     ),
@@ -180,16 +188,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 9),
+          const SizedBox(height: 5),
           Row(
             children: [
               for (var m = 1; m <= 12; m++) ...[
-                if (m > 1) const SizedBox(width: 5),
+                if (m > 1) const SizedBox(width: 4),
                 Expanded(
                   child: Text(
                     t.monthInitial(m),
                     textAlign: TextAlign.center,
-                    style: AppTheme.s(9.5,
+                    style: AppTheme.s(9,
                         weight: FontWeight.w600,
                         color: m == thisMonth ? gc.text : gc.textTertiary),
                   ),
@@ -198,13 +206,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           ),
           if (best > 0) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
             Row(
               children: [
                 Text('${t.yearBestMonth} · ',
-                    style: AppTheme.s(12, weight: FontWeight.w500, color: gc.textTertiary)),
+                    style: AppTheme.s(10.5, weight: FontWeight.w500, color: gc.textTertiary)),
                 Text(t.monthName(best),
-                    style: AppTheme.s(12, weight: FontWeight.w700, color: gc.textSecondary)),
+                    style: AppTheme.s(10.5, weight: FontWeight.w700, color: gc.textSecondary)),
               ],
             ),
           ],
@@ -221,19 +229,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
           crossAxisAlignment: CrossAxisAlignment.baseline,
           textBaseline: TextBaseline.alphabetic,
           children: [
-            Text(value, style: AppTheme.d(26, weight: FontWeight.w800, color: gc.text)),
+            Text(value, style: AppTheme.d(18, weight: FontWeight.w800, color: gc.text)),
             if (unit.isNotEmpty)
               Text(unit,
-                  style: AppTheme.s(12.5, weight: FontWeight.w600, color: gc.textSecondary)),
+                  style: AppTheme.s(10.5, weight: FontWeight.w600, color: gc.textSecondary)),
           ],
         ),
-        const SizedBox(height: 5),
+        const SizedBox(height: 2),
         Text(
           label.toUpperCase(),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: AppTheme.s(9.5,
-              weight: FontWeight.w600, color: gc.textTertiary, letterSpacing: 0.9),
+          style: AppTheme.s(8.5,
+              weight: FontWeight.w600, color: gc.textTertiary, letterSpacing: 0.8),
         ),
       ],
     );
@@ -245,14 +253,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
       onTap: onMore,
       child: Row(
         children: [
-          Text(title, style: AppTheme.d(20, weight: FontWeight.w700, color: gc.text)),
+          Text(title, style: AppTheme.d(15.5, weight: FontWeight.w700, color: gc.text)),
           if (count != null) ...[
-            const SizedBox(width: 9),
-            Text(count, style: AppTheme.s(16, weight: FontWeight.w600, color: gc.textTertiary)),
+            const SizedBox(width: 8),
+            Text(count, style: AppTheme.s(13, weight: FontWeight.w600, color: gc.textTertiary)),
           ],
           const Spacer(),
           if (onMore != null)
-            Icon(PhosphorIconsBold.caretRight, size: 16, color: gc.textTertiary),
+            Icon(PhosphorIconsBold.caretRight, size: 14, color: gc.textTertiary),
         ],
       ),
     );
@@ -267,12 +275,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       (t.statStreak, '${fit.currentStreak}', t.statDays),
     ];
     return SizedBox(
-      height: 54,
+      height: 44,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.only(right: 20),
+        padding: const EdgeInsets.only(right: 16),
         itemCount: items.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 28),
+        separatorBuilder: (_, _) => const SizedBox(width: 20),
         itemBuilder: (_, i) {
           final (label, value, unit) = items[i];
           return Column(
@@ -281,19 +289,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               Text(
                 label.toUpperCase(),
-                style: AppTheme.s(10,
-                    weight: FontWeight.w600, color: gc.textTertiary, letterSpacing: 0.9),
+                style: AppTheme.s(8.5,
+                    weight: FontWeight.w600, color: gc.textTertiary, letterSpacing: 0.8),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.baseline,
                 textBaseline: TextBaseline.alphabetic,
                 children: [
-                  Text(value, style: AppTheme.d(22, weight: FontWeight.w800, color: gc.text)),
+                  Text(value, style: AppTheme.d(17, weight: FontWeight.w800, color: gc.text)),
                   if (unit.isNotEmpty) ...[
-                    const SizedBox(width: 4),
+                    const SizedBox(width: 3),
                     Text(unit,
-                        style: AppTheme.s(12, weight: FontWeight.w500, color: gc.textSecondary)),
+                        style: AppTheme.s(10.5, weight: FontWeight.w500, color: gc.textSecondary)),
                   ],
                 ],
               ),
@@ -307,9 +315,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   List<String> _recentPhotos() {
     final list = <String>[];
     for (final s in fit.sessions.reversed) {
-      if (s.photoAfter != null && s.photoAfter!.isNotEmpty) list.add(s.photoAfter!);
-      if (s.photoBefore != null && s.photoBefore!.isNotEmpty) list.add(s.photoBefore!);
-      if (list.length >= 3) break;
+      if (s.photoAfter != null && s.photoAfter!.isNotEmpty) {
+        if (imageProviderFromSrc(s.photoAfter!) != null) {
+          list.add(s.photoAfter!);
+          if (list.length == 3) break;
+        }
+      }
+      if (s.photoBefore != null && s.photoBefore!.isNotEmpty) {
+        if (imageProviderFromSrc(s.photoBefore!) != null) {
+          list.add(s.photoBefore!);
+          if (list.length == 3) break;
+        }
+      }
     }
     return list;
   }
@@ -317,142 +334,262 @@ class _ProfileScreenState extends State<ProfileScreen> {
   int _photoCount() {
     var count = 0;
     for (final s in fit.sessions) {
-      if (s.photoBefore != null && s.photoBefore!.isNotEmpty) count++;
-      if (s.photoAfter != null && s.photoAfter!.isNotEmpty) count++;
+      if (s.photoBefore != null && s.photoBefore!.isNotEmpty && imageProviderFromSrc(s.photoBefore!) != null) {
+        count++;
+      }
+      if (s.photoAfter != null && s.photoAfter!.isNotEmpty && imageProviderFromSrc(s.photoAfter!) != null) {
+        count++;
+      }
     }
     return count;
   }
+}
 
-  Widget _photoCards(GymColors gc) {
-    final shots = _recentPhotos();
-    final count = _photoCount();
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(
-            child: _card(
-              gc,
-              label: t.photosCard,
-              trailing: count == 0 ? null : '$count',
-              onTap: fit.goGallery,
-              child: shots.isEmpty
-                  ? Icon(PhosphorIconsRegular.imagesSquare, size: 28, color: gc.textTertiary)
-                  : _fan(gc, shots),
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: _card(
-              gc,
-              label: t.snapNow,
-              onTap: fit.goGallery,
-              child: Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(color: gc.bgRaised2, shape: BoxShape.circle),
-                child: Icon(PhosphorIconsRegular.camera, size: 24, color: gc.textSecondary),
-              ),
-            ),
-          ),
-        ],
-      ),
+ImageProvider? imageProviderFromSrc(String src) {
+  if (src.isEmpty) return null;
+  try {
+    if (src.startsWith('http://') || src.startsWith('https://')) {
+      return NetworkImage(src);
+    }
+    if (src.startsWith('file://')) {
+      try {
+        final uri = Uri.parse(src);
+        final f = File(uri.toFilePath());
+        if (f.existsSync()) return FileImage(f);
+      } catch (_) {
+        var cleanPath = src.replaceFirst('file://', '');
+        if (Platform.isWindows &&
+            cleanPath.startsWith('/') &&
+            cleanPath.length > 2 &&
+            cleanPath[2] == ':') {
+          cleanPath = cleanPath.substring(1);
+        }
+        final f = File(cleanPath);
+        if (f.existsSync()) return FileImage(f);
+      }
+    }
+    if (src.startsWith('/') || (src.length > 2 && src[1] == ':')) {
+      final f = File(src);
+      if (f.existsSync()) return FileImage(f);
+    }
+    String clean = src;
+    if (clean.contains(',')) {
+      clean = clean.split(',').last;
+    }
+    clean = clean.replaceAll('\n', '').replaceAll('\r', '').replaceAll(' ', '').trim();
+    final mod4 = clean.length % 4;
+    if (mod4 > 0) {
+      clean = clean.padRight(clean.length + (4 - mod4), '=');
+    }
+    Uint8List bytes;
+    try {
+      bytes = base64Decode(clean);
+    } catch (_) {
+      final normalized = clean.replaceAll('-', '+').replaceAll('_', '/');
+      bytes = base64Decode(normalized);
+    }
+    if (bytes.isEmpty) return null;
+    return MemoryImage(bytes);
+  } catch (_) {
+    return null;
+  }
+}
+
+class _PhotoCarousel extends StatefulWidget {
+  final List<String> photos;
+  final GymColors gc;
+  final VoidCallback onTap;
+
+  const _PhotoCarousel({
+    required this.photos,
+    required this.gc,
+    required this.onTap,
+  });
+
+  @override
+  State<_PhotoCarousel> createState() => _PhotoCarouselState();
+}
+
+class _PhotoCarouselState extends State<_PhotoCarousel> {
+  late PageController _pageController;
+  int _currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(
+      viewportFraction: widget.photos.length == 1 ? 1.0 : 0.78,
     );
   }
 
-  Widget _card(
-    GymColors gc, {
-    required String label,
-    required Widget child,
-    required VoidCallback onTap,
-    String? trailing,
-  }) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: Container(
-        height: 168,
-        decoration: BoxDecoration(
-          color: gc.bgRaised,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: gc.border),
+  @override
+  void didUpdateWidget(_PhotoCarousel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if ((oldWidget.photos.length == 1) != (widget.photos.length == 1)) {
+      _pageController.dispose();
+      _pageController = PageController(
+        viewportFraction: widget.photos.length == 1 ? 1.0 : 0.78,
+        initialPage: _currentPage.clamp(0, math.max(0, widget.photos.length - 1)),
+      );
+    }
+    if (_currentPage >= widget.photos.length && widget.photos.isNotEmpty) {
+      _currentPage = widget.photos.length - 1;
+    }
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.photos.isEmpty) {
+      return _buildEmpty();
+    }
+
+    final hasMultiple = widget.photos.length > 1;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          height: 96,
+          child: PageView.builder(
+            controller: _pageController,
+            itemCount: widget.photos.length,
+            onPageChanged: (i) => setState(() => _currentPage = i),
+            itemBuilder: (context, index) {
+              final photo = widget.photos[index];
+              final provider = imageProviderFromSrc(photo);
+              final isCurrent = index == _currentPage;
+
+              return AnimatedPadding(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOut,
+                padding: EdgeInsets.symmetric(
+                  horizontal: hasMultiple ? 5.0 : 0.0,
+                  vertical: hasMultiple && !isCurrent ? 3.0 : 0.0,
+                ),
+                child: GestureDetector(
+                  onTap: widget.onTap,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: widget.gc.bgRaised2,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isCurrent ? widget.gc.accent.withValues(alpha: 0.45) : widget.gc.border,
+                        width: isCurrent ? 1.5 : 1.0,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: isCurrent ? 0.35 : 0.18),
+                          blurRadius: isCurrent ? 10 : 6,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        if (provider != null)
+                          Image(
+                            image: provider,
+                            fit: BoxFit.cover,
+                            gaplessPlayback: true,
+                            errorBuilder: (_, _, _) => _brokenImage(),
+                          )
+                        else
+                          _brokenImage(),
+                        Positioned(
+                          left: 10,
+                          bottom: 8,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.55),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              '#${index + 1}',
+                              style: AppTheme.d(11, weight: FontWeight.w700, color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
         ),
-        child: Column(
+        if (hasMultiple) ...[
+          const SizedBox(height: 6),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(widget.photos.length, (i) {
+              final isSel = i == _currentPage;
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                width: isSel ? 14 : 5,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: isSel ? widget.gc.accent : widget.gc.bgRaised2,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              );
+            }),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildEmpty() {
+    return GestureDetector(
+      onTap: widget.onTap,
+      child: Container(
+        height: 68,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          color: widget.gc.bgRaised,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: widget.gc.border),
+        ),
+        child: Row(
           children: [
-            Expanded(child: Center(child: child)),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 18),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(label, style: AppTheme.s(14, weight: FontWeight.w600, color: gc.text)),
-                  if (trailing != null) ...[
-                    const SizedBox(width: 7),
-                    Text(trailing,
-                        style: AppTheme.s(13, weight: FontWeight.w600, color: gc.textTertiary)),
-                  ],
-                ],
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: widget.gc.bgRaised2,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(PhosphorIconsRegular.imagesSquare, size: 20, color: widget.gc.textTertiary),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                t.photosCard,
+                style: AppTheme.s(13, weight: FontWeight.w600, color: widget.gc.text),
               ),
             ),
+            Icon(PhosphorIconsBold.caretRight, size: 14, color: widget.gc.textTertiary),
           ],
         ),
       ),
     );
   }
 
-  Widget _fan(GymColors gc, List<String> files) {
-    const spread = [-0.22, 0.0, 0.22];
-    const shift = [-28.0, 0.0, 28.0];
-    final order = [
-      for (var i = 0; i < files.length; i++)
-        if (i != 1) i,
-      if (files.length > 1) 1,
-    ];
-    return SizedBox(
-      height: 104,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          for (final i in order)
-            Transform.translate(
-              offset: Offset(files.length == 1 ? 0 : shift[i], 0),
-              child: Transform.rotate(
-                angle: files.length == 1 ? 0 : spread[i],
-                child: _thumb(gc, files[i], raised: i == 1 || files.length == 1),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _thumb(GymColors gc, String file, {bool raised = false}) {
-    ImageProvider provider;
-    if (file.startsWith('/') || file.startsWith('file://')) {
-      provider = FileImage(File(file.replaceFirst('file://', '')));
-    } else {
-      try {
-        provider = MemoryImage(base64Decode(file));
-      } catch (_) {
-        return const SizedBox.shrink();
-      }
-    }
+  Widget _brokenImage() {
     return Container(
-      width: 62,
-      height: 86,
-      decoration: BoxDecoration(
-        color: gc.bgRaised2,
-        borderRadius: BorderRadius.circular(12),
-        border: raised ? null : Border.all(color: gc.bgRaised, width: 2.5),
-        boxShadow: raised
-            ? [BoxShadow(color: Colors.black.withValues(alpha: 0.45), blurRadius: 14)]
-            : null,
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Image(
-        image: provider,
-        fit: BoxFit.cover,
-        errorBuilder: (_, _, _) => const SizedBox.shrink(),
+      color: widget.gc.bgRaised2,
+      child: Center(
+        child: Icon(PhosphorIconsRegular.imageBroken, size: 24, color: widget.gc.textTertiary),
       ),
     );
   }
@@ -473,13 +610,13 @@ class _ProfileHeader extends SliverPersistentHeaderDelegate {
   final VoidCallback onEdit;
   final VoidCallback onShare;
 
-  static const _banner = 176.0;
-  static const _bar = 60.0;
-  static const _levelRow = 34.0;
+  static const _banner = 112.0;
+  static const _bar = 50.0;
+  static const _levelRow = 24.0;
 
   double get _cut => fit.gamification ? 0 : _levelRow;
-  double get _identity => 128.0 - _cut;
-  double get _identityBlock => 136.0 - _cut;
+  double get _identity => 90.0 - _cut;
+  double get _identityBlock => 98.0 - _cut;
 
   @override
   double get maxExtent => _banner + _identity;
@@ -498,7 +635,7 @@ class _ProfileHeader extends SliverPersistentHeaderDelegate {
     final p = fit.profile;
 
     final height = math.max(maxExtent - shrinkOffset, minExtent);
-    final bannerHeight = (height - 18 - _identityBlock + 38).clamp(minExtent, height);
+    final bannerHeight = (height - 10 - _identityBlock + 24).clamp(minExtent, height);
 
     return SizedBox(
       height: height,
@@ -545,27 +682,27 @@ class _ProfileHeader extends SliverPersistentHeaderDelegate {
             ),
           ),
           Positioned(
-            top: top + 9,
-            right: 16,
+            top: top + 6,
+            right: 14,
             child: Row(children: [
               _round(PhosphorIconsRegular.shareNetwork, onShare),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               _round(PhosphorIconsRegular.gearSix, fit.goPreferences),
             ]),
           ),
           Positioned(
-            left: 20,
-            right: 20,
-            bottom: 18,
+            left: 16,
+            right: 16,
+            bottom: 10,
             child: Opacity(
               opacity: (1 - shrunk * 2).clamp(0.0, 1.0),
               child: _full(p),
             ),
           ),
           Positioned(
-            left: 20,
+            left: 16,
             top: top + 6,
-            height: 44,
+            height: 40,
             child: Opacity(
               opacity: ((shrunk - 0.62) / 0.38).clamp(0.0, 1.0),
               child: _compact(p),
@@ -581,11 +718,11 @@ class _ProfileHeader extends SliverPersistentHeaderDelegate {
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: Container(
-        width: 38,
-        height: 38,
+        width: 34,
+        height: 34,
         decoration:
             BoxDecoration(color: Colors.black.withValues(alpha: 0.5), shape: BoxShape.circle),
-        child: Icon(icon, size: 18, color: Colors.white),
+        child: Icon(icon, size: 16, color: Colors.white),
       ),
     );
   }
@@ -594,21 +731,21 @@ class _ProfileHeader extends SliverPersistentHeaderDelegate {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const ProfileAvatar(size: 34),
-        const SizedBox(width: 11),
+        const ProfileAvatar(size: 32),
+        const SizedBox(width: 10),
         Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(children: [
-              Text(fit.displayName, style: AppTheme.d(15.5, weight: FontWeight.w700, color: gc.text)),
+              Text(fit.displayName, style: AppTheme.d(14.5, weight: FontWeight.w700, color: gc.text)),
               if (p.badge.isNotEmpty) ...[
-                const SizedBox(width: 5),
-                Icon(PhosphorIconsFill.sealCheck, size: 14, color: badgeColor(p.badge)),
+                const SizedBox(width: 4),
+                Icon(PhosphorIconsFill.sealCheck, size: 13, color: badgeColor(p.badge)),
               ],
             ]),
             Text('@${fit.profileHandle}',
-                style: AppTheme.s(11.5, weight: FontWeight.w500, color: gc.textSecondary)),
+                style: AppTheme.s(11, weight: FontWeight.w500, color: gc.textSecondary)),
           ],
         ),
       ],
@@ -623,64 +760,64 @@ class _ProfileHeader extends SliverPersistentHeaderDelegate {
         Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            const ProfileAvatar(size: 76),
+            const ProfileAvatar(size: 54),
             const Spacer(),
             GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: onEdit,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                 decoration: BoxDecoration(
                   color: gc.bgRaised2,
                   borderRadius: BorderRadius.circular(100),
                   border: Border.all(color: gc.border),
                 ),
                 child: Text(t.editProfile,
-                    style: AppTheme.s(13.5, weight: FontWeight.w600, color: gc.text)),
+                    style: AppTheme.s(12.5, weight: FontWeight.w600, color: gc.text)),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 13),
+        const SizedBox(height: 7),
         Row(children: [
           Flexible(
             child: Text(p.name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppTheme.d(24, weight: FontWeight.w800, color: gc.text)),
+                style: AppTheme.d(18, weight: FontWeight.w800, color: gc.text)),
           ),
           if (p.badge.isNotEmpty) ...[
-            const SizedBox(width: 7),
-            Icon(PhosphorIconsFill.sealCheck, size: 19, color: badgeColor(p.badge)),
+            const SizedBox(width: 6),
+            Icon(PhosphorIconsFill.sealCheck, size: 16, color: badgeColor(p.badge)),
           ],
         ]),
-        const SizedBox(height: 4),
+        const SizedBox(height: 2),
         Text(
           '@${fit.profileHandle}  ·  ${fit.weightLabel(p.weightKg)}',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: AppTheme.s(13, weight: FontWeight.w500, color: gc.textSecondary),
+          style: AppTheme.s(11.5, weight: FontWeight.w500, color: gc.textSecondary),
         ),
         if (fit.gamification) ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Row(children: [
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
                 color: gc.bgRaised2,
                 borderRadius: BorderRadius.circular(100),
                 border: Border.all(color: gc.border),
               ),
               child: Text(t.levelShort(fit.athleteLevel),
-                  style: AppTheme.s(12, weight: FontWeight.w700, color: gc.text)),
+                  style: AppTheme.s(10.5, weight: FontWeight.w700, color: gc.text)),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 7),
             Flexible(
               child: Text(
                 t.levelToNext(fit.sessionsToNextLevel, fit.athleteLevel + 1),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppTheme.s(12, weight: FontWeight.w500, color: gc.textTertiary),
+                style: AppTheme.s(10.5, weight: FontWeight.w500, color: gc.textTertiary),
               ),
             ),
           ]),
