@@ -371,6 +371,8 @@ void main() {
       'Esta ação não pode ser desfeita.',
       'Cancelar',
       'Excluir',
+      'Trocar Foto',
+      'Toque aqui para abrir galeria ou câmera',
     };
 
     final offenders = <String>[];

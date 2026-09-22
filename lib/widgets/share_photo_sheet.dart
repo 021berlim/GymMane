@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:share_plus/share_plus.dart';
@@ -12,6 +14,7 @@ import 'package:share_plus/share_plus.dart';
 import '../state/fit_state.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import 'photo_source_sheet.dart';
 import 'ui_kit.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -74,61 +77,25 @@ class SharePhotoSheet extends StatefulWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Preset positions for quick-pick chips
-// ─────────────────────────────────────────────────────────────────────────────
-
-enum _PresetPosition {
-  topLeft('Top-Left', Alignment.topLeft),
-  topRight('Top-Right', Alignment.topRight),
-  center('Center', Alignment.center),
-  bottomLeft('Bottom-Left', Alignment.bottomLeft),
-  bottomRight('Bottom-Right', Alignment.bottomRight);
-
-  final String label;
-  final Alignment alignment;
-  const _PresetPosition(this.label, this.alignment);
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Aspect ratio presets
-// ─────────────────────────────────────────────────────────────────────────────
-
-enum _AspectPreset {
-  ratio1x1('1:1', 1.0),
-  ratio4x5('4:5', 4 / 5),
-  ratio9x16('9:16', 9 / 16);
-
-  final String label;
-  final double value;
-  const _AspectPreset(this.label, this.value);
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // State
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _SharePhotoSheetState extends State<SharePhotoSheet> {
-  // Keys for capture & measurement
   final GlobalKey _boundaryKey = GlobalKey();
   final GlobalKey _watermarkKey = GlobalKey();
 
-  // Photo source
   File? _photoFile;
+  Size? _imageSize; // Real pixel resolution of the photo (width x height)
 
-  // Watermark positioning
-  Alignment _alignment = Alignment.bottomLeft;
-  Offset? _customOffset;
-  bool _useCustomOffset = false;
+  // Relative watermark position [0.0 - 1.0] across available canvas space.
+  // Default: Bottom-left (dx = 0.05, dy = 0.88), classic Strava positioning.
+  Offset _relativePosition = const Offset(0.05, 0.88);
   bool _isDragging = false;
 
-  // Style / scale
+  // Watermark style and scale
   int _styleIndex = 0; // 0 = Full, 1 = Compact, 2 = Minimal
   double _watermarkScale = 1.0;
 
-  // Aspect ratio
-  _AspectPreset _aspect = _AspectPreset.ratio4x5;
-
-  // Share state
   bool _isSharing = false;
 
   // ─── Lifecycle ────────────────────────────────────────────────────────────
@@ -136,79 +103,100 @@ class _SharePhotoSheetState extends State<SharePhotoSheet> {
   @override
   void initState() {
     super.initState();
-    if (widget.initialImagePath != null) {
+    if (widget.initialImagePath != null && widget.initialImagePath!.isNotEmpty) {
       _photoFile = File(widget.initialImagePath!);
-    }
-    if (widget.initialImageBase64 != null &&
-        widget.initialImageBase64!.isNotEmpty) {
+      _resolveImageDimensions(_photoFile!);
+    } else if (widget.initialImageBase64 != null && widget.initialImageBase64!.isNotEmpty) {
       _loadBase64Image(widget.initialImageBase64!);
     }
   }
 
-  Future<void> _loadBase64Image(String base64Str) async {
+  Future<void> _resolveImageDimensions(File file) async {
     try {
-      final bytes = base64Decode(base64Str);
+      if (await file.exists()) {
+        final bytes = await file.readAsBytes();
+        final decoded = await decodeImageFromList(bytes);
+        if (mounted) {
+          setState(() {
+            _imageSize = Size(decoded.width.toDouble(), decoded.height.toDouble());
+          });
+        }
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _loadBase64Image(String rawBase64) async {
+    try {
+      String cleanStr = rawBase64;
+      if (cleanStr.contains(',')) {
+        cleanStr = cleanStr.split(',').last;
+      }
+      cleanStr = cleanStr.replaceAll('\n', '').replaceAll('\r', '').trim();
+      final bytes = base64Decode(cleanStr);
       final tempDir = await getTemporaryDirectory();
       final file = File(
         '${tempDir.path}/fitiron_gallery_${DateTime.now().millisecondsSinceEpoch}.png',
       );
       await file.writeAsBytes(bytes, flush: true);
-      if (mounted) setState(() => _photoFile = file);
+      Size? size;
+      try {
+        final decoded = await decodeImageFromList(bytes);
+        size = Size(decoded.width.toDouble(), decoded.height.toDouble());
+      } catch (_) {}
+
+      if (mounted) {
+        setState(() {
+          _photoFile = file;
+          _imageSize = size;
+        });
+      }
     } catch (_) {}
   }
 
+  Future<void> _pickImage() async {
+    final source = await pickPhotoSource(context);
+    if (source == null) return;
+    try {
+      final picked = await ImagePicker().pickImage(
+        source: source,
+        maxWidth: 2048,
+        maxHeight: 2048,
+        imageQuality: 92,
+      );
+      if (picked == null) return;
+      final bytes = await picked.readAsBytes();
+      final decoded = await decodeImageFromList(bytes);
+      final file = File(picked.path);
+      if (mounted) {
+        setState(() {
+          _photoFile = file;
+          _imageSize = Size(decoded.width.toDouble(), decoded.height.toDouble());
+        });
+      }
+    } catch (e) {
+      debugPrint('Error picking image: $e');
+    }
+  }
+
   // ─── Watermark measurement ───────────────────────────────────────────────
-  // Reads the actual rendered size of the watermark widget via its RenderBox.
-  // Falls back to style-based estimates if the box hasn't laid out yet.
 
   Size _getWatermarkSize() {
-    final rb =
-        _watermarkKey.currentContext?.findRenderObject() as RenderBox?;
-    if (rb != null && rb.hasSize) return rb.size;
-    // Fallback estimates per style * scale
+    final rb = _watermarkKey.currentContext?.findRenderObject() as RenderBox?;
+    if (rb != null && rb.hasSize && rb.size.width > 0 && rb.size.height > 0) {
+      return rb.size;
+    }
+    // Reliable estimates based on style and scale
     switch (_styleIndex) {
-      case 1:
-        return Size(200 * _watermarkScale, 64 * _watermarkScale);
       case 2:
         return Size(140 * _watermarkScale, 36 * _watermarkScale);
+      case 1:
+        return Size(200 * _watermarkScale, 64 * _watermarkScale);
       default:
         return Size(250 * _watermarkScale, 180 * _watermarkScale);
     }
   }
 
-  /// Converts an Alignment preset to an absolute Offset inside the canvas,
-  /// using the real watermark size and a 16 px margin from edges.
-  Offset _getOffsetFromAlignment(double canvasW, double canvasH) {
-    const margin = 16.0;
-    final wm = _getWatermarkSize();
-    final align = _alignment;
-    double x = margin;
-    double y = margin;
-
-    if (align == Alignment.topRight || align == Alignment.bottomRight) {
-      x = canvasW - wm.width - margin;
-    } else if (align == Alignment.center) {
-      x = (canvasW - wm.width) / 2;
-    }
-
-    if (align == Alignment.bottomLeft || align == Alignment.bottomRight) {
-      y = canvasH - wm.height - margin;
-    } else if (align == Alignment.center) {
-      y = (canvasH - wm.height) / 2;
-    }
-
-    return Offset(
-      x.clamp(0, canvasW - wm.width),
-      y.clamp(0, canvasH - wm.height),
-    );
-  }
-
   // ─── Share flow ──────────────────────────────────────────────────────────
-  //
-  // CRITICAL FIX: Share FIRST, pop the sheet AFTER.
-  // The previous code called Navigator.pop() before SharePlus.share(),
-  // which destroyed the widget tree and invalidated the context, causing
-  // the Android share sheet to silently fail on most devices.
 
   Future<void> _shareImage() async {
     if (_photoFile == null) {
@@ -222,50 +210,72 @@ class _SharePhotoSheetState extends State<SharePhotoSheet> {
     setState(() => _isSharing = true);
 
     try {
-      // 1. Let the render pipeline settle
-      await Future.delayed(const Duration(milliseconds: 200));
-      await WidgetsBinding.instance.endOfFrame;
+      // 1. Brief pause to let the UI update and paint
+      await Future.delayed(const Duration(milliseconds: 150));
 
       // 2. Capture the RepaintBoundary
       final boundary = _boundaryKey.currentContext?.findRenderObject()
           as RenderRepaintBoundary?;
-      if (boundary == null) throw Exception('Boundary rendering failed');
-
-      if (boundary.debugNeedsPaint) {
-        await Future.delayed(const Duration(milliseconds: 200));
+      if (boundary == null) {
+        throw Exception('Visualização não pronta para captura');
       }
 
-      final image = await boundary.toImage(pixelRatio: 3.0);
-      final byteData =
+      if (boundary.debugNeedsPaint) {
+        await Future.delayed(const Duration(milliseconds: 150));
+      }
+
+      // Calculate pixelRatio so that exported image matches high resolution (~1080p)
+      final canvasBox = _boundaryKey.currentContext?.findRenderObject() as RenderBox?;
+      final displayW = canvasBox?.size.width ?? 360;
+      final targetW = (_imageSize != null && _imageSize!.width > 0)
+          ? _imageSize!.width
+          : 1080.0;
+      final pixelRatio = (targetW / displayW).clamp(1.5, 3.5);
+
+      final ui.Image image = await boundary.toImage(pixelRatio: pixelRatio);
+      final ByteData? byteData =
           await image.toByteData(format: ui.ImageByteFormat.png);
-      if (byteData == null) throw Exception('PNG byte encoding failed');
+      if (byteData == null) {
+        throw Exception('Falha ao processar imagem PNG');
+      }
 
       // 3. Save to temp file
       final pngBytes = byteData.buffer.asUint8List();
       final tempDir = await getTemporaryDirectory();
-      final file = File(
-        '${tempDir.path}/fitiron_workout_share_${DateTime.now().millisecondsSinceEpoch}.png',
+      final shareFile = File(
+        '${tempDir.path}/fitiron_share_${DateTime.now().millisecondsSinceEpoch}.png',
       );
-      await file.writeAsBytes(pngBytes, flush: true);
+      await shareFile.writeAsBytes(pngBytes, flush: true);
 
       if (!mounted) return;
 
-      // 4. Share FIRST — keep the sheet alive so the Activity context is valid
+      // 4. Calculate origin rect for iPads and share sheet popovers
+      final box = context.findRenderObject() as RenderBox?;
+      final origin = box != null && box.hasSize
+          ? (box.localToGlobal(Offset.zero) & box.size)
+          : null;
+
+      final xFile = XFile(shareFile.path, mimeType: 'image/png');
+
+      // Reset sharing state so the button returns to normal right as the system share sheet appears
+      if (mounted) setState(() => _isSharing = false);
+
       await SharePlus.instance.share(
         ShareParams(
-          files: [XFile(file.path)],
-          subject: 'FIT//IRON Workout',
+          files: [xFile],
+          subject: 'FIT//IRON Treino',
+          sharePositionOrigin: origin,
         ),
       );
 
-      // 5. Only AFTER share returns, close the sheet
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
     } catch (e) {
       if (mounted) {
+        setState(() => _isSharing = false);
         AppToast.showError(context, 'Erro ao compartilhar foto: $e');
       }
-    } finally {
-      if (mounted) setState(() => _isSharing = false);
     }
   }
 
@@ -330,18 +340,50 @@ class _SharePhotoSheetState extends State<SharePhotoSheet> {
                 children: [
                   // Photo preview + draggable watermark
                   _buildPreviewCanvas(gc),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 10),
 
-                  // Aspect ratio selector
-                  _sectionLabel(gc, 'PROPORÇÃO DA IMAGEM'),
-                  const SizedBox(height: 8),
-                  _buildAspectRatioBar(gc),
-                  const SizedBox(height: 16),
-
-                  // Preset position chips
-                  _sectionLabel(gc, 'POSICIONAMENTO (Arraste ou selecione)'),
-                  const SizedBox(height: 8),
-                  _buildPositionBar(gc),
+                  // Move hint & swap photo button
+                  Row(
+                    children: [
+                      Icon(
+                        PhosphorIcons.arrowsOutCardinal(PhosphorIconsStyle.regular),
+                        size: 14,
+                        color: gc.textTertiary,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        "Arraste a marca d'água na foto",
+                        style: AppTheme.s(
+                          12,
+                          color: gc.textTertiary,
+                          weight: FontWeight.w500,
+                        ),
+                      ),
+                      const Spacer(),
+                      if (_photoFile != null)
+                        GestureDetector(
+                          onTap: _pickImage,
+                          child: Row(
+                            children: [
+                              Icon(
+                                PhosphorIcons.camera(PhosphorIconsStyle.bold),
+                                size: 14,
+                                color: gc.accent,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Trocar Foto',
+                                style: AppTheme.s(
+                                  12,
+                                  weight: FontWeight.w700,
+                                  color: gc.accent,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
                   const SizedBox(height: 16),
 
                   // Watermark style selector
@@ -358,11 +400,11 @@ class _SharePhotoSheetState extends State<SharePhotoSheet> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Watermark size slider
+                  // Watermark scale slider
                   _sectionLabel(gc, "TAMANHO DA MARCA D'ÁGUA"),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
                   _buildScaleSlider(gc),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                 ],
               ),
             ),
@@ -372,8 +414,7 @@ class _SharePhotoSheetState extends State<SharePhotoSheet> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
             child: PrimaryButton(
-              label:
-                  _isSharing ? 'Preparando Imagem...' : 'COMPARTILHAR FOTO',
+              label: _isSharing ? 'Preparando Imagem...' : 'COMPARTILHAR FOTO',
               onTap: _isSharing ? () {} : _shareImage,
             ),
           ),
@@ -397,82 +438,6 @@ class _SharePhotoSheetState extends State<SharePhotoSheet> {
         ),
       );
 
-  // ─── Aspect ratio bar ───────────────────────────────────────────────────
-
-  Widget _buildAspectRatioBar(GymColors gc) {
-    return Row(
-      children: _AspectPreset.values.map((ar) {
-        final isSel = _aspect == ar;
-        return Expanded(
-          child: Padding(
-            padding: EdgeInsets.only(
-              right: ar != _AspectPreset.values.last ? 8 : 0,
-            ),
-            child: GestureDetector(
-              onTap: () => setState(() => _aspect = ar),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                decoration: BoxDecoration(
-                  color: isSel ? gc.accentSoft : gc.bgRaised,
-                  borderRadius: BorderRadius.circular(12),
-                  border:
-                      Border.all(color: isSel ? gc.accent : gc.border),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  ar.label,
-                  style: AppTheme.s(
-                    12,
-                    weight: isSel ? FontWeight.w700 : FontWeight.w500,
-                    color: isSel ? gc.accent : gc.textSecondary,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  // ─── Position preset bar ────────────────────────────────────────────────
-
-  Widget _buildPositionBar(GymColors gc) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: _PresetPosition.values.map((pos) {
-          final isSelected =
-              !_useCustomOffset && _alignment == pos.alignment;
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: ChoiceChip(
-              label: Text(pos.label),
-              selected: isSelected,
-              onSelected: (_) {
-                setState(() {
-                  _useCustomOffset = false;
-                  _customOffset = null;
-                  _alignment = pos.alignment;
-                });
-              },
-              selectedColor: gc.accentSoft,
-              labelStyle: AppTheme.s(
-                12,
-                weight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected ? gc.accent : gc.textSecondary,
-              ),
-              backgroundColor: gc.bgRaised,
-              side: BorderSide(
-                color: isSelected ? gc.accent : gc.border,
-              ),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
   // ─── Style chip ─────────────────────────────────────────────────────────
 
   Widget _styleChip(GymColors gc, int index, String label) {
@@ -481,8 +446,6 @@ class _SharePhotoSheetState extends State<SharePhotoSheet> {
       child: GestureDetector(
         onTap: () => setState(() {
           _styleIndex = index;
-          // Reset custom offset so preset recalculates with new size
-          if (!_useCustomOffset) _customOffset = null;
         }),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10),
@@ -521,17 +484,16 @@ class _SharePhotoSheetState extends State<SharePhotoSheet> {
           child: SliderTheme(
             data: SliderThemeData(
               activeTrackColor: gc.accent,
-              inactiveTrackColor: gc.border,
+              inactiveTrackColor: gc.bgRaised2,
               thumbColor: gc.accent,
-              overlayColor: gc.accent.withValues(alpha: 0.2),
+              overlayColor: gc.accent.withAlpha(50),
               trackHeight: 3,
-              thumbShape:
-                  const RoundSliderThumbShape(enabledThumbRadius: 7),
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7),
             ),
             child: Slider(
               value: _watermarkScale,
-              min: 0.5,
-              max: 1.5,
+              min: 0.6,
+              max: 1.4,
               onChanged: (v) => setState(() => _watermarkScale = v),
             ),
           ),
@@ -545,73 +507,116 @@ class _SharePhotoSheetState extends State<SharePhotoSheet> {
     );
   }
 
+  // ─── Empty placeholder ──────────────────────────────────────────────────
+
+  Widget _buildEmptyPlaceholder(GymColors gc) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: _pickImage,
+      child: Container(
+        color: const Color(0xFF1A1F18),
+        alignment: Alignment.center,
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.add_a_photo_outlined,
+              size: 48,
+              color: gc.accent,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Selecione ou tire uma foto',
+              style: AppTheme.s(
+                15,
+                weight: FontWeight.w600,
+                color: gc.text,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Toque aqui para abrir galeria ou câmera',
+              style: AppTheme.s(
+                12,
+                color: gc.textTertiary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // ─── Preview canvas ─────────────────────────────────────────────────────
 
   Widget _buildPreviewCanvas(GymColors gc) {
-    return AspectRatio(
-      aspectRatio: _aspect.value,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          decoration: BoxDecoration(
-            color: const Color(0xFF141712),
-            border: Border.all(color: gc.border),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: RepaintBoundary(
-            key: _boundaryKey,
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final canvasW = constraints.maxWidth;
-                final canvasH = constraints.maxHeight;
+    // If the image resolution is known, match its EXACT aspect ratio!
+    final double photoAspectRatio = (_imageSize != null && _imageSize!.height > 0)
+        ? (_imageSize!.width / _imageSize!.height)
+        : (4 / 5);
 
-                return Stack(
-                  children: [
-                    // Photo background or placeholder
-                    Positioned.fill(
-                      child: _photoFile != null
-                          ? Image.file(_photoFile!, fit: BoxFit.cover)
-                          : Container(
-                              color: const Color(0xFF1A1F18),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.camera_alt,
-                                    size: 48,
-                                    color: gc.textTertiary,
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    'Selecione ou tire uma foto',
-                                    style: AppTheme.s(
-                                      14,
-                                      color: gc.textSecondary,
-                                    ),
-                                  ),
-                                ],
+    final screenH = MediaQuery.of(context).size.height;
+    final maxCanvasH = screenH * 0.44;
+
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: maxCanvasH),
+      child: AspectRatio(
+        aspectRatio: photoAspectRatio,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFF141712),
+              border: Border.all(color: gc.border),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: _photoFile == null
+                ? _buildEmptyPlaceholder(gc)
+                : RepaintBoundary(
+                    key: _boundaryKey,
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final canvasW = constraints.maxWidth;
+                        final canvasH = constraints.maxHeight;
+
+                        final wmSize = _getWatermarkSize();
+                        // 8px margin from edges
+                        const margin = 8.0;
+                        final maxAvailableW = math.max(0.0, canvasW - wmSize.width - (margin * 2));
+                        final maxAvailableH = math.max(0.0, canvasH - wmSize.height - (margin * 2));
+
+                        final posX = margin + (_relativePosition.dx * maxAvailableW).clamp(0.0, maxAvailableW);
+                        final posY = margin + (_relativePosition.dy * maxAvailableH).clamp(0.0, maxAvailableH);
+
+                        return Stack(
+                          children: [
+                            // Full-bleed photo matching exact aspect ratio without cropping
+                            Positioned.fill(
+                              child: Image.file(
+                                _photoFile!,
+                                fit: BoxFit.cover,
                               ),
                             ),
-                    ),
 
-                    // Draggable watermark — always Positioned with absolute coords
-                    Positioned(
-                      left: _useCustomOffset && _customOffset != null
-                          ? _customOffset!.dx
-                          : _getOffsetFromAlignment(canvasW, canvasH).dx,
-                      top: _useCustomOffset && _customOffset != null
-                          ? _customOffset!.dy
-                          : _getOffsetFromAlignment(canvasW, canvasH).dy,
-                      child: _buildDraggableWatermark(
-                        gc,
-                        canvasW,
-                        canvasH,
-                      ),
+                            // Draggable watermark sticker
+                            Positioned(
+                              left: posX,
+                              top: posY,
+                              child: _buildDraggableWatermark(
+                                gc,
+                                canvasW,
+                                canvasH,
+                                maxAvailableW,
+                                maxAvailableH,
+                                margin,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
-                  ],
-                );
-              },
-            ),
+                  ),
           ),
         ),
       ),
@@ -624,56 +629,61 @@ class _SharePhotoSheetState extends State<SharePhotoSheet> {
     GymColors gc,
     double canvasW,
     double canvasH,
+    double maxAvailableW,
+    double maxAvailableH,
+    double margin,
   ) {
     final card = KeyedSubtree(
       key: _watermarkKey,
       child: _buildWatermarkCard(gc),
     );
 
-    // Apply scale via FittedBox
-    final scaledCard = _watermarkScale == 1.0
-        ? card
-        : SizedBox(
-            width: (_styleIndex == 2
-                    ? 140.0
-                    : _styleIndex == 1
-                        ? 200.0
-                        : 250.0) *
-                _watermarkScale,
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.topLeft,
-              child: card,
-            ),
-          );
+    // Apply scale via FittedBox with responsive max-width
+    final maxWatermarkW = canvasW * 0.88;
+    final baseW = (_styleIndex == 2
+            ? 140.0
+            : _styleIndex == 1
+                ? 200.0
+                : 250.0) *
+        _watermarkScale;
+    final clampedW = math.min(baseW, maxWatermarkW);
+
+    final scaledWidget = SizedBox(
+      width: clampedW,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.topLeft,
+        child: card,
+      ),
+    );
 
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onPanStart: (_) {
         HapticFeedback.selectionClick();
         setState(() => _isDragging = true);
       },
       onPanUpdate: (details) {
+        if (maxAvailableW <= 0 && maxAvailableH <= 0) return;
+
         setState(() {
-          final current = _customOffset ??
-              _getOffsetFromAlignment(canvasW, canvasH);
-          final wmSize = _getWatermarkSize();
+          final currentPxX = _relativePosition.dx * maxAvailableW;
+          final currentPxY = _relativePosition.dy * maxAvailableH;
 
-          // FIXED: Clamp to [0, canvasW-wmW] × [0, canvasH-wmH]
-          // so the sticker can reach ALL edges but never overflow.
-          final newDx = (current.dx + details.delta.dx)
-              .clamp(0.0, (canvasW - wmSize.width).clamp(0.0, canvasW));
-          final newDy = (current.dy + details.delta.dy)
-              .clamp(0.0, (canvasH - wmSize.height).clamp(0.0, canvasH));
+          final newPxX = (currentPxX + details.delta.dx).clamp(0.0, maxAvailableW);
+          final newPxY = (currentPxY + details.delta.dy).clamp(0.0, maxAvailableH);
 
-          _useCustomOffset = true;
-          _customOffset = Offset(newDx, newDy);
+          _relativePosition = Offset(
+            maxAvailableW > 0 ? (newPxX / maxAvailableW) : 0.0,
+            maxAvailableH > 0 ? (newPxY / maxAvailableH) : 0.0,
+          );
         });
       },
       onPanEnd: (_) => setState(() => _isDragging = false),
       child: AnimatedOpacity(
         duration: const Duration(milliseconds: 120),
-        opacity: _isDragging ? 0.7 : 1.0,
-        child: scaledCard,
+        opacity: _isDragging ? 0.75 : 1.0,
+        child: scaledWidget,
       ),
     );
   }
