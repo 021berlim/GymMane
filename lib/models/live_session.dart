@@ -34,7 +34,17 @@ class SessionExercise {
 }
 
 class WorkoutSession {
-  WorkoutSession();
+  WorkoutSession({
+    List<String>? photosBefore,
+    List<String>? photosAfter,
+    String? photoBefore,
+    String? photoAfter,
+  })  : photosBefore = photosBefore != null
+            ? List<String>.from(photosBefore)
+            : (photoBefore != null && photoBefore.isNotEmpty ? [photoBefore] : []),
+        photosAfter = photosAfter != null
+            ? List<String>.from(photosAfter)
+            : (photoAfter != null && photoAfter.isNotEmpty ? [photoAfter] : []);
 
   List<SessionExercise> exercises = [];
   int currentIndex = 0;
@@ -45,8 +55,34 @@ class WorkoutSession {
   int? summaryDuration;
   double? bodyweightBeforeKg;
   double? bodyweightAfterKg;
-  String? photoBefore;
-  String? photoAfter;
+  List<String> photosBefore;
+  List<String> photosAfter;
+
+  String? get photoBefore => photosBefore.firstOrNull;
+  set photoBefore(String? val) {
+    if (val == null || val.isEmpty) {
+      photosBefore.clear();
+    } else {
+      if (photosBefore.isEmpty) {
+        photosBefore.add(val);
+      } else {
+        photosBefore[0] = val;
+      }
+    }
+  }
+
+  String? get photoAfter => photosAfter.firstOrNull;
+  set photoAfter(String? val) {
+    if (val == null || val.isEmpty) {
+      photosAfter.clear();
+    } else {
+      if (photosAfter.isEmpty) {
+        photosAfter.add(val);
+      } else {
+        photosAfter[0] = val;
+      }
+    }
+  }
 
   Map<String, dynamic> toJson() => {
         'ex': exercises.map((e) => e.toJson()).toList(),
@@ -59,18 +95,28 @@ class WorkoutSession {
         'bwAfter': bodyweightAfterKg,
         'pb': photoBefore,
         'pa': photoAfter,
+        'pbs': photosBefore,
+        'pas': photosAfter,
       };
 
-  factory WorkoutSession.fromJson(Map<String, dynamic> j) => WorkoutSession()
-    ..exercises =
-        (j['ex'] as List).map((e) => SessionExercise.fromJson((e as Map).cast<String, dynamic>())).toList()
-    ..currentIndex = (j['i'] as num?)?.toInt() ?? 0
-    ..complete = j['c'] as bool? ?? false
-    ..summaryVolume = (j['sv'] as num?)?.toInt()
-    ..summarySets = (j['ss'] as num?)?.toInt()
-    ..summaryDuration = (j['sd'] as num?)?.toInt()
-    ..bodyweightBeforeKg = (j['bwBefore'] as num?)?.toDouble()
-    ..bodyweightAfterKg = (j['bwAfter'] as num?)?.toDouble()
-    ..photoBefore = j['pb'] as String?
-    ..photoAfter = j['pa'] as String?;
+  factory WorkoutSession.fromJson(Map<String, dynamic> j) {
+    final pbs = (j['pbs'] as List?)?.map((e) => e.toString()).where((e) => e.isNotEmpty).toList() ??
+        (j['pb'] != null && (j['pb'] as String).isNotEmpty ? [j['pb'] as String] : <String>[]);
+    final pas = (j['pas'] as List?)?.map((e) => e.toString()).where((e) => e.isNotEmpty).toList() ??
+        (j['pa'] != null && (j['pa'] as String).isNotEmpty ? [j['pa'] as String] : <String>[]);
+
+    return WorkoutSession(
+      photosBefore: pbs,
+      photosAfter: pas,
+    )
+      ..exercises =
+          (j['ex'] as List).map((e) => SessionExercise.fromJson((e as Map).cast<String, dynamic>())).toList()
+      ..currentIndex = (j['i'] as num?)?.toInt() ?? 0
+      ..complete = j['c'] as bool? ?? false
+      ..summaryVolume = (j['sv'] as num?)?.toInt()
+      ..summarySets = (j['ss'] as num?)?.toInt()
+      ..summaryDuration = (j['sd'] as num?)?.toInt()
+      ..bodyweightBeforeKg = (j['bwBefore'] as num?)?.toDouble()
+      ..bodyweightAfterKg = (j['bwAfter'] as num?)?.toDouble();
+  }
 }

@@ -175,18 +175,26 @@ mixin WorkoutState on FitCore, SettingsState, LibraryState, StatsState, Routines
     final current = session;
     if (current == null) return;
     if (before) {
-      current.photoBefore = base64;
+      if (!current.photosBefore.contains(base64)) {
+        current.photosBefore.add(base64);
+      }
     } else {
-      current.photoAfter = base64;
+      if (!current.photosAfter.contains(base64)) {
+        current.photosAfter.add(base64);
+      }
     }
 
     // Sync with history if finished
     if (current.complete && sessions.isNotEmpty) {
       final last = sessions.last;
       if (before) {
-        last.photoBefore = base64;
+        if (!last.photosBefore.contains(base64)) {
+          last.photosBefore.add(base64);
+        }
       } else {
-        last.photoAfter = base64;
+        if (!last.photosAfter.contains(base64)) {
+          last.photosAfter.add(base64);
+        }
       }
     }
 
@@ -196,19 +204,27 @@ mixin WorkoutState on FitCore, SettingsState, LibraryState, StatsState, Routines
 
   void attachPhotoToSession(LoggedSession targetSession, String base64, {required bool before}) {
     if (before) {
-      targetSession.photoBefore = base64;
+      targetSession.photosBefore.add(base64);
     } else {
-      targetSession.photoAfter = base64;
+      targetSession.photosAfter.add(base64);
     }
     persistNow();
     notifyListeners();
   }
 
-  void deleteSessionPhoto(LoggedSession targetSession, {required bool before}) {
+  void deleteSessionPhoto(LoggedSession targetSession, {required bool before, String? photoData}) {
     if (before) {
-      targetSession.photoBefore = null;
+      if (photoData != null) {
+        targetSession.photosBefore.remove(photoData);
+      } else {
+        targetSession.photosBefore.clear();
+      }
     } else {
-      targetSession.photoAfter = null;
+      if (photoData != null) {
+        targetSession.photosAfter.remove(photoData);
+      } else {
+        targetSession.photosAfter.clear();
+      }
     }
     persistNow();
     notifyListeners();
@@ -457,8 +473,7 @@ mixin WorkoutState on FitCore, SettingsState, LibraryState, StatsState, Routines
     s.complete = true;
     s.restRemaining = null;
 
-    final hasPhotos = (s.photoBefore != null && s.photoBefore!.isNotEmpty) ||
-        (s.photoAfter != null && s.photoAfter!.isNotEmpty);
+    final hasPhotos = s.photosBefore.isNotEmpty || s.photosAfter.isNotEmpty;
 
     if (done.isNotEmpty || hasPhotos) {
       final logged = <LoggedExercise>[];
@@ -474,8 +489,8 @@ mixin WorkoutState on FitCore, SettingsState, LibraryState, StatsState, Routines
         logged,
         bwBefore: s.bodyweightBeforeKg,
         bwAfter: s.bodyweightAfterKg,
-        photoBefore: s.photoBefore,
-        photoAfter: s.photoAfter,
+        photosBefore: s.photosBefore,
+        photosAfter: s.photosAfter,
       ));
       _computeSummaryHighlights(logged);
     } else {

@@ -315,16 +315,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
   List<String> _recentPhotos() {
     final list = <String>[];
     for (final s in fit.sessions.reversed) {
-      if (s.photoAfter != null && s.photoAfter!.isNotEmpty) {
-        if (imageProviderFromSrc(s.photoAfter!) != null) {
-          list.add(s.photoAfter!);
-          if (list.length == 3) break;
+      for (final p in s.photosAfter.reversed) {
+        if (p.isNotEmpty && imageProviderFromSrc(p) != null) {
+          list.add(p);
+          if (list.length == 3) return list;
         }
       }
-      if (s.photoBefore != null && s.photoBefore!.isNotEmpty) {
-        if (imageProviderFromSrc(s.photoBefore!) != null) {
-          list.add(s.photoBefore!);
-          if (list.length == 3) break;
+      for (final p in s.photosBefore.reversed) {
+        if (p.isNotEmpty && imageProviderFromSrc(p) != null) {
+          list.add(p);
+          if (list.length == 3) return list;
         }
       }
     }
@@ -334,11 +334,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   int _photoCount() {
     var count = 0;
     for (final s in fit.sessions) {
-      if (s.photoBefore != null && s.photoBefore!.isNotEmpty && imageProviderFromSrc(s.photoBefore!) != null) {
-        count++;
+      for (final p in s.photosBefore) {
+        if (p.isNotEmpty && imageProviderFromSrc(p) != null) {
+          count++;
+        }
       }
-      if (s.photoAfter != null && s.photoAfter!.isNotEmpty && imageProviderFromSrc(s.photoAfter!) != null) {
-        count++;
+      for (final p in s.photosAfter) {
+        if (p.isNotEmpty && imageProviderFromSrc(p) != null) {
+          count++;
+        }
       }
     }
     return count;

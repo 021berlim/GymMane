@@ -542,14 +542,34 @@ class SqliteStore {
             });
           }
 
+          List<String> decodePhotos(dynamic raw) {
+            if (raw == null) return [];
+            final trimmed = raw.toString().trim();
+            if (trimmed.isEmpty) return [];
+            if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+              try {
+                final decoded = jsonDecode(trimmed);
+                if (decoded is List) {
+                  return decoded.map((e) => e.toString()).where((e) => e.isNotEmpty).toList();
+                }
+              } catch (_) {}
+            }
+            return [trimmed];
+          }
+
+          final pbList = decodePhotos(sRow['photo_before']);
+          final paList = decodePhotos(sRow['photo_after']);
+
           sessionsList.add({
             'd': sRow['date'],
             'dur': sRow['duration_sec'],
             'ex': exList,
             if (sRow['bw_before'] != null) 'bwb': sRow['bw_before'],
             if (sRow['bw_after'] != null) 'bwa': sRow['bw_after'],
-            if (sRow['photo_before'] != null) 'pb': sRow['photo_before'],
-            if (sRow['photo_after'] != null) 'pa': sRow['photo_after'],
+            if (pbList.isNotEmpty) 'pb': pbList.first,
+            if (paList.isNotEmpty) 'pa': paList.first,
+            if (pbList.isNotEmpty) 'pbs': pbList,
+            if (paList.isNotEmpty) 'pas': paList,
           });
         }
         result['sessions'] = sessionsList;
@@ -771,13 +791,26 @@ class SqliteStore {
           final sMap = s.cast<String, dynamic>();
           final dateStr = sMap['d'] as String?;
           if (dateStr == null) continue;
+          String? encodePhotos(dynamic pList, dynamic pSingle) {
+            if (pList is List && pList.isNotEmpty) {
+              final strList = pList.map((e) => e.toString()).where((e) => e.isNotEmpty).toList();
+              if (strList.isEmpty) return null;
+              if (strList.length == 1) return strList.first;
+              return jsonEncode(strList);
+            }
+            if (pSingle is String && pSingle.isNotEmpty) {
+              return pSingle;
+            }
+            return null;
+          }
+
           final sessionId = await txn.insert('sessions', {
             'date': dateStr,
             'duration_sec': (sMap['dur'] as num?)?.toInt() ?? 0,
             'bw_before': (sMap['bwb'] as num?)?.toDouble(),
             'bw_after': (sMap['bwa'] as num?)?.toDouble(),
-            'photo_before': sMap['pb'] as String?,
-            'photo_after': sMap['pa'] as String?,
+            'photo_before': encodePhotos(sMap['pbs'], sMap['pb']),
+            'photo_after': encodePhotos(sMap['pas'], sMap['pa']),
           });
 
           final exList = (sMap['ex'] as List?) ?? [];

@@ -66,23 +66,27 @@ class _GalleryScreenState extends State<GalleryScreen> {
   List<_GalleryItem> _getPhotos() {
     final list = <_GalleryItem>[];
     for (final s in fit.sessions) {
-      if (s.photoBefore != null && s.photoBefore!.isNotEmpty) {
-        list.add(_GalleryItem(
-          date: s.date,
-          label: t.photoBefore,
-          data: s.photoBefore!,
-          session: s,
-          isBefore: true,
-        ));
+      for (final pb in s.photosBefore) {
+        if (pb.isNotEmpty) {
+          list.add(_GalleryItem(
+            date: s.date,
+            label: t.photoBefore,
+            data: pb,
+            session: s,
+            isBefore: true,
+          ));
+        }
       }
-      if (s.photoAfter != null && s.photoAfter!.isNotEmpty) {
-        list.add(_GalleryItem(
-          date: s.date,
-          label: t.photoAfter,
-          data: s.photoAfter!,
-          session: s,
-          isBefore: false,
-        ));
+      for (final pa in s.photosAfter) {
+        if (pa.isNotEmpty) {
+          list.add(_GalleryItem(
+            date: s.date,
+            label: t.photoAfter,
+            data: pa,
+            session: s,
+            isBefore: false,
+          ));
+        }
       }
     }
     list.sort((a, b) => b.date.compareTo(a.date));
@@ -587,7 +591,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
             photos: allPhotos,
             initialIndex: allPhotos.indexOf(item),
             onDelete: (photo) {
-              fit.deleteSessionPhoto(photo.session, before: photo.isBefore);
+              fit.deleteSessionPhoto(photo.session, before: photo.isBefore, photoData: photo.data);
               Navigator.of(context).pop();
             },
             onShare: (photo) {

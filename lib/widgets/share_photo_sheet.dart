@@ -220,10 +220,6 @@ class _SharePhotoSheetState extends State<SharePhotoSheet> {
         throw Exception('Visualização não pronta para captura');
       }
 
-      if (boundary.debugNeedsPaint) {
-        await Future.delayed(const Duration(milliseconds: 150));
-      }
-
       // Calculate pixelRatio so that exported image matches high resolution (~1080p)
       final canvasBox = _boundaryKey.currentContext?.findRenderObject() as RenderBox?;
       final displayW = canvasBox?.size.width ?? 360;
