@@ -1,11 +1,7 @@
-import 'dart:convert';
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fitiron/l10n/l10n.dart';
-import 'package:fitiron/models/exercise.dart';
 import 'package:fitiron/models/workout.dart';
 import 'package:fitiron/screens/profile_screen.dart';
 import 'package:fitiron/state/fit_state.dart';
