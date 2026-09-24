@@ -7,6 +7,7 @@ import '../theme/app_theme.dart';
 import 'dart:io';
 
 import '../screens/splash_screen.dart';
+import '../widgets/global_alarm_dismiss_listener.dart';
 import 'app_shell.dart';
 
 class FitIronApp extends StatelessWidget {
@@ -39,6 +40,9 @@ class FitIronApp extends StatelessWidget {
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
+        builder: (context, child) => GlobalAlarmDismissListener(
+          child: child ?? const SizedBox.shrink(),
+        ),
         home: shouldShowSplash ? const SplashScreen() : const AppShell(),
       ),
     );

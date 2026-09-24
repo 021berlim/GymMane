@@ -1,11 +1,11 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../l10n/l10n.dart';
+import 'alarm_controller.dart';
 
 class RestAlarm {
   RestAlarm._();
@@ -38,7 +38,7 @@ class RestAlarm {
     importance: Importance.max,
     priority: Priority.high,
     category: AndroidNotificationCategory.alarm,
-    playSound: true,
+    playSound: false,
     enableVibration: true,
     fullScreenIntent: true,
     audioAttributesUsage: AudioAttributesUsage.alarm,
@@ -49,6 +49,14 @@ class RestAlarm {
     autoCancel: false,
     icon: 'ic_notification',
     visibility: NotificationVisibility.public,
+    actions: const [
+      AndroidNotificationAction(
+        'stop_alarm_action',
+        'Parar Alarme',
+        showsUserInterface: true,
+        cancelNotification: true,
+      ),
+    ],
   );
 
   AndroidNotificationDetails get _androidGoal => AndroidNotificationDetails(
@@ -80,7 +88,6 @@ class RestAlarm {
     }
   }
 
-  AudioPlayer? _player;
   String? customSoundPath;
 
   Source get _source {
@@ -107,26 +114,7 @@ class RestAlarm {
     } catch (e) {
       debugPrint('RestAlarm (notificaciones) no disponible: $e');
     }
-    try {
-      final player = AudioPlayer();
-      await player.setReleaseMode(ReleaseMode.loop);
-      await player.setPlayerMode(PlayerMode.mediaPlayer);
-      await player.setAudioContext(
-        AudioContext(
-          android: const AudioContextAndroid(
-            isSpeakerphoneOn: false,
-            stayAwake: true,
-            contentType: AndroidContentType.sonification,
-            usageType: AndroidUsageType.alarm,
-            audioFocus: AndroidAudioFocus.gain,
-          ),
-          iOS: AudioContextIOS(category: AVAudioSessionCategory.playback, options: const {}),
-        ),
-      );
-      _player = player;
-    } catch (e) {
-      debugPrint('RestAlarm (audio) no disponible: $e');
-    }
+    await AlarmController.instance.init();
   }
 
   AndroidFlutterLocalNotificationsPlugin? get _androidPlugin =>
@@ -201,28 +189,11 @@ class RestAlarm {
         debugPrint('No se pudo mostrar el aviso: $e');
       }
     }
-    try {
-      HapticFeedback.heavyImpact();
-    } catch (_) {}
-    final player = _player;
-    if (player == null) return;
-    try {
-      await player.stop();
-      await player.play(_source, volume: 1.0);
-    } catch (e) {
-      debugPrint('No se pudo reproducir el aviso: $e');
-    }
+    await AlarmController.instance.playAlarm(source: _source);
   }
 
   Future<void> preview() async {
-    final player = _player;
-    if (player == null) return;
-    try {
-      await player.stop();
-      await player.play(_source, volume: 1.0);
-    } catch (e) {
-      debugPrint('No se pudo reproducir la vista previa: $e');
-    }
+    await AlarmController.instance.playAlarm(source: _source);
   }
 
   Future<Duration?> probeDuration(String path) async {
@@ -250,8 +221,13 @@ class RestAlarm {
   }
 
   Future<void> stopSound() async {
+    await AlarmController.instance.stopAlarm();
+    await cancelActiveNotification();
+  }
+
+  Future<void> cancelActiveNotification() async {
     try {
-      await _player?.stop();
+      await _plugin.cancel(id: _id);
     } catch (_) {}
   }
 

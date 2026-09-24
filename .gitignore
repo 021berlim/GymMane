@@ -69,3 +69,6 @@ Thumbs.db
 desktop.ini
 # Widget Preview related
 .widget_preview/
+
+# Temporary downloader output
+novas_imagens/

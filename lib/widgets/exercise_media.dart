@@ -7,7 +7,7 @@ import 'package:video_player/video_player.dart';
 import '../models/exercise.dart';
 import '../services/media_store.dart';
 import '../theme/app_colors.dart';
-import 'exercise_art.dart';
+import 'exercise_gif_player.dart';
 
 class ExerciseMedia extends StatelessWidget {
   const ExerciseMedia({
@@ -27,7 +27,13 @@ class ExerciseMedia extends StatelessWidget {
   Widget build(BuildContext context) {
     final path = ex.media.isEmpty ? null : MediaStore.pathFor(ex.media);
     if (path == null) {
-      return ExerciseArt(slug: ex.art, height: height, radius: radius, live: live);
+      final gif = ex.gifPath.isNotEmpty ? ex.gifPath : 'assets/exercises/${ex.id}.gif';
+      return ExerciseGifPlayer(
+        gifPath: gif,
+        height: height,
+        radius: radius,
+        isThumbnail: !live && height <= 80,
+      );
     }
     final isVideo = MediaStore.isVideo(ex.media);
     if (isVideo && live) {

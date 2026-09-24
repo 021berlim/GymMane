@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:flutter/widgets.dart';
 import '../l10n/l10n.dart';
 
 class Muscle {
@@ -11,34 +13,136 @@ class Exercise {
   const Exercise({
     required this.id,
     required this.name,
-    required this.primary,
-    required this.secondary,
-    required this.equipment,
-    required this.difficulty,
-    required this.art,
-    required this.steps,
+    this.namePt = '',
+    this.bodyPart = 'other',
+    this.bodyPartPt = 'Outros',
+    this.equipment = 'Other',
+    this.equipmentPt = 'Outros',
+    this.target = 'other',
+    this.targetPt = 'Geral',
+    this.secondaryMuscles = const [],
+    this.secondaryMusclesPt = const [],
+    this.instructions = const [],
+    this.instructionsPt = const [],
+    this.gifPath = '',
+    this.description = '',
+    this.difficulty = 'Beginner',
+    this.category = 'strength',
     this.media = '',
-  });
+    String? primary,
+    List<String>? secondary,
+    String? art,
+    List<String>? steps,
+  })  : _primary = primary,
+        _secondary = secondary,
+        _art = art,
+        _steps = steps;
+
   final String id;
   final String name;
-  final String primary;
-  final List<String> secondary;
+  final String namePt;
+  final String bodyPart;
+  final String bodyPartPt;
   final String equipment;
+  final String equipmentPt;
+  final String target;
+  final String targetPt;
+  final List<String> secondaryMuscles;
+  final List<String> secondaryMusclesPt;
+  final List<String> instructions;
+  final List<String> instructionsPt;
+  final String gifPath;
+  final String description;
   final String difficulty;
-  final String art;
-  final List<String> steps;
+  final String category;
   final String media;
 
-  Exercise copyWith({String? media}) => Exercise(
+  final String? _primary;
+  final List<String>? _secondary;
+  final String? _art;
+  final List<String>? _steps;
+
+  // -------------------------------------------------------------
+  // Helpers de Localização Contextual Reativa
+  // -------------------------------------------------------------
+  String getLocalizedName([BuildContext? context]) {
+    if (appLanguage == 'pt' && namePt.isNotEmpty) return namePt;
+    return exerciseName(this);
+  }
+
+  List<String> getLocalizedInstructions([BuildContext? context]) {
+    if (appLanguage == 'pt' && instructionsPt.isNotEmpty) return instructionsPt;
+    return steps;
+  }
+
+  String getLocalizedBodyPart([BuildContext? context]) {
+    if (appLanguage == 'pt' && bodyPartPt.isNotEmpty) return bodyPartPt;
+    return bodyPart;
+  }
+
+  String getLocalizedTarget([BuildContext? context]) {
+    if (appLanguage == 'pt' && targetPt.isNotEmpty) return targetPt;
+    return muscleLabel(primary);
+  }
+
+  List<String> getLocalizedSecondaryMuscles([BuildContext? context]) {
+    if (appLanguage == 'pt' && secondaryMusclesPt.isNotEmpty) return secondaryMusclesPt;
+    return secondary;
+  }
+
+  String getLocalizedEquipment([BuildContext? context]) {
+    if (appLanguage == 'pt' && equipmentPt.isNotEmpty) return equipmentPt;
+    return t.equipment(equipment);
+  }
+
+  // Getters de retrocompatibilidade com telas legadas
+  String get primary => _primary ?? mapTargetToPrimaryMuscle(target, bodyPart);
+  List<String> get secondary => _secondary ?? (secondaryMusclesPt.isNotEmpty && appLanguage == 'pt' ? secondaryMusclesPt : secondaryMuscles);
+  List<String> get steps => _steps ?? (instructionsPt.isNotEmpty && appLanguage == 'pt' ? instructionsPt : instructions);
+  String get art => _art ?? id;
+
+  Exercise copyWith({
+    String? name,
+    String? namePt,
+    String? bodyPart,
+    String? bodyPartPt,
+    String? equipment,
+    String? equipmentPt,
+    String? target,
+    String? targetPt,
+    List<String>? secondaryMuscles,
+    List<String>? secondaryMusclesPt,
+    List<String>? instructions,
+    List<String>? instructionsPt,
+    String? gifPath,
+    String? description,
+    String? difficulty,
+    String? category,
+    String? media,
+  }) =>
+      Exercise(
         id: id,
-        name: name,
-        primary: primary,
-        secondary: secondary,
-        equipment: equipment,
-        difficulty: difficulty,
-        art: art,
-        steps: steps,
+        name: name ?? this.name,
+        namePt: namePt ?? this.namePt,
+        bodyPart: bodyPart ?? this.bodyPart,
+        bodyPartPt: bodyPartPt ?? this.bodyPartPt,
+        equipment: equipment ?? this.equipment,
+        equipmentPt: equipmentPt ?? this.equipmentPt,
+        target: target ?? this.target,
+        targetPt: targetPt ?? this.targetPt,
+        secondaryMuscles: secondaryMuscles ?? this.secondaryMuscles,
+        secondaryMusclesPt: secondaryMusclesPt ?? this.secondaryMusclesPt,
+        instructions: instructions ?? this.instructions,
+        instructionsPt: instructionsPt ?? this.instructionsPt,
+        gifPath: gifPath ?? this.gifPath,
+        description: description ?? this.description,
+        difficulty: difficulty ?? this.difficulty,
+        category: category ?? this.category,
         media: media ?? this.media,
+        primary: _primary,
+        secondary: _secondary,
+        art: _art,
+        steps: _steps,
       );
 
   Map<String, dynamic> toJson() => {
@@ -49,10 +153,12 @@ class Exercise {
         'd': difficulty,
         if (media.isNotEmpty) 'm': media,
       };
+
   factory Exercise.fromJson(Map<String, dynamic> j) => Exercise(
         id: j['id'] as String,
-        name: j['n'] as String,
-        primary: j['p'] as String,
+        name: (j['n'] ?? j['name'] ?? '') as String,
+        namePt: (j['name_pt'] as String?) ?? '',
+        primary: j['p'] as String?,
         secondary: const [],
         equipment: (j['e'] as String?) ?? 'Other',
         difficulty: (j['d'] as String?) ?? 'Beginner',
@@ -60,6 +166,39 @@ class Exercise {
         steps: const [],
         media: (j['m'] as String?) ?? '',
       );
+
+  factory Exercise.fromDbMap(Map<String, dynamic> row) {
+    List<String> decodeList(dynamic val) {
+      if (val == null) return const [];
+      if (val is List) return val.map((e) => e.toString()).toList();
+      try {
+        final decoded = jsonDecode(val.toString());
+        if (decoded is List) return decoded.map((e) => e.toString()).toList();
+      } catch (_) {}
+      return const [];
+    }
+
+    return Exercise(
+      id: row['id'] as String,
+      name: row['name'] as String,
+      namePt: (row['name_pt'] as String?) ?? '',
+      bodyPart: (row['body_part'] as String?) ?? 'other',
+      bodyPartPt: (row['body_part_pt'] as String?) ?? 'Outros',
+      equipment: (row['equipment'] as String?) ?? 'Other',
+      equipmentPt: (row['equipment_pt'] as String?) ?? 'Outros',
+      target: (row['target'] as String?) ?? 'other',
+      targetPt: (row['target_pt'] as String?) ?? 'Geral',
+      secondaryMuscles: decodeList(row['secondary_muscles']),
+      secondaryMusclesPt: decodeList(row['secondary_muscles_pt']),
+      instructions: decodeList(row['instructions']),
+      instructionsPt: decodeList(row['instructions_pt']),
+      gifPath: (row['gif_path'] as String?) ?? '',
+      description: (row['description'] as String?) ?? '',
+      difficulty: (row['difficulty'] as String?) ?? 'Beginner',
+      category: (row['category'] as String?) ?? 'strength',
+      media: (row['media'] as String?) ?? '',
+    );
+  }
 }
 
 class ToolMeta {
@@ -88,10 +227,58 @@ const List<Muscle> kMuscles = [
 ];
 
 String muscleLabel(String id) => t.muscle(id);
+String exerciseName(Exercise e) => e.namePt.isNotEmpty && appLanguage == 'pt' ? e.namePt : t.catalogName(e.id, e.name);
+List<String> exerciseSteps(Exercise e) => e.instructionsPt.isNotEmpty && appLanguage == 'pt' ? e.instructionsPt : t.catalogSteps(e.id, e.steps);
 
-String exerciseName(Exercise e) => t.catalogName(e.id, e.name);
-
-List<String> exerciseSteps(Exercise e) => t.catalogSteps(e.id, e.steps);
+String mapTargetToPrimaryMuscle(String target, String bodyPart) {
+  switch (target.trim().toLowerCase()) {
+    case 'pectorals':
+    case 'serratus anterior':
+      return 'chest';
+    case 'lats':
+    case 'upper back':
+    case 'spine':
+      return 'back';
+    case 'delts':
+      return 'shoulders';
+    case 'biceps':
+      return 'biceps';
+    case 'triceps':
+      return 'triceps';
+    case 'forearms':
+      return 'forearm';
+    case 'abs':
+      return 'abdomen';
+    case 'quads':
+    case 'adductors':
+    case 'abductors':
+      return 'quads';
+    case 'glutes':
+      return 'glutes';
+    case 'hamstrings':
+      return 'hamstrings';
+    case 'calves':
+      return 'calves';
+    case 'traps':
+    case 'levator scapulae':
+      return 'trapezius';
+    case 'cardiovascular system':
+      return 'cardio';
+    default:
+      final bp = bodyPart.trim().toLowerCase();
+      if (bp == 'cardio') return 'cardio';
+      if (bp == 'neck') return 'trapezius';
+      if (bp == 'waist') return 'abdomen';
+      if (bp == 'back') return 'back';
+      if (bp == 'chest') return 'chest';
+      if (bp == 'shoulders') return 'shoulders';
+      if (bp == 'upper arms') return 'biceps';
+      if (bp == 'lower arms') return 'forearm';
+      if (bp == 'upper legs') return 'quads';
+      if (bp == 'lower legs') return 'calves';
+      return 'abdomen';
+  }
+}
 
 String muscleGroup(String muscleId) {
   switch (muscleId) {
