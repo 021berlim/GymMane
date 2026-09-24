@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../catalog/exercise_catalog.dart';
+import '../l10n/fitness_translator.dart';
 import '../l10n/l10n.dart';
-import '../models/exercise.dart';
 import '../models/live_session.dart';
 import '../state/fit_state.dart';
 import '../theme/app_colors.dart';
@@ -167,6 +167,10 @@ class _SessionScreenState extends State<SessionScreen> {
     final s = fit.session!;
     final ex = s.exercises[exIdx];
     final def = fit.exerciseById(ex.id) ?? kExercises.first;
+    final displayName = def.localizedName(context).isNotEmpty
+        ? def.localizedName(context)
+        : (ex.name.isNotEmpty ? FitnessTranslator.translateExerciseName(ex.name) : def.name);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -176,12 +180,12 @@ class _SessionScreenState extends State<SessionScreen> {
             Text(t.exerciseXofY(exIdx + 1, s.exercises.length),
                 style: AppTheme.s(12, weight: FontWeight.w600, color: gc.textSecondary, letterSpacing: 1)),
             const SizedBox(height: 4),
-            Text(ex.name, style: AppTheme.d(26, weight: FontWeight.w700, color: gc.text)),
+            Text(displayName, style: AppTheme.d(26, weight: FontWeight.w700, color: gc.text)),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(color: gc.emberSoft, borderRadius: BorderRadius.circular(100)),
-              child: Text(muscleLabel(ex.primary),
+              child: Text(def.getLocalizedTarget(context),
                   style: AppTheme.s(12, weight: FontWeight.w600, color: gc.ember)),
             ),
             if (fit.lastSummaryFor(ex.id) != null) ...[
@@ -275,7 +279,7 @@ class _SessionScreenState extends State<SessionScreen> {
               button: true,
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
-                onTap: () => _confirmDrop(context, exIdx, ex.name),
+                onTap: () => _confirmDrop(context, exIdx, displayName),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   child: Text(t.dropExercise,

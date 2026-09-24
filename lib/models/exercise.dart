@@ -62,36 +62,65 @@ class Exercise {
   final String? _art;
   final List<String>? _steps;
 
+  String get nameEn => name;
+  String get bodyPartEn => bodyPart;
+  String get targetEn => target;
+  String get equipmentEn => equipment;
+  List<String> get secondaryMusclesEn => secondaryMuscles;
+  List<String> get instructionsEn => instructions;
+
   // -------------------------------------------------------------
   // Helpers de Localização Contextual Reativa
   // -------------------------------------------------------------
-  String getLocalizedName([BuildContext? context]) {
-    if (appLanguage == 'pt' && namePt.isNotEmpty) return namePt;
+  String localizedName([BuildContext? context]) {
+    final bool isPt = context != null
+        ? Localizations.localeOf(context).languageCode == 'pt'
+        : appLanguage == 'pt';
+    if (isPt && namePt.trim().isNotEmpty) {
+      return namePt;
+    }
     return exerciseName(this);
   }
 
+  String getLocalizedName([BuildContext? context]) => localizedName(context);
+
   List<String> getLocalizedInstructions([BuildContext? context]) {
-    if (appLanguage == 'pt' && instructionsPt.isNotEmpty) return instructionsPt;
+    final bool isPt = context != null
+        ? Localizations.localeOf(context).languageCode == 'pt'
+        : appLanguage == 'pt';
+    if (isPt && instructionsPt.isNotEmpty) return instructionsPt;
     return steps;
   }
 
   String getLocalizedBodyPart([BuildContext? context]) {
-    if (appLanguage == 'pt' && bodyPartPt.isNotEmpty) return bodyPartPt;
+    final bool isPt = context != null
+        ? Localizations.localeOf(context).languageCode == 'pt'
+        : appLanguage == 'pt';
+    if (isPt && bodyPartPt.isNotEmpty) return bodyPartPt;
     return bodyPart;
   }
 
   String getLocalizedTarget([BuildContext? context]) {
-    if (appLanguage == 'pt' && targetPt.isNotEmpty) return targetPt;
+    final bool isPt = context != null
+        ? Localizations.localeOf(context).languageCode == 'pt'
+        : appLanguage == 'pt';
+    if (isPt && targetPt.isNotEmpty) return targetPt;
     return muscleLabel(primary);
   }
 
   List<String> getLocalizedSecondaryMuscles([BuildContext? context]) {
-    if (appLanguage == 'pt' && secondaryMusclesPt.isNotEmpty) return secondaryMusclesPt;
+    final bool isPt = context != null
+        ? Localizations.localeOf(context).languageCode == 'pt'
+        : appLanguage == 'pt';
+    if (isPt && secondaryMusclesPt.isNotEmpty) return secondaryMusclesPt;
     return secondary;
   }
 
   String getLocalizedEquipment([BuildContext? context]) {
-    if (appLanguage == 'pt' && equipmentPt.isNotEmpty) return equipmentPt;
+    final bool isPt = context != null
+        ? Localizations.localeOf(context).languageCode == 'pt'
+        : appLanguage == 'pt';
+    if (isPt && equipmentPt.isNotEmpty) return equipmentPt;
     return t.equipment(equipment);
   }
 
@@ -178,19 +207,28 @@ class Exercise {
       return const [];
     }
 
+    final rawName = (row['name_en'] ?? row['name'] ?? '').toString();
+    final rawNamePt = (row['name_pt'] as String?) ?? '';
+    final rawBodyPart = (row['body_part_en'] ?? row['body_part'] ?? 'other').toString();
+    final rawBodyPartPt = (row['body_part_pt'] as String?) ?? 'Outros';
+    final rawTarget = (row['target_en'] ?? row['target'] ?? 'other').toString();
+    final rawTargetPt = (row['target_pt'] as String?) ?? 'Geral';
+    final rawEquip = (row['equipment_en'] ?? row['equipment'] ?? 'Other').toString();
+    final rawEquipPt = (row['equipment_pt'] as String?) ?? 'Outros';
+
     return Exercise(
       id: row['id'] as String,
-      name: row['name'] as String,
-      namePt: (row['name_pt'] as String?) ?? '',
-      bodyPart: (row['body_part'] as String?) ?? 'other',
-      bodyPartPt: (row['body_part_pt'] as String?) ?? 'Outros',
-      equipment: (row['equipment'] as String?) ?? 'Other',
-      equipmentPt: (row['equipment_pt'] as String?) ?? 'Outros',
-      target: (row['target'] as String?) ?? 'other',
-      targetPt: (row['target_pt'] as String?) ?? 'Geral',
-      secondaryMuscles: decodeList(row['secondary_muscles']),
+      name: rawName,
+      namePt: rawNamePt,
+      bodyPart: rawBodyPart,
+      bodyPartPt: rawBodyPartPt,
+      equipment: rawEquip,
+      equipmentPt: rawEquipPt,
+      target: rawTarget,
+      targetPt: rawTargetPt,
+      secondaryMuscles: decodeList(row['secondary_muscles_json'] ?? row['secondary_muscles']),
       secondaryMusclesPt: decodeList(row['secondary_muscles_pt']),
-      instructions: decodeList(row['instructions']),
+      instructions: decodeList(row['instructions_json'] ?? row['instructions']),
       instructionsPt: decodeList(row['instructions_pt']),
       gifPath: (row['gif_path'] as String?) ?? '',
       description: (row['description'] as String?) ?? '',
@@ -200,6 +238,8 @@ class Exercise {
     );
   }
 }
+
+typedef ExerciseModel = Exercise;
 
 class ToolMeta {
   const ToolMeta(this.id, this.name, this.desc);
@@ -227,7 +267,8 @@ const List<Muscle> kMuscles = [
 ];
 
 String muscleLabel(String id) => t.muscle(id);
-String exerciseName(Exercise e) => e.namePt.isNotEmpty && appLanguage == 'pt' ? e.namePt : t.catalogName(e.id, e.name);
+String exerciseName(Exercise e) =>
+    e.namePt.isNotEmpty && appLanguage == 'pt' ? e.namePt : t.catalogName(e.id, e.name);
 List<String> exerciseSteps(Exercise e) => e.instructionsPt.isNotEmpty && appLanguage == 'pt' ? e.instructionsPt : t.catalogSteps(e.id, e.steps);
 
 String mapTargetToPrimaryMuscle(String target, String bodyPart) {

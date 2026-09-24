@@ -254,7 +254,7 @@ mixin WorkoutState on FitCore, SettingsState, LibraryState, StatsState, Routines
           return SessionSet(r, w, false);
         },
       );
-      return SessionExercise(ex.id, ex.name, ex.primary, sets);
+      return SessionExercise(ex.id, ex.localizedName(), ex.primary, sets);
     }).toList();
     _restTimer?.cancel();
     _elapsedBefore = 0;
@@ -433,7 +433,7 @@ mixin WorkoutState on FitCore, SettingsState, LibraryState, StatsState, Routines
     final last = lastSetsFor(id);
     s.exercises.add(SessionExercise(
       ex.id,
-      ex.name,
+      ex.localizedName(),
       ex.primary,
       last.isNotEmpty
           ? last.map((l) => SessionSet(l.reps, l.weight, false)).toList()

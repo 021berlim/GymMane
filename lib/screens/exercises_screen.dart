@@ -479,7 +479,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                     children: [
                       Padding(
                         padding: const EdgeInsets.only(right: 24),
-                        child: Text(exerciseName(ex), style: AppTheme.s(14, weight: FontWeight.w600, color: gc.text)),
+                        child: Text(ex.localizedName(context), style: AppTheme.s(14, weight: FontWeight.w600, color: gc.text)),
                       ),
                       const SizedBox(height: 6),
                       Wrap(
@@ -490,10 +490,10 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(color: gc.accentSoft, borderRadius: BorderRadius.circular(100)),
-                            child: Text(muscleLabel(ex.primary),
+                            child: Text(ex.getLocalizedTarget(context),
                                 style: AppTheme.s(11, weight: FontWeight.w600, color: gc.accent)),
                           ),
-                          Text(t.equipment(ex.equipment), style: AppTheme.s(12, color: gc.textSecondary)),
+                          Text(ex.getLocalizedEquipment(context), style: AppTheme.s(12, color: gc.textSecondary)),
                         ],
                       ),
                       const SizedBox(height: 6),

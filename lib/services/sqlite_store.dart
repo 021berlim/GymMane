@@ -81,7 +81,7 @@ class SqliteStore {
 
       final checkSetting = await db.query(
         'app_settings',
-        where: "key = 'catalog_v1394_synced'",
+        where: "key = 'catalog_brazilian_v1_synced'",
       );
       final countQuery = await db.rawQuery(
         'SELECT COUNT(*) as total FROM ${ExerciseRepository.tableExercises}',
@@ -92,14 +92,14 @@ class SqliteStore {
       final bool needsReseed = checkSetting.isEmpty || total < 1390;
 
       if (needsReseed && !isTest) {
-        debugPrint('[SqliteStore] Zerando exercícios e cadastrando 1.394 novos no SQLite...');
+        debugPrint('[SqliteStore] Aplicando patch brasileiro de 1.394 exercícios no SQLite...');
         await ExerciseRepository.instance.seedDatabaseFromInitialJson(
           db: db,
           force: true,
         );
         await db.insert(
           'app_settings',
-          {'key': 'catalog_v1394_synced', 'value': 'true'},
+          {'key': 'catalog_brazilian_v1_synced', 'value': 'true'},
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
       }
@@ -123,7 +123,7 @@ class SqliteStore {
     );
     await db.insert(
       'app_settings',
-      {'key': 'catalog_v1394_synced', 'value': 'true'},
+      {'key': 'catalog_brazilian_v1_synced', 'value': 'true'},
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
     final allDbExercises = await ExerciseRepository.instance.getAllExercises(db);

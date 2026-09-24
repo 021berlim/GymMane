@@ -65,6 +65,7 @@ class _RoutineEditScreenState extends State<RoutineEditScreen> {
 
       if (q.isNotEmpty &&
           !ex.name.toLowerCase().contains(q) &&
+          !ex.localizedName().toLowerCase().contains(q) &&
           !exerciseName(ex).toLowerCase().contains(q)) {
         return false;
       }
@@ -513,7 +514,7 @@ class _RoutineEditScreenState extends State<RoutineEditScreen> {
             ReorderableDragStartListener(
               index: index,
               child: Semantics(
-                label: t.reorderHandle(ex.name),
+                label: t.reorderHandle(ex.localizedName(context)),
                 child: SizedBox(
                   width: 34,
                   height: 44,
@@ -527,9 +528,9 @@ class _RoutineEditScreenState extends State<RoutineEditScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(exerciseName(ex), style: AppTheme.s(14, weight: FontWeight.w600, color: gc.text)),
+                  Text(ex.localizedName(context), style: AppTheme.s(14, weight: FontWeight.w600, color: gc.text)),
                   const SizedBox(height: 2),
-                  Text('${muscleLabel(ex.primary)} · ${t.equipment(ex.equipment)}',
+                  Text('${ex.getLocalizedTarget(context)} · ${ex.getLocalizedEquipment(context)}',
                       style: AppTheme.s(12, color: gc.textSecondary)),
                 ],
               ),
@@ -543,7 +544,7 @@ class _RoutineEditScreenState extends State<RoutineEditScreen> {
                   final ok = await showConfirmDeleteModal(
                     context: context,
                     title: t.removeFromRoutine,
-                    message: t.deleteEntryBody(ex.name),
+                    message: t.deleteEntryBody(ex.localizedName(context)),
                   );
                   if (ok) fit.toggleRoutineExercise(_id, ex.id);
                 },

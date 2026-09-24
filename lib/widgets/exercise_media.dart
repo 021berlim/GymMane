@@ -28,7 +28,7 @@ class ExerciseMedia extends StatelessWidget {
     final path = ex.media.isEmpty ? null : MediaStore.pathFor(ex.media);
     if (path == null) {
       final gif = ex.gifPath.isNotEmpty ? ex.gifPath : 'assets/exercises/${ex.id}.gif';
-      return ExerciseGifPlayer(
+      return ExerciseGifView(
         gifPath: gif,
         height: height,
         radius: radius,

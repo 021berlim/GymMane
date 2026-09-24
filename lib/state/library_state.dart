@@ -104,21 +104,29 @@ mixin LibraryState on FitCore {
       if (exFavouritesOnly && favorites[ex.id] != true) return false;
 
       if (q.isNotEmpty) {
-        final matchesId = ex.id.toLowerCase().contains(rawQ.toLowerCase());
-        final matchesName = normalizeSearchText(ex.name).contains(q);
-        final matchesLocName = normalizeSearchText(exerciseName(ex)).contains(q) ||
-            normalizeSearchText(ex.namePt).contains(q);
+        final paddedId = RegExp(r'^\d+$').hasMatch(rawQ) ? rawQ.padLeft(4, '0') : '';
+        final matchesId = ex.id.toLowerCase().contains(rawQ.toLowerCase()) ||
+            (paddedId.isNotEmpty && ex.id == paddedId);
+        final matchesName = normalizeSearchText(ex.name).contains(q) ||
+            normalizeSearchText(ex.nameEn).contains(q);
+        final matchesLocName = normalizeSearchText(ex.localizedName()).contains(q) ||
+            normalizeSearchText(ex.namePt).contains(q) ||
+            normalizeSearchText(exerciseName(ex)).contains(q);
         final matchesEquip = normalizeSearchText(ex.equipment).contains(q) ||
             normalizeSearchText(ex.equipmentPt).contains(q) ||
+            normalizeSearchText(ex.getLocalizedEquipment()).contains(q) ||
             normalizeSearchText(t.equipment(ex.equipment)).contains(q);
         final matchesMuscle = normalizeSearchText(ex.primary).contains(q) ||
             normalizeSearchText(ex.target).contains(q) ||
             normalizeSearchText(ex.targetPt).contains(q) ||
+            normalizeSearchText(ex.getLocalizedTarget()).contains(q) ||
             normalizeSearchText(ex.bodyPart).contains(q) ||
             normalizeSearchText(ex.bodyPartPt).contains(q) ||
+            normalizeSearchText(ex.getLocalizedBodyPart()).contains(q) ||
             normalizeSearchText(muscleLabel(ex.primary)).contains(q);
         final matchesSecondary = ex.secondary.any((m) => normalizeSearchText(m).contains(q)) ||
-            ex.secondaryMusclesPt.any((m) => normalizeSearchText(m).contains(q));
+            ex.secondaryMusclesPt.any((m) => normalizeSearchText(m).contains(q)) ||
+            ex.getLocalizedSecondaryMuscles().any((m) => normalizeSearchText(m).contains(q));
 
         if (!matchesId &&
             !matchesName &&

@@ -4,13 +4,15 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../theme/app_colors.dart';
 
-/// Widget de alta performance para exibição de GIFs animados de exercícios.
+/// Widget de alta performance para renderização de GIFs animados de exercícios.
 ///
-/// Proteção Anti-OOM no Android:
-/// - Decodificação restrita na GPU via ResizeImage (cacheWidth/cacheHeight).
-/// - Descarte imediato no dispose via evict().
-class ExerciseGifPlayer extends StatefulWidget {
-  const ExerciseGifPlayer({
+/// Proteção Avançada Anti-OOM (Out-of-Memory) no Android:
+/// 1. Decodificação restrita na GPU via ResizeImage (cacheWidth/cacheHeight limitados).
+/// 2. Descarte imediato no dispose via evict() do ImageProvider anterior.
+/// 3. Resolução segura de caminhos locais (assets/exercises/, novas_imagens/, File system).
+/// 4. Skeleton/Placeholder suave enquanto o frame é decodificado.
+class ExerciseGifView extends StatefulWidget {
+  const ExerciseGifView({
     super.key,
     required this.gifPath,
     this.height = 180,
@@ -28,10 +30,10 @@ class ExerciseGifPlayer extends StatefulWidget {
   final bool isThumbnail;
 
   @override
-  State<ExerciseGifPlayer> createState() => _ExerciseGifPlayerState();
+  State<ExerciseGifView> createState() => _ExerciseGifViewState();
 }
 
-class _ExerciseGifPlayerState extends State<ExerciseGifPlayer> {
+class _ExerciseGifViewState extends State<ExerciseGifView> {
   ImageProvider? _imageProvider;
 
   @override
@@ -41,26 +43,33 @@ class _ExerciseGifPlayerState extends State<ExerciseGifPlayer> {
   }
 
   @override
-  void didUpdateWidget(ExerciseGifPlayer oldWidget) {
+  void didUpdateWidget(ExerciseGifView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.gifPath != widget.gifPath || oldWidget.isThumbnail != widget.isThumbnail) {
+      oldWidget.gifPath.isNotEmpty ? _imageProvider?.evict() : null;
       _setupImageProvider();
     }
   }
 
   void _setupImageProvider() {
-    if (widget.gifPath.isEmpty) {
+    final cleanPath = widget.gifPath.trim();
+    if (cleanPath.isEmpty) {
       _imageProvider = null;
       return;
     }
 
     final ImageProvider rawProvider;
-    if (widget.gifPath.startsWith('assets/')) {
-      rawProvider = AssetImage(widget.gifPath);
-    } else if (File(widget.gifPath).existsSync()) {
-      rawProvider = FileImage(File(widget.gifPath));
+    if (cleanPath.startsWith('assets/')) {
+      rawProvider = AssetImage(cleanPath);
     } else {
-      rawProvider = AssetImage('assets/exercises/${widget.gifPath.split('/').last}');
+      final localFile = File(cleanPath);
+      if (localFile.existsSync()) {
+        rawProvider = FileImage(localFile);
+      } else {
+        final filename = cleanPath.split('/').last.split('\\').last;
+        final assetTarget = 'assets/exercises/$filename';
+        rawProvider = AssetImage(assetTarget);
+      }
     }
 
     final int targetWidth = widget.isThumbnail ? 160 : 360;
@@ -77,6 +86,7 @@ class _ExerciseGifPlayerState extends State<ExerciseGifPlayer> {
   @override
   void dispose() {
     _imageProvider?.evict();
+    _imageProvider = null;
     super.dispose();
   }
 
@@ -106,19 +116,25 @@ class _ExerciseGifPlayerState extends State<ExerciseGifPlayer> {
                 if (wasSynchronouslyLoaded || frame != null) {
                   return child;
                 }
-                return Center(
-                  child: SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: gc.accent.withValues(alpha: 0.6),
-                    ),
-                  ),
-                );
+                return _skeletonPlaceholder(gc);
               },
               errorBuilder: (context, error, stackTrace) => _fallbackIcon(gc),
             ),
+    );
+  }
+
+  Widget _skeletonPlaceholder(GymColors gc) {
+    return Container(
+      color: gc.bgRaised,
+      alignment: Alignment.center,
+      child: SizedBox(
+        width: 22,
+        height: 22,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          color: gc.accent.withValues(alpha: 0.5),
+        ),
+      ),
     );
   }
 
@@ -132,3 +148,6 @@ class _ExerciseGifPlayerState extends State<ExerciseGifPlayer> {
     );
   }
 }
+
+/// Alias para manter compatibilidade reversa com chamadas legadas
+typedef ExerciseGifPlayer = ExerciseGifView;

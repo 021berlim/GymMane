@@ -1,10 +1,8 @@
-import 'dart:convert';
-import 'dart:io';
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:sqflite/sqflite.dart';
 
 import '../l10n/fitness_translator.dart';
 import '../models/exercise.dart';
+import 'apply_brazilian_exercises_patch.dart';
 
 class ExerciseRepository {
   ExerciseRepository._();
@@ -18,17 +16,25 @@ class ExerciseRepository {
       CREATE TABLE IF NOT EXISTS $tableExercises (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
+        name_en TEXT NOT NULL,
         name_pt TEXT NOT NULL,
         body_part TEXT,
+        body_part_en TEXT,
         body_part_pt TEXT,
         equipment TEXT,
+        equipment_en TEXT,
         equipment_pt TEXT,
         target TEXT,
+        target_en TEXT,
         target_pt TEXT,
         secondary_muscles TEXT,
+        secondary_muscles_en TEXT,
         secondary_muscles_pt TEXT,
+        secondary_muscles_json TEXT,
         instructions TEXT,
+        instructions_en TEXT,
         instructions_pt TEXT,
+        instructions_json TEXT,
         gif_path TEXT NOT NULL,
         description TEXT,
         difficulty TEXT,
@@ -55,108 +61,15 @@ class ExerciseRepository {
     String jsonAssetPath = 'assets/data/exercicios_metadados.json',
     bool force = false,
   }) async {
-    if (!force) {
-      final check = await db.rawQuery('SELECT COUNT(*) as total FROM $tableExercises');
-      final currentCount = Sqflite.firstIntValue(check) ?? 0;
-      if (currentCount >= 1390) return currentCount;
-    } else {
-      await db.delete(tableExercises);
-    }
-
-    String content;
-    try {
-      content = await rootBundle.loadString(jsonAssetPath);
-    } catch (_) {
-      final f = File(jsonAssetPath);
-      if (await f.exists()) {
-        content = await f.readAsString();
-      } else {
-        return 0;
-      }
-    }
-
-    final List decoded = jsonDecode(content);
-
-    const int chunkSize = 500;
-    int insertedCount = 0;
-
-    for (int i = 0; i < decoded.length; i += chunkSize) {
-      final end = (i + chunkSize < decoded.length) ? i + chunkSize : decoded.length;
-      final chunk = decoded.sublist(i, end);
-      final batch = db.batch();
-
-      for (final raw in chunk) {
-        final item = raw as Map<String, dynamic>;
-        final id = item['id'].toString();
-        final nameEn = (item['name'] ?? '').toString();
-        final namePt = FitnessTranslator.translateExerciseName(nameEn);
-
-        final bodyPartEn = (item['bodyPart'] ?? '').toString();
-        final bodyPartPt = FitnessTranslator.bodyPartsPt[bodyPartEn] ?? bodyPartEn;
-
-        final targetEn = (item['target'] ?? '').toString();
-        final targetPt = FitnessTranslator.targetMusclesPt[targetEn] ?? targetEn;
-
-        final equipEn = (item['equipment'] ?? '').toString();
-        final equipPt = FitnessTranslator.equipmentPt[equipEn] ?? equipEn;
-
-        final secondaryRaw = (item['secondaryMuscles'] as List? ?? []).cast<String>();
-        final secondaryPt = secondaryRaw
-            .map((m) => FitnessTranslator.secondaryMusclesPt[m] ?? m)
-            .toList();
-
-        final instructionsRaw = (item['instructions'] as List? ?? []).cast<String>();
-        final instructionsPt = FitnessTranslator.translateInstructions(instructionsRaw);
-
-        final termsToConcat = [
-          id,
-          nameEn,
-          namePt,
-          bodyPartEn,
-          bodyPartPt,
-          targetEn,
-          targetPt,
-          equipEn,
-          equipPt,
-          ...secondaryRaw,
-          ...secondaryPt,
-        ].join(' ');
-
-        final searchIndex = normalizeSearchText(termsToConcat);
-
-        batch.insert(
-          tableExercises,
-          {
-            'id': id,
-            'name': nameEn,
-            'name_pt': namePt,
-            'body_part': bodyPartEn,
-            'body_part_pt': bodyPartPt,
-            'equipment': equipEn,
-            'equipment_pt': equipPt,
-            'target': targetEn,
-            'target_pt': targetPt,
-            'secondary_muscles': jsonEncode(secondaryRaw),
-            'secondary_muscles_pt': jsonEncode(secondaryPt),
-            'instructions': jsonEncode(instructionsRaw),
-            'instructions_pt': jsonEncode(instructionsPt),
-            'gif_path': 'assets/exercises/$id.gif',
-            'description': (item['description'] ?? '').toString(),
-            'difficulty': (item['difficulty'] ?? 'beginner').toString(),
-            'category': (item['category'] ?? 'strength').toString(),
-            'search_index': searchIndex,
-          },
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
-        insertedCount++;
-      }
-
-      await batch.commit(noResult: true);
-    }
-
-    return insertedCount;
+    await createSchema(db);
+    return applyBrazilianExercisesPatch(
+      db: db,
+      jsonPath: jsonAssetPath,
+      force: force,
+    );
   }
 
+  /// Busca otimizada e tolerante por ID, sem acento, com acento e multilíngue
   Future<List<Exercise>> searchExercises(
     Database db, {
     required String query,
@@ -164,17 +77,32 @@ class ExerciseRepository {
     int limit = 50,
     int offset = 0,
   }) async {
-    final cleanQuery = normalizeSearchText(query);
+    final rawTrimmed = query.trim();
+    final cleanQuery = normalizeSearchText(rawTrimmed);
     final whereClauses = <String>[];
     final whereArgs = <dynamic>[];
 
     if (cleanQuery.isNotEmpty) {
-      whereClauses.add('search_index LIKE ?');
-      whereArgs.add('%$cleanQuery%');
+      // Verifica se é busca direta por ID numérico (ex: "0001", "45", "1")
+      final isNumeric = RegExp(r'^\d+$').hasMatch(rawTrimmed);
+      if (isNumeric) {
+        final paddedId = rawTrimmed.padLeft(4, '0');
+        whereClauses.add('(id = ? OR id LIKE ? OR search_index LIKE ?)');
+        whereArgs.add(rawTrimmed);
+        whereArgs.add('$paddedId%');
+        whereArgs.add('%$cleanQuery%');
+      } else {
+        whereClauses.add('search_index LIKE ?');
+        whereArgs.add('%$cleanQuery%');
+      }
     }
 
     if (categoryFilter != null && categoryFilter.isNotEmpty && categoryFilter.toLowerCase() != 'all') {
-      whereClauses.add('(target = ? OR body_part = ?)');
+      whereClauses.add('(target = ? OR target_en = ? OR target_pt = ? OR body_part = ? OR body_part_en = ? OR body_part_pt = ?)');
+      whereArgs.add(categoryFilter);
+      whereArgs.add(categoryFilter);
+      whereArgs.add(categoryFilter);
+      whereArgs.add(categoryFilter);
       whereArgs.add(categoryFilter);
       whereArgs.add(categoryFilter);
     }

@@ -2,6 +2,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
+import '../l10n/fitness_translator.dart';
 import '../l10n/l10n.dart';
 import '../models/exercise.dart';
 import '../models/workout.dart';
@@ -55,8 +56,10 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
     final gc = context.gc;
     final ex = fit.activeExercise;
     final fav = fit.favorites[ex.id] ?? false;
-    final secondary =
-        ex.secondary.map(muscleLabel).join(', ').isEmpty ? t.none : ex.secondary.map(muscleLabel).join(', ');
+    final localizedSecondaryList = ex.getLocalizedSecondaryMuscles(context);
+    final secondary = localizedSecondaryList.isEmpty
+        ? t.none
+        : localizedSecondaryList.map((m) => FitnessTranslator.secondaryMusclesPt[m] ?? muscleLabel(m)).join(', ');
     final steps = fit.activeExerciseSteps(ex);
     final pr = fit.exercisePr(ex.id);
     final history = fit.exerciseHistory(ex.id);
@@ -81,7 +84,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
                           final ok = await showConfirmDeleteModal(
                             context: context,
                             title: t.delete,
-                            message: t.deleteEntryBody(ex.name),
+                            message: t.deleteEntryBody(ex.localizedName(context)),
                           );
                           if (ok) {
                             fit.closeExerciseDetail();
@@ -137,7 +140,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
                               final ok = await showConfirmDeleteModal(
                                 context: context,
                                 title: t.delete,
-                                message: t.deleteEntryBody(ex.name),
+                                message: t.deleteEntryBody(ex.localizedName(context)),
                               );
                               if (ok) fit.clearExerciseMedia(ex.id);
                             }),
@@ -159,18 +162,18 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(exerciseName(ex), style: AppTheme.d(24, weight: FontWeight.w700, color: gc.text)),
+                  Text(ex.localizedName(context), style: AppTheme.d(24, weight: FontWeight.w700, color: gc.text)),
                   const SizedBox(height: 4),
                   Text('ID: ${ex.id}', style: AppTheme.s(12, color: gc.textTertiary)),
                   const SizedBox(height: 20),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _meta(gc, t.primaryLabel, muscleLabel(ex.primary), gc.ember),
+                      _meta(gc, t.primaryLabel, ex.getLocalizedTarget(context), gc.ember),
                       const SizedBox(width: 20),
                       _meta(gc, t.secondaryLabel, secondary, gc.text),
                       const SizedBox(width: 20),
-                      _meta(gc, t.equipmentLabel, t.equipment(ex.equipment), gc.text),
+                      _meta(gc, t.equipmentLabel, ex.getLocalizedEquipment(context), gc.text),
                     ],
                   ),
                   const SizedBox(height: 20),

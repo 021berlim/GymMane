@@ -243,6 +243,7 @@ class _TrainScreenState extends State<TrainScreen> {
       if (_favouritesOnly && fit.favorites[ex.id] != true) return false;
       if (q.isNotEmpty &&
           !ex.name.toLowerCase().contains(q) &&
+          !ex.localizedName().toLowerCase().contains(q) &&
           !exerciseName(ex).toLowerCase().contains(q)) {
         return false;
       }
