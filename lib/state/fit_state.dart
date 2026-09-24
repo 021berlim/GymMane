@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../catalog/exercise_catalog.dart';
+import '../l10n/fitness_translator.dart';
 import '../l10n/l10n.dart';
 import '../models/exercise.dart';
 import '../models/goal.dart';

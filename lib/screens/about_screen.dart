@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
-
-import '../catalog/exercise_catalog.dart';
 import '../l10n/l10n.dart';
 import '../state/fit_state.dart';
 import '../theme/app_colors.dart';
@@ -68,7 +66,7 @@ class _AboutScreenState extends State<AboutScreen> {
             Text(t.whatsInside,
                 style: AppTheme.d(12, weight: FontWeight.w600, color: gc.textSecondary, letterSpacing: 3)),
             const SizedBox(height: 10),
-            _principle(gc, PhosphorIconsRegular.barbell, t.exercisesInside(kExercises.length),
+            _principle(gc, PhosphorIconsRegular.barbell, t.exercisesInside(fit.allExercises.length),
                 t.exercisesInsideWhy),
             const SizedBox(height: 10),
             _principle(gc, PhosphorIconsRegular.calculator, t.calculatorsInside, t.calculatorsInsideWhy),

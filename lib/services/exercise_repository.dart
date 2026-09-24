@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:sqflite/sqflite.dart';
 
@@ -52,12 +53,28 @@ class ExerciseRepository {
   Future<int> seedDatabaseFromInitialJson({
     required Database db,
     String jsonAssetPath = 'assets/data/exercicios_metadados.json',
+    bool force = false,
   }) async {
-    final check = await db.rawQuery('SELECT COUNT(*) as total FROM $tableExercises');
-    final currentCount = Sqflite.firstIntValue(check) ?? 0;
-    if (currentCount >= 1300) return currentCount;
+    if (!force) {
+      final check = await db.rawQuery('SELECT COUNT(*) as total FROM $tableExercises');
+      final currentCount = Sqflite.firstIntValue(check) ?? 0;
+      if (currentCount >= 1390) return currentCount;
+    } else {
+      await db.delete(tableExercises);
+    }
 
-    final String content = await rootBundle.loadString(jsonAssetPath);
+    String content;
+    try {
+      content = await rootBundle.loadString(jsonAssetPath);
+    } catch (_) {
+      final f = File(jsonAssetPath);
+      if (await f.exists()) {
+        content = await f.readAsString();
+      } else {
+        return 0;
+      }
+    }
+
     final List decoded = jsonDecode(content);
 
     const int chunkSize = 500;

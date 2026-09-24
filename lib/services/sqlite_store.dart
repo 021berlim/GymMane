@@ -8,6 +8,9 @@ import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
+import '../state/fit_state.dart';
+import 'exercise_repository.dart';
+
 class SqliteStore {
   SqliteStore._();
   static final SqliteStore instance = SqliteStore._();
@@ -65,8 +68,67 @@ class SqliteStore {
         } catch (_) {}
       }
       await _migrateLegacyDataIfNeeded();
+      await _syncCatalogExercisesIfNeeded();
     } catch (e, stack) {
       debugPrint('SqliteStore.init fallo: $e\n$stack');
+    }
+  }
+
+  Future<void> _syncCatalogExercisesIfNeeded() async {
+    try {
+      final db = _db ?? await _ensureDb;
+      await ExerciseRepository.createSchema(db);
+
+      final checkSetting = await db.query(
+        'app_settings',
+        where: "key = 'catalog_v1394_synced'",
+      );
+      final countQuery = await db.rawQuery(
+        'SELECT COUNT(*) as total FROM ${ExerciseRepository.tableExercises}',
+      );
+      final total = (countQuery.isNotEmpty ? countQuery.first['total'] as num? : null)?.toInt() ?? 0;
+
+      final bool isTest = Platform.environment.containsKey('FLUTTER_TEST');
+      final bool needsReseed = checkSetting.isEmpty || total < 1390;
+
+      if (needsReseed && !isTest) {
+        debugPrint('[SqliteStore] Zerando exercícios e cadastrando 1.394 novos no SQLite...');
+        await ExerciseRepository.instance.seedDatabaseFromInitialJson(
+          db: db,
+          force: true,
+        );
+        await db.insert(
+          'app_settings',
+          {'key': 'catalog_v1394_synced', 'value': 'true'},
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+
+      final allDbExercises = await ExerciseRepository.instance.getAllExercises(db);
+      if (allDbExercises.isNotEmpty) {
+        fit.setCatalogExercises(allDbExercises);
+        debugPrint('[SqliteStore] ${allDbExercises.length} exercícios sincronizados no FitState.');
+      }
+    } catch (e, stack) {
+      debugPrint('Erro ao sincronizar catálogo de exercícios: $e\n$stack');
+    }
+  }
+
+  Future<void> syncExercises({bool force = false}) async {
+    final db = _db ?? await _ensureDb;
+    await ExerciseRepository.createSchema(db);
+    await ExerciseRepository.instance.seedDatabaseFromInitialJson(
+      db: db,
+      force: force,
+    );
+    await db.insert(
+      'app_settings',
+      {'key': 'catalog_v1394_synced', 'value': 'true'},
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+    final allDbExercises = await ExerciseRepository.instance.getAllExercises(db);
+    if (allDbExercises.isNotEmpty) {
+      fit.setCatalogExercises(allDbExercises);
     }
   }
 

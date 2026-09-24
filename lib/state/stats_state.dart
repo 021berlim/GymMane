@@ -23,16 +23,17 @@ mixin StatsState on FitCore, ToolsState, LibraryState {
     final muscles = suggestedFocus.muscles;
     final picks = <Exercise>[];
     final usedMuscle = <String>{};
+    final sourceList = allExercises.isNotEmpty ? allExercises : kExercises;
 
     for (final m in muscles) {
-      final ex = kExercises.firstWhere(
+      final ex = sourceList.firstWhere(
         (e) => e.primary == m && !picks.contains(e),
-        orElse: () => kExercises.first,
+        orElse: () => sourceList.first,
       );
       if (ex.primary == m && usedMuscle.add(m)) picks.add(ex);
     }
 
-    for (final e in kExercises) {
+    for (final e in sourceList) {
       if (picks.length >= n) break;
       if (muscles.contains(e.primary) && !picks.contains(e)) picks.add(e);
     }

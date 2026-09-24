@@ -8,10 +8,29 @@ mixin LibraryState on FitCore {
   String? activeExerciseId;
   int exTab = 0;
 
-  List<Exercise> get allExercises => [...kExercises, ...customExercises];
+  List<Exercise> _catalogExercises = [];
+  List<Exercise> get catalogExercises => _catalogExercises;
+
+  void setCatalogExercises(List<Exercise> list) {
+    _catalogExercises = list;
+    notifyListeners();
+  }
+
+  List<Exercise> get allExercises => [
+    if (_catalogExercises.isNotEmpty) ..._catalogExercises else ...kExercises,
+    ...customExercises,
+  ];
 
   Exercise? exerciseById(String id) {
-    for (final e in allExercises) {
+    if (_catalogExercises.isNotEmpty) {
+      for (final e in _catalogExercises) {
+        if (e.id == id) return e;
+      }
+    }
+    for (final e in customExercises) {
+      if (e.id == id) return e;
+    }
+    for (final e in kExercises) {
       if (e.id == id) return e;
     }
     return null;
@@ -79,54 +98,68 @@ mixin LibraryState on FitCore {
   int get favouriteCount => favorites.values.where((v) => v).length;
 
   List<Exercise> get exercisesFiltered {
-    final q = exSearch.trim().toLowerCase();
+    final rawQ = exSearch.trim();
+    final q = normalizeSearchText(rawQ);
     return allExercises.where((ex) {
       if (exFavouritesOnly && favorites[ex.id] != true) return false;
 
       if (q.isNotEmpty) {
-        final matchesId = ex.id.toLowerCase().contains(q);
-        final matchesName = ex.name.toLowerCase().contains(q);
-        final matchesLocName = exerciseName(ex).toLowerCase().contains(q);
-        final matchesEquip = ex.equipment.toLowerCase().contains(q) ||
-            t.equipment(ex.equipment).toLowerCase().contains(q);
-        final matchesMuscle = ex.primary.toLowerCase().contains(q) ||
-            muscleLabel(ex.primary).toLowerCase().contains(q);
+        final matchesId = ex.id.toLowerCase().contains(rawQ.toLowerCase());
+        final matchesName = normalizeSearchText(ex.name).contains(q);
+        final matchesLocName = normalizeSearchText(exerciseName(ex)).contains(q) ||
+            normalizeSearchText(ex.namePt).contains(q);
+        final matchesEquip = normalizeSearchText(ex.equipment).contains(q) ||
+            normalizeSearchText(ex.equipmentPt).contains(q) ||
+            normalizeSearchText(t.equipment(ex.equipment)).contains(q);
+        final matchesMuscle = normalizeSearchText(ex.primary).contains(q) ||
+            normalizeSearchText(ex.target).contains(q) ||
+            normalizeSearchText(ex.targetPt).contains(q) ||
+            normalizeSearchText(ex.bodyPart).contains(q) ||
+            normalizeSearchText(ex.bodyPartPt).contains(q) ||
+            normalizeSearchText(muscleLabel(ex.primary)).contains(q);
+        final matchesSecondary = ex.secondary.any((m) => normalizeSearchText(m).contains(q)) ||
+            ex.secondaryMusclesPt.any((m) => normalizeSearchText(m).contains(q));
 
         if (!matchesId &&
             !matchesName &&
             !matchesLocName &&
             !matchesEquip &&
-            !matchesMuscle) {
+            !matchesMuscle &&
+            !matchesSecondary) {
           return false;
         }
       }
-      if (exMuscleFilter != null &&
-          ex.primary != exMuscleFilter &&
-          !ex.secondary.contains(exMuscleFilter)) {
-        return false;
+      if (exMuscleFilter != null) {
+        final targetMuscle = exMuscleFilter!.toLowerCase();
+        final matchesPrimary = ex.primary.toLowerCase() == targetMuscle ||
+            ex.target.toLowerCase() == targetMuscle ||
+            mapTargetToPrimaryMuscle(ex.target, ex.bodyPart).toLowerCase() == targetMuscle;
+        final matchesSecondary = ex.secondary.map((s) => s.toLowerCase()).contains(targetMuscle);
+        if (!matchesPrimary && !matchesSecondary) return false;
       }
       if (exEquipmentFilter != null) {
         final eqTarget = exEquipmentFilter!.toLowerCase();
         final exEq = ex.equipment.toLowerCase();
+        final exEqPt = ex.equipmentPt.toLowerCase();
         final exName = ex.name.toLowerCase();
         final locName = exerciseName(ex).toLowerCase();
 
         bool matches = false;
-        if (eqTarget == 'barbell' && (exEq == 'barbell' || exName.contains('barbell') || locName.contains('barra'))) {
+        if (eqTarget == 'barbell' && (exEq == 'barbell' || exEqPt.contains('barra') || exName.contains('barbell') || locName.contains('barra'))) {
           matches = true;
-        } else if (eqTarget == 'dumbbell' && (exEq == 'dumbbell' || exName.contains('dumbbell') || locName.contains('halter'))) {
+        } else if (eqTarget == 'dumbbell' && (exEq == 'dumbbell' || exEqPt.contains('halter') || exName.contains('dumbbell') || locName.contains('halter'))) {
           matches = true;
-        } else if (eqTarget == 'cable' && (exEq == 'cable' || exName.contains('cable') || locName.contains('cabo') || locName.contains('polia'))) {
+        } else if (eqTarget == 'cable' && (exEq == 'cable' || exEqPt.contains('cabo') || exEqPt.contains('polia') || exName.contains('cable') || locName.contains('cabo') || locName.contains('polia'))) {
           matches = true;
-        } else if (eqTarget == 'machine' && (exEq == 'machine' || exName.contains('machine') || locName.contains('máquina'))) {
+        } else if (eqTarget == 'machine' && (exEq == 'machine' || exEqPt.contains('máquina') || exEqPt.contains('maquina') || exName.contains('machine') || locName.contains('máquina') || locName.contains('maquina'))) {
           matches = true;
-        } else if (eqTarget == 'bodyweight' && (exEq == 'bodyweight' || exName.contains('push-up') || exName.contains('pull-up') || locName.contains('corporal'))) {
+        } else if (eqTarget == 'bodyweight' && (exEq == 'body weight' || exEq == 'bodyweight' || exEqPt.contains('corporal') || exName.contains('push-up') || exName.contains('pull-up') || locName.contains('corporal'))) {
           matches = true;
-        } else if (eqTarget == 'weighted' && (exEq == 'weighted' || exName.contains('plate') || locName.contains('anilha') || locName.contains('peso'))) {
+        } else if (eqTarget == 'weighted' && (exEq == 'weighted' || exEqPt.contains('anilha') || exEqPt.contains('peso') || exName.contains('plate') || locName.contains('anilha') || locName.contains('peso'))) {
           matches = true;
-        } else if (eqTarget == 'band' && (exEq == 'band' || exName.contains('band') || locName.contains('elástico'))) {
+        } else if (eqTarget == 'band' && (exEq == 'band' || exEqPt.contains('elástico') || exEqPt.contains('elastico') || exName.contains('band') || locName.contains('elástico'))) {
           matches = true;
-        } else if (eqTarget == 'kettlebell' && (exEq == 'kettlebell' || exName.contains('kettlebell'))) {
+        } else if (eqTarget == 'kettlebell' && (exEq == 'kettlebell' || exEqPt.contains('kettlebell') || exName.contains('kettlebell'))) {
           matches = true;
         } else if (eqTarget == 'incline' && (exName.contains('incline') || locName.contains('inclinad'))) {
           matches = true;
@@ -134,7 +167,7 @@ mixin LibraryState on FitCore {
           matches = true;
         } else if (eqTarget == 'squat' && (exName.contains('squat') || locName.contains('agachament'))) {
           matches = true;
-        } else if (exEq.contains(eqTarget) || exName.contains(eqTarget) || locName.contains(eqTarget)) {
+        } else if (exEq.contains(eqTarget) || exEqPt.contains(eqTarget) || exName.contains(eqTarget) || locName.contains(eqTarget)) {
           matches = true;
         }
 
