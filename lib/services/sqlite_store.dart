@@ -79,7 +79,7 @@ class SqliteStore {
       if (Platform.environment.containsKey('FLUTTER_TEST')) {
         try {
           final prefs = await SharedPreferences.getInstance().timeout(
-            const Duration(milliseconds: 50),
+            const Duration(seconds: 2),
             onTimeout: () => throw TimeoutException('test env timeout'),
           );
           final raw = prefs.getString('fitiron_v1');

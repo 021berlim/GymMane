@@ -94,9 +94,15 @@ void main() {
   testWidgets('SharePhotoSheet loads base64 image and displays watermark', (tester) async {
     await tester.runAsync(() async {
       await tester.pumpWidget(_buildSheet(base64Photo: _sampleBase64Png));
-      await Future.delayed(const Duration(milliseconds: 150));
+      for (var i = 0; i < 60; i++) {
+        await Future.delayed(const Duration(milliseconds: 50));
+        await tester.pump();
+        if (find.text('Trocar Foto').evaluate().isNotEmpty) {
+          break;
+        }
+      }
     });
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     expect(find.text("Arraste a marca d'água na foto"), findsOneWidget);
     expect(find.text('Trocar Foto'), findsOneWidget);

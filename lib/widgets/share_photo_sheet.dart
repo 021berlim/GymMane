@@ -133,7 +133,12 @@ class _SharePhotoSheetState extends State<SharePhotoSheet> {
       }
       cleanStr = cleanStr.replaceAll('\n', '').replaceAll('\r', '').trim();
       final bytes = base64Decode(cleanStr);
-      final tempDir = await getTemporaryDirectory();
+      Directory tempDir;
+      try {
+        tempDir = await getTemporaryDirectory();
+      } catch (_) {
+        tempDir = Directory.systemTemp;
+      }
       final file = File(
         '${tempDir.path}/fitiron_gallery_${DateTime.now().millisecondsSinceEpoch}.png',
       );
@@ -237,7 +242,12 @@ class _SharePhotoSheetState extends State<SharePhotoSheet> {
 
       // 3. Save to temp file
       final pngBytes = byteData.buffer.asUint8List();
-      final tempDir = await getTemporaryDirectory();
+      Directory tempDir;
+      try {
+        tempDir = await getTemporaryDirectory();
+      } catch (_) {
+        tempDir = Directory.systemTemp;
+      }
       final shareFile = File(
         '${tempDir.path}/fitiron_share_${DateTime.now().millisecondsSinceEpoch}.png',
       );
