@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:sqflite/sqflite.dart';
 
+import '../catalog/exercise_catalog.dart';
 import '../l10n/fitness_translator.dart';
 import 'exercise_repository.dart';
 
@@ -63,7 +64,9 @@ Future<int> applyBrazilianExercisesPatch({
       final item = raw as Map<String, dynamic>;
       final id = item['id'].toString();
       final nameEn = (item['name'] ?? '').toString();
-      final namePt = FitnessTranslator.translateExerciseName(nameEn);
+      final namePt = (item['name_pt'] != null && item['name_pt'].toString().trim().isNotEmpty)
+          ? item['name_pt'].toString().trim()
+          : FitnessTranslator.translateExerciseName(nameEn);
 
       final bodyPartEn = (item['bodyPart'] ?? '').toString();
       final bodyPartPt = FitnessTranslator.bodyPartsPt[bodyPartEn] ?? bodyPartEn;
@@ -80,7 +83,10 @@ Future<int> applyBrazilianExercisesPatch({
           .toList();
 
       final instructionsRaw = (item['instructions'] as List? ?? []).cast<String>();
-      final instructionsPt = FitnessTranslator.translateInstructions(instructionsRaw);
+      final instructionsPtRaw = item['instructions_pt'];
+      final instructionsPt = (instructionsPtRaw is List && instructionsPtRaw.isNotEmpty)
+          ? instructionsPtRaw.map((e) => e.toString()).toList()
+          : FitnessTranslator.translateInstructions(instructionsRaw);
 
       final secondaryMusclesJson = jsonEncode(secondaryPt);
       final instructionsJson = jsonEncode(instructionsPt);
@@ -146,6 +152,42 @@ Future<int> applyBrazilianExercisesPatch({
   await db.execute(
     'CREATE INDEX IF NOT EXISTS idx_exercises_name_pt ON ${ExerciseRepository.tableExercises}(name_pt);',
   );
+
+  // 6. Povoamento da tabela de de-para do catálogo legado
+  try {
+    final legacyBatch = db.batch();
+    final allDb = await db.query(
+      ExerciseRepository.tableExercises,
+      columns: ['id', 'name'],
+    );
+    final normMap = <String, String>{};
+    for (final row in allDb) {
+      final nid = row['id'] as String;
+      final nname = (row['name'] as String).toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+      normMap[nname] = nid;
+    }
+
+    for (final lex in kExercises) {
+      final legNorm = lex.name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+      String? targetNewId = normMap[legNorm];
+      if (targetNewId == null) {
+        for (final entry in normMap.entries) {
+          if (entry.key.contains(legNorm) || legNorm.contains(entry.key)) {
+            targetNewId = entry.value;
+            break;
+          }
+        }
+      }
+      if (targetNewId != null) {
+        legacyBatch.insert(
+          ExerciseRepository.tableLegacyMap,
+          {'legacy_id': lex.id, 'new_id': targetNewId},
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+    }
+    await legacyBatch.commit(noResult: true);
+  } catch (_) {}
 
   return patchedCount;
 }

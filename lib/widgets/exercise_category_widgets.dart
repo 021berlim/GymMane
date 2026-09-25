@@ -25,12 +25,12 @@ class EquipmentItemData {
 const List<EquipmentGroup> kEquipmentGroups = [
   EquipmentGroup('BARRAS E PESOS', [
     EquipmentItemData('Anilha', 'Weighted', PhosphorIconsRegular.disc),
-    EquipmentItemData('Barra Hexagonal', 'Hex', PhosphorIconsRegular.barbell),
+    EquipmentItemData('Barra Hexagonal', 'trap bar', PhosphorIconsRegular.barbell),
     EquipmentItemData('Barra W', 'EZ', PhosphorIconsRegular.barbell),
-    EquipmentItemData('Barra fixa', 'Bodyweight', PhosphorIconsRegular.rows),
+    EquipmentItemData('Barra fixa', 'pull-up', PhosphorIconsRegular.rows),
     EquipmentItemData('Barra olímpica', 'Barbell', PhosphorIconsRegular.barbell),
   ]),
-  EquipmentGroup('BANCOS E HACKERS', [
+  EquipmentGroup('BANCOS E SUPORTES', [
     EquipmentItemData('Banco Inclinado', 'Incline', PhosphorIconsRegular.armchair),
     EquipmentItemData('Banco Reto', 'Bench', PhosphorIconsRegular.armchair),
     EquipmentItemData('Banco Romano', 'Roman', PhosphorIconsRegular.armchair),
@@ -38,7 +38,7 @@ const List<EquipmentGroup> kEquipmentGroups = [
     EquipmentItemData('Gaiola de Agachamento', 'Rack', PhosphorIconsRegular.frameCorners),
     EquipmentItemData('Máquina de Agachamento em V', 'Squat', PhosphorIconsRegular.cpu),
   ]),
-  EquipmentGroup('OTHERS', [
+  EquipmentGroup('OUTROS', [
     EquipmentItemData('Barra Fixa e Paralelas', 'Parallel', PhosphorIconsRegular.rows),
     EquipmentItemData('Bicicleta Ergométrica', 'Bike', PhosphorIconsRegular.bicycle),
     EquipmentItemData('Bola Pilates', 'Ball', PhosphorIconsRegular.circle),
@@ -58,6 +58,9 @@ bool matchesEquipmentFilter(Exercise ex, String filterKey) {
   final exName = ex.name.toLowerCase();
   final locName = exerciseName(ex).toLowerCase();
 
+  if (eqTarget == 'trap bar' && (exEq == 'trap bar' || locName.contains('hexagonal') || exName.contains('trap bar'))) return true;
+  if (eqTarget == 'pull-up' && (exName.contains('pull-up') || exName.contains('chin-up') || locName.contains('barra fixa'))) return true;
+  if (eqTarget == 'parallel' && (exName.contains('dip') || locName.contains('paralela'))) return true;
   if (eqTarget == 'barbell' && (exEq == 'barbell' || exName.contains('barbell') || locName.contains('barra'))) return true;
   if (eqTarget == 'dumbbell' && (exEq == 'dumbbell' || exName.contains('dumbbell') || locName.contains('halter'))) return true;
   if (eqTarget == 'cable' && (exEq == 'cable' || exName.contains('cable') || locName.contains('cabo') || locName.contains('polia'))) return true;

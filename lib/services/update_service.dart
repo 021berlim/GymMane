@@ -64,7 +64,7 @@ class UpdateService {
   static Future<void> _initNotifications() async {
     if (_notificationsInitialized) return;
     try {
-      const androidInit = AndroidInitializationSettings('@drawable/ic_notification');
+      const androidInit = AndroidInitializationSettings('ic_notification');
       await _notifications.initialize(
         settings: const InitializationSettings(android: androidInit),
         onDidReceiveNotificationResponse: (response) {
@@ -77,7 +77,9 @@ class UpdateService {
       final androidPlugin = _notifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
       await androidPlugin?.requestNotificationsPermission();
       _notificationsInitialized = true;
-    } catch (_) {}
+    } catch (e, st) {
+      debugPrint('[UpdateService] Falha ao inicializar notificações: $e\n$st');
+    }
   }
 
   static Future<void> _showProgressNotification(String version, int percent) async {

@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
+import '../l10n/fitness_translator.dart';
 import '../l10n/l10n.dart';
 import '../models/workout.dart';
 import '../state/fit_state.dart';
@@ -27,7 +28,7 @@ String _getWorkoutTitle(LoggedSession session) {
   }
 
   final translatedNames = session.exercises
-      .map((e) => t.catalogName(e.id, e.name))
+      .map((e) => fit.exerciseById(e.id)?.localizedName() ?? (appLanguage == 'pt' ? FitnessTranslator.translateExerciseName(e.name) : t.catalogName(e.id, e.name)))
       .where((name) => name.isNotEmpty)
       .toSet();
 

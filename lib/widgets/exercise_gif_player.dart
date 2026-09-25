@@ -17,14 +17,16 @@ class ExerciseGifView extends StatefulWidget {
     required this.gifPath,
     this.height = 180,
     this.width,
+    this.aspectRatio,
     this.radius = 16,
     this.fit = BoxFit.contain,
     this.isThumbnail = false,
   });
 
   final String gifPath;
-  final double height;
+  final double? height;
   final double? width;
+  final double? aspectRatio;
   final double radius;
   final BoxFit fit;
   final bool isThumbnail;
@@ -35,6 +37,9 @@ class ExerciseGifView extends StatefulWidget {
 
 class _ExerciseGifViewState extends State<ExerciseGifView> {
   ImageProvider? _imageProvider;
+  ImageStream? _imageStream;
+  ImageStreamListener? _streamListener;
+  double? _detectedAspectRatio;
 
   @override
   void initState() {
@@ -47,8 +52,17 @@ class _ExerciseGifViewState extends State<ExerciseGifView> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.gifPath != widget.gifPath || oldWidget.isThumbnail != widget.isThumbnail) {
       oldWidget.gifPath.isNotEmpty ? _imageProvider?.evict() : null;
+      _cleanupStream();
       _setupImageProvider();
     }
+  }
+
+  void _cleanupStream() {
+    if (_imageStream != null && _streamListener != null) {
+      _imageStream!.removeListener(_streamListener!);
+    }
+    _imageStream = null;
+    _streamListener = null;
   }
 
   void _setupImageProvider() {
@@ -81,10 +95,33 @@ class _ExerciseGifViewState extends State<ExerciseGifView> {
       height: targetHeight,
       allowUpscaling: false,
     );
+
+    if (widget.aspectRatio != null) {
+      final stream = _imageProvider!.resolve(const ImageConfiguration());
+      _imageStream = stream;
+      _streamListener = ImageStreamListener(
+        (ImageInfo info, bool synchronousCall) {
+          if (!mounted) return;
+          final w = info.image.width;
+          final h = info.image.height;
+          if (w > 0 && h > 0) {
+            final ratio = w / h;
+            if (_detectedAspectRatio == null || (_detectedAspectRatio! - ratio).abs() > 0.01) {
+              setState(() {
+                _detectedAspectRatio = ratio;
+              });
+            }
+          }
+        },
+        onError: (_, _) {},
+      );
+      stream.addListener(_streamListener!);
+    }
   }
 
   @override
   void dispose() {
+    _cleanupStream();
     _imageProvider?.evict();
     _imageProvider = null;
     super.dispose();
@@ -93,11 +130,11 @@ class _ExerciseGifViewState extends State<ExerciseGifView> {
   @override
   Widget build(BuildContext context) {
     final gc = context.gc;
-    final effectiveWidth = widget.width ?? widget.height;
+    final effectiveRatio = _detectedAspectRatio ?? widget.aspectRatio;
 
-    return Container(
-      width: effectiveWidth,
-      height: widget.height,
+    Widget frame = Container(
+      width: effectiveRatio != null ? (widget.width ?? double.infinity) : (widget.width ?? widget.height),
+      height: effectiveRatio != null ? null : widget.height,
       decoration: BoxDecoration(
         color: gc.bgRaised2,
         borderRadius: BorderRadius.circular(widget.radius),
@@ -121,6 +158,15 @@ class _ExerciseGifViewState extends State<ExerciseGifView> {
               errorBuilder: (context, error, stackTrace) => _fallbackIcon(gc),
             ),
     );
+
+    if (effectiveRatio != null) {
+      frame = AspectRatio(
+        aspectRatio: effectiveRatio,
+        child: frame,
+      );
+    }
+
+    return frame;
   }
 
   Widget _skeletonPlaceholder(GymColors gc) {
@@ -139,10 +185,11 @@ class _ExerciseGifViewState extends State<ExerciseGifView> {
   }
 
   Widget _fallbackIcon(GymColors gc) {
+    final effectiveHeight = widget.height ?? 180;
     return Center(
       child: Icon(
         PhosphorIconsRegular.barbell,
-        size: widget.height * 0.35,
+        size: effectiveHeight * 0.35,
         color: gc.textTertiary,
       ),
     );

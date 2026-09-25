@@ -104,15 +104,17 @@ class RestAlarm {
 
     try {
       tzdata.initializeTimeZones();
-      await _plugin.initialize(
+      final initialized = await _plugin.initialize(
         settings: const InitializationSettings(
-          android: AndroidInitializationSettings('@drawable/ic_notification'),
+          android: AndroidInitializationSettings('ic_notification'),
         ),
         onDidReceiveNotificationResponse: (_) => stopSound(),
       );
-      _ready = true;
-    } catch (e) {
-      debugPrint('RestAlarm (notificaciones) no disponible: $e');
+      _ready = initialized ?? true;
+      debugPrint('[RestAlarm.init] Notificações inicializadas com sucesso (_ready: $_ready)');
+    } catch (e, st) {
+      _ready = false;
+      debugPrint('[RestAlarm.init] Falha ao inicializar notificações: $e\n$st');
     }
     await AlarmController.instance.init();
   }
@@ -125,7 +127,8 @@ class RestAlarm {
     if (!_ready) return true;
     try {
       return await _androidPlugin?.areNotificationsEnabled() ?? true;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[RestAlarm] Erro ao verificar areNotificationsEnabled: $e');
       return true;
     }
   }
@@ -134,7 +137,8 @@ class RestAlarm {
     if (!_ready) return true;
     try {
       return await _androidPlugin?.canScheduleExactNotifications() ?? true;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[RestAlarm] Erro ao verificar canScheduleExactNotifications: $e');
       return true;
     }
   }
@@ -185,9 +189,12 @@ class RestAlarm {
           body: t.restOverBody,
           notificationDetails: NotificationDetails(android: _androidAlert),
         );
-      } catch (e) {
-        debugPrint('No se pudo mostrar el aviso: $e');
+        debugPrint('[RestAlarm.fireNow] Notificação visual de descanso exibida com sucesso.');
+      } catch (e, st) {
+        debugPrint('[RestAlarm.fireNow] Erro ao exibir notificação visual: $e\n$st');
       }
+    } else {
+      debugPrint('[RestAlarm.fireNow] AVISO: Notificação visual NÃO exibida pois _ready == false.');
     }
     await AlarmController.instance.playAlarm(source: _source);
   }
@@ -232,7 +239,10 @@ class RestAlarm {
   }
 
   Future<void> schedule(Duration after) async {
-    if (!_ready) return;
+    if (!_ready) {
+      debugPrint('[RestAlarm.schedule] AVISO: Notificação não agendada pois _ready == false.');
+      return;
+    }
     final mine = ++_generation;
 
     await ensurePermission();
@@ -249,8 +259,9 @@ class RestAlarm {
         notificationDetails: NotificationDetails(android: _android(scheduledDate.millisecondsSinceEpoch)),
         androidScheduleMode: AndroidScheduleMode.alarmClock,
       );
-    } catch (e) {
-      debugPrint('No se pudo programar el aviso: $e');
+      debugPrint('[RestAlarm.schedule] Notificação agendada com sucesso para $scheduledDate.');
+    } catch (e, st) {
+      debugPrint('[RestAlarm.schedule] Erro ao programar o aviso: $e\n$st');
     }
   }
 

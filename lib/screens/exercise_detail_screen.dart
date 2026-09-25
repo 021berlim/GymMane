@@ -445,7 +445,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
                 children: [
                   Text(exerciseName(s), style: AppTheme.s(14, weight: FontWeight.w600, color: gc.text)),
                   const SizedBox(height: 2),
-                  Text(t.equipment(s.equipment), style: AppTheme.s(12, color: gc.textSecondary)),
+                  Text(s.getLocalizedEquipment(context), style: AppTheme.s(12, color: gc.textSecondary)),
                 ],
               ),
             ),

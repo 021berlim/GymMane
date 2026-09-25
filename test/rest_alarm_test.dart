@@ -47,9 +47,13 @@ void main() {
     calls.clear();
   }
 
-  test('init reaches the platform', () async {
+  test('init reaches the platform and sets defaultIcon to ic_notification without @drawable prefix', () async {
     await RestAlarm.instance.init();
     expect(methods(), contains('initialize'));
+    final initCall = calls.firstWhere((c) => c.method == 'initialize');
+    final args = (initCall.arguments as Map).cast<String, dynamic>();
+    expect(args['defaultIcon'], 'ic_notification');
+    expect(args['defaultIcon'], isNot(startsWith('@drawable/')));
   });
 
   test('scheduling actually reaches the platform', () async {
@@ -102,6 +106,8 @@ void main() {
     expect(specifics['usesChronometer'], true);
     expect(specifics['chronometerCountDown'], true);
     expect(specifics['channelId'], 'rest_timer_v3');
+    expect(specifics['icon'], 'ic_notification');
+    expect(specifics['icon'], isNot(startsWith('@drawable/')));
   });
 
   test('cancel reaches the platform', () async {
@@ -110,10 +116,14 @@ void main() {
     expect(methods(), contains('cancel'));
   });
 
-  test('finishing the rest shows the alert notification', () async {
+  test('finishing the rest shows the alert notification with ic_notification icon', () async {
     await ready();
     await RestAlarm.instance.fireNow();
     expect(methods(), contains('show'), reason: 'o aviso final precisa ser criado no Android');
+    final showCall = calls.firstWhere((c) => c.method == 'show');
+    final specifics = (showCall.arguments['platformSpecifics'] as Map).cast<String, dynamic>();
+    expect(specifics['icon'], 'ic_notification');
+    expect(specifics['icon'], isNot(startsWith('@drawable/')));
   });
 
   test('skipping the rest wins the race against a pending schedule', () async {

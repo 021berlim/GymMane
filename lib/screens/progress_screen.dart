@@ -4,6 +4,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
+import '../l10n/fitness_translator.dart';
 import '../l10n/l10n.dart';
 import '../models/goal.dart';
 import '../models/workout.dart';
@@ -274,7 +275,7 @@ class _DaySheet extends StatelessWidget {
   }
 
   Widget _loggedRow(BuildContext context, GymColors gc, LoggedSession s, LoggedExercise e) {
-    final name = t.catalogName(e.id, e.name);
+    final name = fit.exerciseById(e.id)?.localizedName(context) ?? (appLanguage == 'pt' ? FitnessTranslator.translateExerciseName(e.name) : t.catalogName(e.id, e.name));
     final detail = '${e.sets.length}×${e.sets.isEmpty ? 0 : e.sets.map((x) => x.reps).reduce((a, b) => a > b ? a : b)}';
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -320,7 +321,7 @@ class _DaySheet extends StatelessWidget {
 
   Future<void> _confirmDelete(BuildContext context, LoggedSession s, LoggedExercise e) async {
     final gc = context.gc;
-    final name = t.catalogName(e.id, e.name);
+    final name = fit.exerciseById(e.id)?.localizedName(context) ?? (appLanguage == 'pt' ? FitnessTranslator.translateExerciseName(e.name) : t.catalogName(e.id, e.name));
     final ok = await showDialog<bool>(
       context: context,
       builder: (dctx) => AlertDialog(
@@ -1354,7 +1355,7 @@ class _GoalsCard extends StatelessWidget {
         case GoalType.durationMonthly:
           return '${t.timeCaps} / mês (${g.targetValue.round()}h)';
         case GoalType.strength:
-          final name = fit.exerciseById(g.exerciseId ?? '')?.name ?? 'PR';
+          final name = fit.exerciseById(g.exerciseId ?? '')?.localizedName(context) ?? 'PR';
           return '$name (${fit.weightLabel(g.targetValue)})';
       }
     }

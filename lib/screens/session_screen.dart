@@ -203,7 +203,7 @@ class _SessionScreenState extends State<SessionScreen> {
           ],
         ),
         const SizedBox(height: 14),
-        ExerciseMedia(ex: def, height: 170, live: true),
+        ExerciseMedia(ex: def, aspectRatio: 1.0, live: true),
         const SizedBox(height: 18),
         if (s.restRemaining != null) ...[
           Container(

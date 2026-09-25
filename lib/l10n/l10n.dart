@@ -7,6 +7,7 @@ import 'catalog_es.dart';
 import 'catalog_it.dart';
 import 'catalog_pt.dart';
 import 'catalog_zh.dart';
+import 'fitness_translator.dart';
 
 export 'app_localizations.dart';
 
@@ -141,33 +142,42 @@ extension GymL10n on AppLocalizations {
         _ => id,
       };
 
-  String muscleGroupName(String key) => switch (key) {
-        'Chest' => mgChest,
-        'Back' => mgBack,
-        'Legs' => mgLegs,
-        'Shoulders' => mgShoulders,
-        'Arms' => mgArms,
-        'Core' => mgCore,
+  String muscleGroupName(String key) => switch (key.trim().toLowerCase()) {
+        'chest' => mgChest,
+        'back' => mgBack,
+        'legs' => mgLegs,
+        'shoulders' => mgShoulders,
+        'arms' => mgArms,
+        'core' => mgCore,
+        'flexibility' => 'Flexibilidade',
+        'cardio' => 'Cardio',
         _ => key,
       };
 
-  String equipment(String id) => switch (id) {
-        'Barbell' => equipBarbell,
-        'Dumbbell' => equipDumbbell,
-        'Cable' => equipCable,
-        'Machine' => equipMachine,
-        'Bodyweight' => equipBodyweight,
-        'Weighted' => equipWeighted,
-        'Band' => equipBand,
-        'Kettlebell' => equipKettlebell,
-        'all' || 'All' => appLanguage == 'es' ? 'Todo el material' : (appLanguage == 'pt' ? 'Todos os Equip.' : 'All Equipment'),
-        _ => equipOther,
-      };
+  String equipment(String id) {
+    final norm = id.trim().toLowerCase();
+    if (appLanguage == 'pt' && FitnessTranslator.equipmentPt.containsKey(norm)) {
+      return FitnessTranslator.equipmentPt[norm]!;
+    }
+    return switch (norm) {
+      'barbell' => equipBarbell,
+      'dumbbell' => equipDumbbell,
+      'cable' => equipCable,
+      'machine' || 'leverage machine' => equipMachine,
+      'bodyweight' || 'body weight' => equipBodyweight,
+      'weighted' => equipWeighted,
+      'band' || 'resistance band' => equipBand,
+      'kettlebell' => equipKettlebell,
+      'all' => appLanguage == 'es' ? 'Todo el material' : (appLanguage == 'pt' ? 'Todos os Equip.' : 'All Equipment'),
+      _ => equipOther,
+    };
+  }
 
-  String difficulty(String id) => switch (id) {
-        'Beginner' => diffBeginner,
-        'Advanced' => diffAdvanced,
-        'all' || 'All' => appLanguage == 'es' ? 'Todos los niveles' : (appLanguage == 'pt' ? 'Todos os Níveis' : 'All Levels'),
+  String difficulty(String id) => switch (id.trim().toLowerCase()) {
+        'beginner' => diffBeginner,
+        'intermediate' => diffIntermediate,
+        'advanced' => diffAdvanced,
+        'all' => appLanguage == 'es' ? 'Todos los niveles' : (appLanguage == 'pt' ? 'Todos os Níveis' : 'All Levels'),
         _ => diffIntermediate,
       };
 

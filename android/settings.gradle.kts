@@ -1,11 +1,26 @@
+// Fix AGP conflicting environment variables (ANDROID_PREFS_ROOT vs ANDROID_USER_HOME)
+@Suppress("UNCHECKED_CAST")
+try {
+    val processEnvironment = Class.forName("java.lang.ProcessEnvironment")
+    val envField = processEnvironment.getDeclaredField("theEnvironment").apply { isAccessible = true }
+    (envField.get(null) as? MutableMap<String, String>)?.remove("ANDROID_PREFS_ROOT")
+
+    val ciEnvField = processEnvironment.getDeclaredField("theCaseInsensitiveEnvironment").apply { isAccessible = true }
+    (ciEnvField.get(null) as? MutableMap<String, String>)?.remove("ANDROID_PREFS_ROOT")
+} catch (_: Throwable) {
+}
+
 pluginManagement {
     val flutterSdkPath =
         run {
             val properties = java.util.Properties()
-            file("local.properties").inputStream().use { properties.load(it) }
-            val flutterSdkPath = properties.getProperty("flutter.sdk")
-            require(flutterSdkPath != null) { "flutter.sdk not set in local.properties" }
-            flutterSdkPath
+            val localPropertiesFile = file("local.properties")
+            if (localPropertiesFile.exists()) {
+                localPropertiesFile.inputStream().use { properties.load(it) }
+            }
+            properties.getProperty("flutter.sdk")
+                ?: System.getenv("FLUTTER_ROOT")
+                ?: "C:/flutter"
         }
 
     includeBuild("$flutterSdkPath/packages/flutter_tools/gradle")

@@ -38,6 +38,7 @@ class FitnessTranslator {
   };
 
   static const Map<String, String> secondaryMusclesPt = {
+    // Músculos base
     'hip flexors': 'Flexores do Quadril',
     'lower back': 'Lombar',
     'obliques': 'Oblíquos',
@@ -63,6 +64,58 @@ class FitnessTranslator {
     'abs': 'Abdominais',
     'adductors': 'Adutores',
     'abductors': 'Abdutores',
+
+    // Inclusão mandatória dos 50 músculos auditados pela SBA e Agente 5:
+    'abdominals': 'Abdominais',
+    'ankle stabilizers': 'Estabilizadores do Tornozelo',
+    'ankles': 'Tornozelos',
+    'back': 'Costas',
+    'deep cervical flexors': 'Flexores Cervicais Profundos',
+    'deltoids': 'Deltoides',
+    'delts': 'Deltoides',
+    'extensor digitorum longus': 'Extensor Longo dos Dedos',
+    'extensor hallucis longus': 'Extensor Longo do Hálux',
+    'feet': 'Pés',
+    'flexor digitorum longus': 'Flexor Longo dos Dedos',
+    'flexor hallucis longus': 'Flexor Longo do Hálux',
+    'gemellus superior/inferior': 'Gêmeos Pélvicos (Superior e Inferior)',
+    'gluteus medius': 'Glúteo Médio',
+    'gluteus medius (posterior fibers)': 'Glúteo Médio (Fibras Posteriores)',
+    'gluteus minimus': 'Glúteo Mínimo',
+    'grip muscles': 'Músculos da Pegada (Preensão)',
+    'groin': 'Adutores da Coxa (Virilha)',
+    'hands': 'Mãos',
+    'inner thighs': 'Adutores da Coxa (Parte Interna)',
+    'latissimus dorsi': 'Grande Dorsal (Dorsais)',
+    'levator scapulae': 'Elevador da Escápula',
+    'longus capitis': 'Longo da Cabeça',
+    'longus colli': 'Longo do Pescoço',
+    'lower abs': 'Abdominal Infra (Inferior)',
+    'obturator internus': 'Obturador Interno',
+    'obturator internus/externus': 'Obturador Interno e Externo',
+    'pectorals': 'Peitorais',
+    'peroneus brevis': 'Fibular Curto',
+    'peroneus longus': 'Fibular Longo',
+    'peroneus tertius': 'Fibular Terceiro',
+    'piriformis': 'Piriforme',
+    'quadriceps': 'Quadríceps',
+    'rear deltoids': 'Deltoide Posterior',
+    'scalenes': 'Escalenos',
+    'semispinalis capitis': 'Semiespinal da Cabeça',
+    'serratus anterior': 'Serrátil Anterior',
+    'shins': 'Tibiais (Canelas)',
+    'spine': 'Eretores da Espinha',
+    'splenius capitis': 'Esplênio da Cabeça',
+    'splenius cervicis': 'Esplênio do Pescoço',
+    'sternocleidomastoid': 'Esternocleidomastoideo',
+    'suboccipitals': 'Suboccipitais',
+    'tibialis anterior': 'Tibial Anterior',
+    'tibialis posterior': 'Tibial Posterior',
+    'trapezius': 'Trapézio',
+    'upper back': 'Costas Superior / Trapézio',
+    'upper chest': 'Peitoral Superior (Clavicular)',
+    'upper trapezius': 'Trapézio Superior',
+    'wrists': 'Punhos',
   };
 
   static const Map<String, String> equipmentPt = {
@@ -94,7 +147,7 @@ class FitnessTranslator {
     'dumbbell, exercise ball, tennis ball': 'Halter e Bola Suíça',
     'dumbbell (used as handles for deeper range)': 'Halter como Apoio',
     'stationary bike': 'Bicicleta Ergométrica',
-    'upper body ergometer': 'Ergômetro Superior',
+    'upper body ergometer': 'Cicloergômetro de Braço',
     'elliptical machine': 'Elíptico',
     'skierg machine': 'SkiErg',
     'stepmill machine': 'Simulador de Escada',
@@ -499,7 +552,7 @@ class FitnessTranslator {
       equipStr = 'Corporal';
       working = working.replaceFirst(RegExp(r'^(bodyweight|body weight)\s+'), '');
     } else if (working.startsWith('assisted ')) {
-      equipStr = 'no Graviton / Assistido';
+      equipStr = 'Assistido';
       working = working.substring('assisted '.length);
     } else if (working.startsWith('weighted ')) {
       equipStr = 'com Carga Adicional';
@@ -676,6 +729,25 @@ class FitnessTranslator {
         .replaceAll('na Polia na Polia', 'na Polia')
         .replaceAll('no Smith no Smith', 'no Smith')
         .replaceAll('com Halteres com Halteres', 'com Halteres')
+        .replaceAll('Agachamento com Barra Acima da Cabeça com Barra', 'Agachamento com Barra Acima da Cabeça (Overhead Squat)')
+        .replaceAll('Unilateral Unilateral', 'Unilateral')
+        .replaceAll('Unilateral com Halteres', 'Unilateral com Halter')
+        .replaceAll('com Barra com Barra W', 'com Barra W')
+        .replaceAll('Supino Reto na Máquina Inclinado na Máquina Articulada', 'Supino Inclinado na Máquina Articulada')
+        .replaceAll('Supino Reto na Máquina Declinado na Máquina Articulada', 'Supino Declinado na Máquina Articulada')
+        .replaceAll('Supino Reto na Máquina em Pé na Máquina Articulada', 'Supino em Pé na Máquina Articulada')
+        .replaceAll('Rosca Inclinado', 'Rosca Inclinada')
+        .replaceAll('Remada Inclinado', 'Remada Inclinada')
+        .replaceAll('Elevação Inclinado', 'Elevação Inclinada')
+        .replaceAll('Extensão Inclinado', 'Extensão Inclinada')
+        .replaceAll('Flexão Inclinado', 'Flexão Inclinada')
+        .replaceAll('Puxada Alternado', 'Puxada Alternada')
+        .replaceAll('Remada Alternado', 'Remada Alternada')
+        .replaceAll('Rosca Deitado', 'Rosca Deitada')
+        .replaceAll('Remada Deitado', 'Remada Deitada')
+        .replaceAll('Elevação Deitado', 'Elevação Deitada')
+        .replaceAll('Extensão Deitado', 'Extensão Deitada')
+        .replaceAll('Prancha Abdominal Inclinado', 'Prancha Abdominal Inclinada')
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
   }
@@ -708,130 +780,928 @@ class FitnessTranslator {
     return ptWords.join(' ');
   }
 
-  /// Tradução automática contextual e gramatical das instruções de treino
+  /// Tradução automática contextual e gramatical das instruções de treino (PT-BR Autêntico)
   static List<String> translateInstructions(List<dynamic> rawSteps) {
     if (rawSteps.isEmpty) return const [];
-    return rawSteps.map((s) => _translateSentence(s.toString())).toList();
-  }
-
-  static String _translateSentence(String text) {
-    var s = text.trim();
-    if (s.isEmpty) return s;
-
-    final exactPhrases = <String, String>{
-      'Repeat for the desired number of repetitions.':
-          'Repita pelo número desejado de repetições.',
-      'Continue alternating sides for the desired number of repetitions.':
-          'Continue alternando os lados pelo número desejado de repetições.',
-      'Hold the contracted position for a brief pause as you squeeze your biceps.':
-          'Segure a posição contraída com uma breve pausa, contraindo bem os bíceps.',
-      'Repeat for the desired number of repetitions, then switch arms.':
-          'Repita pelo número desejado de repetições e troque de braço.',
-      'Repeat for the desired number of repetitions, then switch sides.':
-          'Repita pelo número desejado de repetições e troque de lado.',
-      'Repeat for the desired number of repetitions, then switch to the other arm.':
-          'Repita pelo número desejado de repetições e mude para o outro braço.',
-      'Lie flat on your back with your knees bent and feet flat on the ground.':
-          'Deite-se de costas no chão com os joelhos flexionados e os pés apoiados.',
-      'Lie flat on a bench with your feet flat on the ground.':
-          'Deite-se no banco reto com os pés firmes no chão.',
-      'Stand with your feet shoulder-width apart and your knees slightly bent.':
-          'Fique em pé com os pés na largura dos ombros e joelhos levemente flexionados.',
-      'Stand with your feet shoulder-width apart.':
-          'Fique em pé com os pés afastados na largura dos ombros.',
-      'Stand facing the machine with your feet shoulder-width apart.':
-          'Fique de frente para a máquina com os pés na largura dos ombros.',
-      'Stand facing the cable machine with your feet shoulder-width apart.':
-          'Fique de frente para a polia com os pés afastados na largura dos ombros.',
-      'Sit on a bench with your back straight and feet flat on the ground.':
-          'Sente-se no banco com as costas retas e os pés firmes no chão.',
-      'Set up an incline bench at a 45-degree angle.':
-          'Ajuste o banco inclinado a um ângulo de 45 graus.',
-      'Place your hands behind your head with your elbows pointing outwards.':
-          'Coloque as mãos atrás da cabeça com os cotovelos apontando para fora.',
-      'Bend your knees slightly and hinge forward at the hips, keeping your back straight.':
-          'Flexione levemente os joelhos e incline o tronco à frente a partir do quadril, mantendo a coluna ereta.',
-      'Keep your back straight and your core engaged.':
-          'Mantenha as costas retas e o abdômen contraído.',
-      'Keeping your upper arms stationary, exhale and curl the weights while contracting your biceps.':
-          'Mantendo os braços firmes, expire e flexione os antebraços contraindo os bíceps.',
-      'Continue to raise the dumbbells until your biceps are fully contracted and the dumbbells are at shoulder level.':
-          'Continue levantando os halteres até a contração máxima dos bíceps na altura dos ombros.',
-      'Inhale and slowly begin to lower the dumbbells back to the starting position.':
-          'Inspire e comece a descer lentamente os halteres de volta à posição inicial.',
-      'Pause for a moment at the top, then slowly lower your upper body back down to the starting position.':
-          'Faça uma breve pausa no topo e desça lentamente o tronco à posição inicial.',
-      'Pause for a moment at the top, then slowly lower your heels back down to the starting position.':
-          'Faça uma pausa no topo e desça lentamente os calcanhares à posição inicial.',
-      'Pause for a moment at the top, then slowly lower your legs back down to the starting position.':
-          'Faça uma pausa no topo e desça lentamente as pernas à posição inicial.',
-      'Pause for a moment at the top, then slowly lower your arms back down to the starting position.':
-          'Faça uma pausa no topo e desça lentamente os braços de volta à posição inicial.',
-      'Pause for a moment at the top, then slowly lower your body back down to the starting position.':
-          'Faça uma pausa no topo e retorne o corpo controladamente à posição inicial.',
-      'Pause for a moment at the bottom, then push through your heels to return to the starting position.':
-          'Faça uma breve pausa embaixo e empurre pelos calcanhares para retornar à posição inicial.',
-      'Pause for a moment at the top, squeezing your biceps.':
-          'Faça uma breve pausa no topo, contraindo bem os bíceps.',
-      'Pause for a moment at the top, then slowly lower the dumbbell back to the starting position.':
-          'Faça uma breve pausa no topo e desça lentamente o halter de volta à posição inicial.',
-      'Pause for a moment at the top, then slowly lower the dumbbells back to the starting position.':
-          'Faça uma pausa no topo e desça lentamente os halteres à posição inicial.',
-      'Repeat on the other side.':
-          'Repita do outro lado.',
-      'Exhale as you push and inhale as you return.':
-          'Expire ao empurrar e inspire ao retornar à posição inicial.',
-      'Grasp the barbell with an overhand grip slightly wider than shoulder-width apart.':
-          'Segure a barra com pegada pronada um pouco mais aberta que a largura dos ombros.',
-      'Hold a dumbbell in each hand.':
-          'Segure um halter em cada mão.',
-    };
-
-    if (exactPhrases.containsKey(s)) {
-      return exactPhrases[s]!;
-    }
-
-    final replacements = <RegExp, String>{
-      RegExp(r'\bstarting position\b', caseSensitive: false): 'posição inicial',
-      RegExp(r'\bshoulder-width apart\b', caseSensitive: false): 'na largura dos ombros',
-      RegExp(r'\bknees slightly bent\b', caseSensitive: false): 'joelhos levemente flexionados',
-      RegExp(r'\bback straight\b', caseSensitive: false): 'costas retas',
-      RegExp(r'\bcore engaged\b', caseSensitive: false): 'abdômen contraído',
-      RegExp(r'\bupper body\b', caseSensitive: false): 'parte superior do tronco',
-      RegExp(r'\blower body\b', caseSensitive: false): 'membros inferiores',
-      RegExp(r'\bpause for a moment\b', caseSensitive: false): 'faça uma breve pausa',
-      RegExp(r'\bslowly lower\b', caseSensitive: false): 'desça lentamente',
-      RegExp(r'\bslowly return\b', caseSensitive: false): 'retorne lentamente',
-      RegExp(r'\bdesired number of repetitions\b', caseSensitive: false): 'número desejado de repetições',
-      RegExp(r'\boverhand grip\b', caseSensitive: false): 'pegada pronada',
-      RegExp(r'\bunderhand grip\b', caseSensitive: false): 'pegada supinada',
-      RegExp(r'\bneutral grip\b', caseSensitive: false): 'pegada neutra',
-      RegExp(r'\bexhale as you\b', caseSensitive: false): 'expire ao',
-      RegExp(r'\binhale as you\b', caseSensitive: false): 'inspire ao',
-      RegExp(r'\bsqueeze your\b', caseSensitive: false): 'contraia os seus',
-      RegExp(r'\bbiceps\b', caseSensitive: false): 'bíceps',
-      RegExp(r'\btriceps\b', caseSensitive: false): 'tríceps',
-      RegExp(r'\bchest\b', caseSensitive: false): 'peitoral',
-      RegExp(r'\bglutes\b', caseSensitive: false): 'glúteos',
-      RegExp(r'\bhamstrings\b', caseSensitive: false): 'posteriores de coxa',
-      RegExp(r'\bquadriceps\b', caseSensitive: false): 'quadríceps',
-      RegExp(r'\bquads\b', caseSensitive: false): 'quadríceps',
-      RegExp(r'\bcalves\b', caseSensitive: false): 'panturrilhas',
-      RegExp(r'\bshoulders\b', caseSensitive: false): 'ombros',
-      RegExp(r'\bdumbbell\b', caseSensitive: false): 'halter',
-      RegExp(r'\bdumbbells\b', caseSensitive: false): 'halteres',
-      RegExp(r'\bbarbell\b', caseSensitive: false): 'barra',
-      RegExp(r'\bbench\b', caseSensitive: false): 'banco',
-      RegExp(r'\bfloor\b', caseSensitive: false): 'chão',
-    };
-
-    for (final entry in replacements.entries) {
-      s = s.replaceAll(entry.key, entry.value);
-    }
-
-    return s;
+    return rawSteps.map((s) => _InstructionTranslator.translate(s.toString())).toList();
   }
 }
+
+/// Motor Canônico de Tradução de Instruções de Fitness em 4 Camadas
+class _InstructionTranslator {
+  _InstructionTranslator._();
+
+  static bool _initialized = false;
+  static final Map<String, String> _exact = {};
+  static final List<MapEntry<Pattern, String>> _clausePatterns = [];
+  static final List<MapEntry<Pattern, String>> _phrasePatterns = [];
+  static final List<MapEntry<Pattern, String>> _vocabPatterns = [];
+
+  static Pattern _u(String text) {
+    return RegExp('(?<![a-zA-ZÀ-ÿ])$text(?![a-zA-ZÀ-ÿ])', caseSensitive: false);
+  }
+
+  static void _addClause(Pattern pat, String repl) => _clausePatterns.add(MapEntry(pat, repl));
+  static void _addPhrase(Pattern pat, String repl) => _phrasePatterns.add(MapEntry(pat, repl));
+  static void _addVocab(Pattern pat, String repl) => _vocabPatterns.add(MapEntry(pat, repl));
+
+  static void _init() {
+    if (_initialized) return;
+    _initialized = true;
+
+    _exact['Repeat for the desired number of repetitions.'] = 'Repita pelo número desejado de repetições.';
+    _exact['Continue alternating sides for the desired number of repetitions.'] = 'Continue alternando os lados pelo número desejado de repetições.';
+    _exact['Hold the contracted position for a brief pause as you squeeze your biceps.'] = 'Sustente a posição contraída por um instante, contraindo ao máximo os bíceps.';
+    _exact['Repeat for the desired number of repetitions, then switch arms.'] = 'Repita pelo número desejado de repetições e troque de braço.';
+    _exact['Repeat for the desired number of repetitions, then switch sides.'] = 'Repita pelo número desejado de repetições e troque de lado.';
+    _exact['Repeat for the desired number of repetitions, then switch to the other arm.'] = 'Repita pelo número desejado de repetições e passe para o outro braço.';
+    _exact['Repeat for the desired number of repetitions, then switch legs.'] = 'Repita pelo número desejado de repetições e troque de perna.';
+    _exact['Repeat for the desired number of repetitions, then switch to the other leg.'] = 'Repita pelo número desejado de repetições e passe para a outra perna.';
+    _exact['Repeat for the desired number of repetitions, then switch to the other side.'] = 'Repita pelo número desejado de repetições e passe para o outro lado.';
+    _exact['Repeat on the other side.'] = 'Repita do outro lado.';
+    _exact['Repeat on the opposite side.'] = 'Repita no lado oposto.';
+    _exact['Repeat the movement for the desired number of repetitions.'] = 'Repita o movimento pelo número desejado de repetições.';
+    _exact['Repeat for the desired number of sets and repetitions.'] = 'Repita pelo número desejado de séries e repetições.';
+    _exact['Repeat for the desired amount of repetitions.'] = 'Repita pela quantidade desejada de repetições.';
+    _exact['Repeat for the desired duration or repetitions.'] = 'Repita pela duração ou número de repetições desejado.';
+    _exact['Continue this movement for the desired number of repetitions.'] = 'Continue esse movimento pelo número desejado de repetições.';
+    _exact['Continue alternating for the desired number of repetitions.'] = 'Continue alternando pelo número desejado de repetições.';
+    _exact['Continue alternating legs for the desired number of repetitions.'] = 'Continue alternando as pernas pelo número desejado de repetições.';
+    _exact['Continue alternating arms for the desired number of repetitions.'] = 'Continue alternando os braços pelo número desejado de repetições.';
+    _exact['Repeat the exercise for the desired number of repetitions.'] = 'Repita o exercício pelo número desejado de repetições.';
+    _exact['Repeat the process for the desired number of repetitions.'] = 'Repita o processo pelo número desejado de repetições.';
+    _exact['Lie flat on your back with your knees bent and feet flat on the ground.'] = 'Deite-se de costas no chão com os joelhos flexionados e os pés apoiados.';
+    _exact['Lie flat on your back with your knees bent and feet flat on the floor.'] = 'Deite-se de costas no chão com os joelhos flexionados e os pés apoiados.';
+    _exact['Lie flat on a bench with your feet flat on the ground.'] = 'Deite-se no banco reto com os pés firmes no chão.';
+    _exact['Lie flat on a bench with your feet flat on the floor.'] = 'Deite-se no banco reto com os pés apoiados no chão.';
+    _exact['Stand with your feet shoulder-width apart and your knees slightly bent.'] = 'Fique em pé com os pés na largura dos ombros e joelhos levemente flexionados.';
+    _exact['Stand with your feet shoulder-width apart.'] = 'Fique em pé com os pés afastados na largura dos ombros.';
+    _exact['Stand with your feet hip-width apart and your knees slightly bent.'] = 'Fique em pé com os pés na largura do quadril e joelhos levemente flexionados.';
+    _exact['Stand with your feet hip-width apart.'] = 'Fique em pé com os pés afastados na largura do quadril.';
+    _exact['Stand facing the machine with your feet shoulder-width apart.'] = 'Fique de frente para o aparelho com os pés na largura dos ombros.';
+    _exact['Stand facing the cable machine with your feet shoulder-width apart.'] = 'Fique de frente para a polia com os pés afastados na largura dos ombros.';
+    _exact['Sit on a bench with your back straight and feet flat on the ground.'] = 'Sente-se no banco com as costas retas e os pés firmes no chão.';
+    _exact['Sit on a bench with your back straight and feet flat on the floor.'] = 'Sente-se no banco com as costas retas e os pés apoiados no chão.';
+    _exact['Set up an incline bench at a 45-degree angle.'] = 'Ajuste o banco inclinado a um ângulo de 45 graus.';
+    _exact['Set an incline bench to a 45-degree angle.'] = 'Ajuste um banco inclinado em um ângulo de 45 graus.';
+    _exact['Adjust an incline bench to a 45-degree angle.'] = 'Ajuste o banco inclinado para um ângulo de 45 graus.';
+    _exact['Place your hands behind your head with your elbows pointing outwards.'] = 'Posicione as mãos suavemente atrás da cabeça com os cotovelos abertos para fora (sem puxar a cervical).';
+    _exact['Bend your knees slightly and hinge forward at the hips, keeping your back straight.'] = 'Flexione levemente os joelhos e incline o tronco à frente a partir do quadril, mantendo a coluna ereta.';
+    _exact['Keep your back straight and your core engaged.'] = 'Mantenha as costas retas e o abdômen contraído.';
+    _exact['Keeping your upper arms stationary, exhale and curl the weights while contracting your biceps.'] = 'Mantendo os braços firmes e imóveis, expire e flexione os antebraços contraindo os bíceps.';
+    _exact['Continue to raise the dumbbells until your biceps are fully contracted and the dumbbells are at shoulder level.'] = 'Continue elevando os halteres até a contração máxima dos bíceps com os pesos na altura dos ombros.';
+    _exact['Inhale and slowly begin to lower the dumbbells back to the starting position.'] = 'Inspire e comece a descer lentamente os halteres de volta à posição inicial.';
+    _exact['Inhale and slowly lower the dumbbells back to the starting position.'] = 'Inspire e desça lentamente os halteres de volta à posição inicial.';
+    _exact['Inhale and slowly lower the dumbbell back to the starting position.'] = 'Inspire e desça lentamente o halter de volta à posição inicial.';
+    _exact['Inhale and slowly lower the barbell back to the starting position.'] = 'Inspire e desça lentamente a barra de volta à posição inicial.';
+    _exact['Inhale and slowly lower the bar back to the starting position.'] = 'Inspire e desça lentamente a barra de volta à posição inicial.';
+    _exact['Pause for a moment at the top, then slowly lower your upper body back down to the starting position.'] = 'Faça uma breve pausa no topo e desça lentamente o tronco à posição inicial.';
+    _exact['Pause for a moment at the top, then slowly lower your heels back down to the starting position.'] = 'Faça uma pausa no topo e desça lentamente os calcanhares à posição inicial.';
+    _exact['Pause for a moment at the top, then slowly lower your legs back down to the starting position.'] = 'Faça uma pausa no topo e desça lentamente as pernas à posição inicial.';
+    _exact['Pause for a moment at the top, then slowly lower your arms back down to the starting position.'] = 'Faça uma pausa no topo e desça lentamente os braços de volta à posição inicial.';
+    _exact['Pause for a moment at the top, then slowly lower your body back down to the starting position.'] = 'Faça uma pausa no topo e retorne o corpo controladamente à posição inicial.';
+    _exact['Pause for a moment at the bottom, then push through your heels to return to the starting position.'] = 'Faça uma breve pausa embaixo e empurre pelos calcanhares para retornar à posição inicial.';
+    _exact['Pause for a moment at the top, squeezing your biceps.'] = 'Faça uma breve pausa no topo, contraindo bem os bíceps.';
+    _exact['Pause for a moment at the top, squeezing your glutes.'] = 'Faça uma breve pausa no topo, contraindo bem os glúteos.';
+    _exact['Pause for a moment at the top, then slowly lower the dumbbell back to the starting position.'] = 'Faça uma breve pausa no topo e desça lentamente o halter de volta à posição inicial.';
+    _exact['Pause for a moment at the top, then slowly lower the dumbbells back to the starting position.'] = 'Faça uma pausa no topo e desça lentamente os halteres à posição inicial.';
+    _exact['Pause for a moment at the top, then slowly lower the dumbbells back down to the starting position.'] = 'Faça uma pausa no topo e desça lentamente os halteres à posição inicial.';
+    _exact['Exhale as you push and inhale as you return.'] = 'Expire ao empurrar e inspire ao retornar à posição inicial.';
+    _exact['Grasp the barbell with an overhand grip slightly wider than shoulder-width apart.'] = 'Segure a barra com pegada pronada um pouco mais aberta que a largura dos ombros.';
+    _exact['Hold a dumbbell in each hand.'] = 'Segure um halter em cada mão.';
+    _exact['Hold a dumbbell in each hand with an overhand grip.'] = 'Segure um halter em cada mão com pegada pronada.';
+    _exact['Hold a dumbbell in each hand with a neutral grip.'] = 'Segure um halter em cada mão com pegada neutra.';
+    _exact['Hold a dumbbell in each hand with your palms facing your body.'] = 'Segure um halter em cada mão com as palmas voltadas para o corpo.';
+    _exact['Twist your torso to the right, bringing the cable handle towards your right hip.'] = 'Gire o tronco para a direita, trazendo a manopla da polia em direção ao quadril direito.';
+    _exact['Pause for a moment, then twist your torso to the left, bringing the cable handle towards your left hip.'] = 'Faça uma breve pausa e gire o tronco para a esquerda, trazendo a manopla da polia em direção ao quadril esquerdo.';
+    _exact['Lower your torso until you feel a stretch in your left hamstring and your right arm is pointing towards the ground.'] = 'Desça o tronco até sentir o alongamento nos posteriores da coxa esquerda e o braço direito apontar para o chão.';
+    _exact['Repeat the exercise on the other side, starting with the kettlebell in your left hand.'] = 'Repita o exercício do outro lado, começando com o kettlebell na mão esquerda.';
+    _exact['Bend your knees slightly and rotate your torso to the right, swinging the barbell down towards your right hip.'] = 'Flexione levemente os joelhos e gire o tronco para a direita, conduzindo a barra para baixo em direção ao quadril direito.';
+    _exact['Continue alternating between lifting your right and left foot for the desired number of repetitions.'] = 'Continue alternando a elevação do pé direito e esquerdo pelo número desejado de repetições.';
+    _exact['Slowly tilt your head to the right, bringing your right ear toward your right shoulder without lifting or shrugging the shoulder.'] = 'Incline suavemente a cabeça para a direita, aproximando a orelha direita do ombro direito sem elevar ou encolher os ombros.';
+    _exact['Tilt your head to the right, bringing your right ear towards your right shoulder.'] = 'Incline a cabeça para a direita, aproximando a orelha direita do ombro direito.';
+    _exact['With your left hand, grab your right hand and gently pull it towards your body, feeling a stretch in your right forearm.'] = 'Com a mão esquerda, segure a mão direita e puxe-a suavemente em direção ao corpo, sentindo o alongamento no antebraço direito.';
+    _exact['Keeping your back straight, slowly lean to the right side, feeling a stretch in your left lat muscle.'] = 'Mantendo a coluna ereta, incline o tronco lentamente para o lado direito até sentir o alongamento na grande dorsal esquerda.';
+    _exact['Repeat the stretch on the left side, leaning to the left and feeling a stretch in your right lat muscle.'] = 'Repita o alongamento do lado esquerdo, inclinando-se para a esquerda até sentir o alongamento na grande dorsal direita.';
+    _exact['Lean forward, pushing your hips towards the stability ball, until you feel a stretch in your right hip flexor.'] = 'Incline-se à frente, projetando o quadril em direção à bola suíça até sentir o alongamento nos flexores de quadril direitos.';
+    _exact['Slowly pull your right foot towards your glutes, feeling a stretch in your right quad.'] = 'Puxe lentamente o pé direito em direção aos glúteos até sentir o alongamento no quadríceps direito.';
+    _exact['Gently pull your left foot towards your glutes, feeling a stretch in your left quad.'] = 'Puxe suavemente o pé esquerdo em direção aos glúteos até sentir o alongamento no quadríceps esquerdo.';
+    _exact['Initiate from the ground: push off the ball of the right foot and rotate the right hip and shoulder forward.'] = 'Inicie o movimento pelo chão: empurre com a ponta do pé direito e rotacione o quadril e o ombro direitos para a frente.';
+    _exact['Drive the right fist straight from your chin to the target, turning the palm down at extension with a neutral wrist.'] = 'Lance o punho direito em linha reta do queixo até o alvo, girando a palma para baixo no final da extensão com o punho alinhado.';
+    _exact['Settle a bit into the right hip with the right heel light and core braced.'] = 'Apoie o peso suavemente sobre o quadril direito com o calcanhar direito livre e o abdômen travado.';
+    _exact['As you rotate, bring the right fist up close to your body in a vertical arc, palm facing you, elbow ~90°, exhaling on the punch.'] = 'Ao girar, suba o punho direito junto ao corpo em arco vertical, palma virada para você, cotovelo a ~90°, expirando no golpe.';
+    _exact['Dip slightly by bending the knees and loading the lead (left) hip without collapsing your torso.'] = 'Flexione levemente os joelhos e apoie a carga sobre o quadril de base (esquerdo) sem perder o alinhamento do tronco.';
+    _exact['Position the left head pad on the bony side of your skull above the ear (not on the jaw or ear).'] = 'Posicione o apoio esquerdo da cabeça na parte óssea lateral do crânio acima da orelha (não na mandíbula ou orelha).';
+    _exact['Maintain smooth breathing and consistent tension; complete all reps on the right, then train the left for balance.'] = 'Mantenha a respiração fluida e tensão constante; complete todas as repetições à direita e depois treine o lado esquerdo.';
+    _exact['Re-chamber the leg immediately, then place it back to the starting stance under control.'] = 'Recolha a perna imediatamente e retorne à posição inicial de guarda com controle.';
+    _exact['Retract the leg immediately along the same path and place the foot down to the starting stance.'] = 'Recolha a perna imediatamente pela mesma trajetória e apoie o pé no chão na base inicial.';
+    _exact['Lower the dumbbell until you feel a stretch in your right hamstring, then return to the starting position.'] = 'Desça o halter até sentir o alongamento nos posteriores da coxa direita e retorne à posição inicial.';
+    _exact['Continue alternating between your right and left foot for the desired number of repetitions.'] = 'Continue alternando entre os pés direito e esquerdo pelo número desejado de repetições.';
+    _exact['Shift weight to your right forefoot and press through the ball of the foot to lift the right heel high; keep the knee soft, not locked.'] = 'Transfira o peso para o antepé direito e empurre pela ponta do pé para elevar bem o calcanhar direito; mantenha o joelho destravado.';
+    _exact['Land softly on your left forefoot with a slight bend in the ankle, knee, and hip; keep your torso upright.'] = 'Aterrisse suavemente sobre o antepé esquerdo com leve flexão no tornozelo, joelho e quadril, mantendo o tronco ereto.';
+    _exact['As you land, swing your left leg behind your right leg and tap the ground with your left toes.'] = 'Ao aterrissar, cruze a perna esquerda por trás da perna direita e toque o chão com a ponta do pé esquerdo.';
+    _exact['As you land, swing your right leg behind your left leg and tap the ground with your right toes.'] = 'Ao aterrissar, cruze a perna direita por trás da perna esquerda e toque o chão com a ponta do pé direito.';
+    _exact['Continue the movement by lowering your hips back down towards the ground, returning to the starting push-up position.'] = 'Continue o movimento descendo o quadril de volta em direção ao chão, retornando à posição inicial de flexão de braço.';
+    _exact['Shift weight slightly and row the right dumbbell toward your ribs without rotating the torso; return it to the floor and repeat with the left.'] = 'Transfira levemente o peso e reme o halter direito em direção às costelas sem girar o tronco; retorne ao chão e repita com o lado esquerdo.';
+
+    // 1. CLAUSES
+    _addClause(_u(r'Lie flat on your back with your knees bent and feet flat on the (ground|floor)'), 'Deite-se de costas no chão com os joelhos flexionados e os pés apoiados');
+    _addClause(_u(r'Lie flat on your back with your hands placed behind your head'), 'Deite-se de costas no chão com as mãos posicionadas atrás da cabeça (sem puxar o pescoço)');
+    _addClause(_u(r'Lie flat on your back with your arms by your sides'), 'Deite-se de costas no chão com os braços ao lado do corpo');
+    _addClause(_u(r'Lie flat on your back with your arms extended'), 'Deite-se de costas no chão com os braços estendidos');
+    _addClause(_u(r'Lie flat on your back'), 'Deite-se de costas no chão');
+    _addClause(_u(r'Lie flat on a bench with (your )?feet flat on the (ground|floor)'), 'Deite-se no banco reto com os pés firmes no chão');
+    _addClause(_u(r'Lie flat on a bench'), 'Deite-se no banco reto');
+    _addClause(_u(r'Lie face down on a bench'), 'Deite-se de bruços no banco');
+    _addClause(_u(r'Lie face down on the (floor|ground)'), 'Deite-se de bruços no chão');
+    _addClause(_u(r'Lie face down'), 'Deite-se de bruços');
+    _addClause(_u(r'Lie on your back'), 'Deite-se de costas');
+    _addClause(_u(r'Lie on your side'), 'Deite-se de lado');
+    _addClause(_u(r'Lie on an incline bench'), 'Deite-se no banco inclinado');
+    _addClause(_u(r'Lie on a decline bench'), 'Deite-se no banco declinado');
+    _addClause(_u(r'Lie down on a decline bench'), 'Deite-se no banco declinado');
+    _addClause(_u(r'Lie down on an incline bench'), 'Deite-se no banco inclinado');
+    _addClause(_u(r'Lie down on a bench'), 'Deite-se no banco');
+    _addClause(_u(r'Lie down on the (floor|ground)'), 'Deite-se no chão');
+    _addClause(_u(r'Lie down on'), 'Deite-se em');
+
+    _addClause(_u(r'Stand tall with your feet shoulder-width apart'), 'Fique em pé ereto com os pés na largura dos ombros');
+    _addClause(_u(r'Stand up straight with your feet shoulder-width apart'), 'Fique em pé ereto com os pés na largura dos ombros');
+    _addClause(_u(r'Stand up straight with a dumbbell in each hand'), 'Fique em pé ereto com um halter em cada mão');
+    _addClause(_u(r'Stand up straight'), 'Fique em pé ereto');
+    _addClause(_u(r'Stand with your feet shoulder-width apart and your arms extended straight down by your sides'), 'Fique em pé com os pés na largura dos ombros e os braços estendidos para baixo ao lado do corpo');
+    _addClause(_u(r'Stand with your feet shoulder-width apart, holding a dumbbell in each hand'), 'Fique em pé com os pés na largura dos ombros, segurando um halter em cada mão');
+    _addClause(_u(r'Stand with your feet shoulder-width apart and hold a dumbbell in each hand'), 'Fique em pé com os pés na largura dos ombros e segure um halter em cada mão');
+    _addClause(_u(r'Stand with your feet shoulder-width apart and hold a barbell'), 'Fique em pé com os pés na largura dos ombros e segure uma barra');
+    _addClause(_u(r'Stand with your feet shoulder-width apart'), 'Fique em pé com os pés na largura dos ombros');
+    _addClause(_u(r'Stand with your feet hip-width apart'), 'Fique em pé com os pés na largura do quadril');
+    _addClause(_u(r'Stand with your feet'), 'Fique em pé com os pés');
+    _addClause(_u(r'Stand facing the cable machine with your feet shoulder-width apart'), 'Fique de frente para a polia com os pés na largura dos ombros');
+    _addClause(_u(r'Stand facing the machine with your feet shoulder-width apart'), 'Fique de frente para o aparelho com os pés na largura dos ombros');
+    _addClause(_u(r'Stand facing the cable machine'), 'Fique de frente para a polia');
+    _addClause(_u(r'Stand facing the machine'), 'Fique de frente para o aparelho');
+    _addClause(_u(r'Stand facing away from the cable machine'), 'Fique de costas para a polia');
+    _addClause(_u(r'Stand facing away from the machine'), 'Fique de costas para o aparelho');
+    _addClause(_u(r'Stand facing away from the rack'), 'Fique de costas para o suporte');
+    _addClause(_u(r'Stand facing'), 'Fique de frente para');
+    _addClause(_u(r'Stand on'), 'Fique em pé sobre');
+
+    _addClause(_u(r'Sit on a bench with your back straight and feet flat on the (ground|floor)'), 'Sente-se no banco com as costas retas e os pés firmes no chão');
+    _addClause(_u(r'Sit on a bench with your back straight'), 'Sente-se no banco com as costas retas');
+    _addClause(_u(r'Sit on the edge of a bench'), 'Sente-se na ponta do banco');
+    _addClause(_u(r'Sit on a bench'), 'Sente-se no banco');
+    _addClause(_u(r'Sit on the machine with your back flat against the pad'), 'Sente-se no aparelho com as costas bem apoiadas no encosto');
+    _addClause(_u(r'Sit on the machine'), 'Sente-se no aparelho');
+    _addClause(_u(r'Sit on the cable machine'), 'Sente-se no aparelho de polia');
+    _addClause(_u(r'Sit facing the cable machine'), 'Sente-se de frente para a polia');
+    _addClause(_u(r'Sit facing'), 'Sente-se de frente para');
+    _addClause(_u(r'Sit on the floor with your legs extended'), 'Sente-se no chão com as pernas estendidas');
+    _addClause(_u(r'Sit on the (floor|ground)'), 'Sente-se no chão');
+    _addClause(_u(r'Sit tall'), 'Sente-se ereto');
+    _addClause(_u(r'Sit upright'), 'Sente-se ereto');
+
+    _addClause(_u(r'Kneel down on the pad facing the machine'), 'Ajoelhe-se no apoio de frente para o aparelho');
+    _addClause(_u(r'Kneel on the (floor|ground|pad)'), 'Ajoelhe-se no chão');
+    _addClause(_u(r'Kneel down on'), 'Ajoelhe-se em');
+
+    // 2. PHRASES
+    _addPhrase(_u(r'with a dumbbell in each hand'), 'com um halter em cada mão');
+    _addPhrase(_u(r'holding a dumbbell in each hand'), 'segurando um halter em cada mão');
+    _addPhrase(_u(r'hold a dumbbell in each hand'), 'segure um halter em cada mão');
+    _addPhrase(_u(r'holding a barbell with'), 'segurando uma barra com');
+    _addPhrase(_u(r'holding the barbell with'), 'segurando a barra com');
+    _addPhrase(_u(r'holding the dumbbells'), 'segurando os halteres');
+    _addPhrase(_u(r'holding a dumbbell'), 'segurando um halter');
+    _addPhrase(_u(r'holding the handles'), 'segurando as manoplas');
+    _addPhrase(_u(r'holding the handle'), 'segurando a manopla');
+    _addPhrase(_u(r'holding the bar'), 'segurando a barra');
+    _addPhrase(_u(r'holding a weight'), 'segurando um peso');
+    _addPhrase(_u(r'holding onto'), 'segurando-se em');
+    _addPhrase(_u(r'hold onto'), 'segure-se em');
+
+    _addPhrase(_u(r'at shoulder height'), 'na altura dos ombros');
+    _addPhrase(_u(r'at shoulder level'), 'na altura dos ombros');
+    _addPhrase(_u(r'to shoulder height'), 'até a altura dos ombros');
+    _addPhrase(_u(r'to shoulder level'), 'até a altura dos ombros');
+    _addPhrase(_u(r'to shoulder width'), 'na largura dos ombros');
+    _addPhrase(_u(r'at chest height'), 'na altura do peito');
+    _addPhrase(_u(r'at chest level'), 'na altura do peito');
+    _addPhrase(_u(r'to chest height'), 'até a altura do peito');
+    _addPhrase(_u(r'to chest level'), 'até a altura do peito');
+
+    _addPhrase(_u(r'by bending at the knees and hips'), 'flexionando os joelhos e o quadril');
+    _addPhrase(_u(r'by bending your knees and hips'), 'flexionando os joelhos e o quadril');
+    _addPhrase(_u(r'by bending at the hips and knees'), 'flexionando o quadril e os joelhos');
+    _addPhrase(_u(r'by bending your hips and knees'), 'flexionando o quadril e os joelhos');
+    _addPhrase(_u(r'by bending your knees'), 'flexionando os joelhos');
+    _addPhrase(_u(r'by bending your elbows'), 'flexionando os cotovelos');
+    _addPhrase(_u(r'by bending the knees'), 'flexionando os joelhos');
+    _addPhrase(_u(r'by bending the elbows'), 'flexionando os cotovelos');
+    _addPhrase(_u(r'bending at the hips and knees'), 'flexionando o quadril e os joelhos');
+    _addPhrase(_u(r'bending at the knees and hips'), 'flexionando os joelhos e o quadril');
+    _addPhrase(_u(r'bending at the hips'), 'flexionando o quadril');
+    _addPhrase(_u(r'bending at the knees'), 'flexionando os joelhos');
+    _addPhrase(_u(r'bending your knees'), 'flexionando os joelhos');
+    _addPhrase(_u(r'bending your elbows'), 'flexionando os cotovelos');
+
+    _addPhrase(_u(r'into a squat position'), 'em posição de agachamento');
+    _addPhrase(_u(r'in a squat position'), 'em posição de agachamento');
+    _addPhrase(_u(r'in a seated position'), 'na posição sentada');
+    _addPhrase(_u(r'in a standing position'), 'na posição em pé');
+    _addPhrase(_u(r'in a neutral position'), 'em posição neutra');
+
+    _addPhrase(_u(r'cable machine'), 'máquina de polia');
+    _addPhrase(_u(r'squat rack'), 'suporte de agachamento (rack)');
+    _addPhrase(_u(r'medicine ball'), 'medicine ball');
+    _addPhrase(_u(r'exercise ball'), 'bola suíça');
+    _addPhrase(_u(r'stability ball'), 'bola suíça');
+    _addPhrase(_u(r'resistance band'), 'elástico de resistência');
+
+    _addPhrase(_u(r'chest up'), 'peito estufado');
+    _addPhrase(_u(r'and your chest up'), 'e o peito erguido');
+    _addPhrase(_u(r'and chest up'), 'e o peito erguido');
+
+    _addPhrase(_u(r'with both hands'), 'com ambas as mãos');
+    _addPhrase(_u(r'with your hands'), 'com as mãos');
+    _addPhrase(_u(r'hands slightly wider than shoulder-width apart'), 'mãos ligeiramente mais afastadas que a largura dos ombros');
+    _addPhrase(_u(r'hands shoulder-width apart'), 'mãos na largura dos ombros');
+
+    _addPhrase(_u(r'palms facing each other'), 'palmas voltadas uma para a outra');
+    _addPhrase(_u(r'palms facing forward'), 'palmas voltadas para a frente');
+    _addPhrase(_u(r'palms facing towards you'), 'palmas voltadas para você');
+    _addPhrase(_u(r'palms facing your body'), 'palmas voltadas para o corpo');
+    _addPhrase(_u(r'palms facing away from you'), 'palmas voltadas para a frente');
+    _addPhrase(_u(r'palms facing inward'), 'palmas voltadas para dentro');
+    _addPhrase(_u(r'palms facing down'), 'palmas voltadas para baixo');
+    _addPhrase(_u(r'palms facing up'), 'palmas voltadas para cima');
+    _addPhrase(_u(r'palms facing towards your feet'), 'palmas voltadas para os pés');
+    _addPhrase(_u(r'palms facing'), 'palmas voltadas para');
+
+    _addPhrase(_u(r'an overhand grip, slightly wider than shoulder-width apart'), 'uma pegada pronada, um pouco mais aberta que a largura dos ombros');
+    _addPhrase(_u(r'an overhand grip slightly wider than shoulder-width apart'), 'uma pegada pronada um pouco mais aberta que a largura dos ombros');
+    _addPhrase(_u(r'with an overhand grip, slightly wider than shoulder-width apart'), 'com pegada pronada, um pouco mais aberta que a largura dos ombros');
+    _addPhrase(_u(r'with an overhand grip slightly wider than shoulder-width apart'), 'com pegada pronada um pouco mais aberta que a largura dos ombros');
+    _addPhrase(_u(r'with an overhand grip'), 'com pegada pronada');
+    _addPhrase(_u(r'with an underhand grip'), 'com pegada supinada');
+    _addPhrase(_u(r'with a neutral grip'), 'com pegada neutra');
+    _addPhrase(_u(r'with a wide grip'), 'com pegada aberta');
+    _addPhrase(_u(r'with a close grip'), 'com pegada fechada');
+    _addPhrase(_u(r'an overhand grip'), 'uma pegada pronada');
+    _addPhrase(_u(r'an underhand grip'), 'uma pegada supinada');
+    _addPhrase(_u(r'a neutral grip'), 'uma pegada neutra');
+    _addPhrase(_u(r'overhand grip'), 'pegada pronada');
+    _addPhrase(_u(r'underhand grip'), 'pegada supinada');
+    _addPhrase(_u(r'neutral grip'), 'pegada neutra');
+    _addPhrase(_u(r'wide grip'), 'pegada aberta');
+    _addPhrase(_u(r'close grip'), 'pegada fechada');
+    _addPhrase(_u(r'shoulder-width apart'), 'na largura dos ombros');
+    _addPhrase(_u(r'hip-width apart'), 'na largura do quadril');
+
+    _addPhrase(_u(r'keeping your back straight and your core engaged'), 'mantendo a coluna ereta e o abdômen contraído');
+    _addPhrase(_u(r'keeping your back straight and core engaged'), 'mantendo a coluna ereta e o abdômen contraído');
+    _addPhrase(_u(r'keeping your core engaged and your back straight'), 'mantendo o abdômen contraído e a coluna ereta');
+    _addPhrase(_u(r'keeping your core engaged and back straight'), 'mantendo o abdômen contraído e a coluna ereta');
+    _addPhrase(_u(r'keeping your back straight'), 'mantendo a coluna ereta');
+    _addPhrase(_u(r'keeping your core engaged'), 'mantendo o abdômen contraído');
+    _addPhrase(_u(r'keeping your upper arms stationary'), 'mantendo os braços firmes e imóveis');
+    _addPhrase(_u(r'keeping your arms straight'), 'mantendo os braços estendidos');
+    _addPhrase(_u(r'keeping your arms slightly bent'), 'mantendo os braços levemente flexionados');
+    _addPhrase(_u(r'keeping your elbows close to your body'), 'mantendo os cotovelos junto ao corpo');
+    _addPhrase(_u(r'keeping your elbows tucked in'), 'mantendo os cotovelos fechados');
+    _addPhrase(_u(r'keeping your elbows slightly bent'), 'mantendo os cotovelos levemente flexionados');
+    _addPhrase(_u(r'keeping your chest up'), 'mantendo o peito erguido');
+    _addPhrase(_u(r'keeping your head in a neutral position'), 'mantendo a cabeça em posição neutra');
+    _addPhrase(_u(r'keeping your knees slightly bent'), 'mantendo os joelhos levemente flexionados');
+    _addPhrase(_u(r'keeping your lower body stable'), 'mantendo os membros inferiores estáveis');
+    _addPhrase(_u(r'keeping your legs together'), 'mantendo as pernas unidas');
+    _addPhrase(_u(r'keeping them straight'), 'mantendo-os estendidos');
+    _addPhrase(_u(r'keeping it straight'), 'mantendo-o reto');
+    _addPhrase(_u(r'keeping it close to your body'), 'mantendo o peso junto ao corpo');
+    _addPhrase(_u(r'keeping your'), 'mantendo seu');
+    _addPhrase(_u(r'keeping the'), 'mantendo o');
+    _addPhrase(_u(r'keeping'), 'mantendo');
+
+    _addPhrase(_u(r'engage your core muscles'), 'contraia os músculos do core');
+    _addPhrase(_u(r'engage your core'), 'contraia o abdômen');
+    _addPhrase(_u(r'engaging your core'), 'contraindo o abdômen');
+    _addPhrase(_u(r'engage your abs'), 'contraia o abdômen');
+    _addPhrase(_u(r'engaging your abs'), 'contraindo o abdômen');
+
+    _addPhrase(_u(r'push through your heels to stand back up'), 'empurre pelos calcanhares para ficar em pé novamente');
+    _addPhrase(_u(r'push through your heels to return to the starting position'), 'empurre pelos calcanhares para retornar à posição inicial');
+    _addPhrase(_u(r'push through your heels'), 'empurre pelos calcanhares');
+    _addPhrase(_u(r'drive through your heels to stand back up'), 'empurre com força pelos calcanhares para ficar em pé novamente');
+    _addPhrase(_u(r'drive through your heels to return to the starting position'), 'empurre com força pelos calcanhares para retornar à posição inicial');
+    _addPhrase(_u(r'drive through your heels'), 'empurre com força pelos calcanhares');
+    _addPhrase(_u(r'pushing through your heels'), 'empurrando pelos calcanhares');
+
+    _addPhrase(_u(r'until your arms are fully extended, but do not lock your elbows'), 'até a extensão completa dos braços, sem travar os cotovelos');
+    _addPhrase(_u(r'until your arms are fully extended, without locking your elbows'), 'até a extensão completa dos braços, sem travar os cotovelos');
+    _addPhrase(_u(r'until your legs are fully extended, without locking your knees'), 'até a extensão completa das pernas, sem travar os joelhos');
+    _addPhrase(_u(r'without locking your elbows'), 'sem travar os cotovelos');
+    _addPhrase(_u(r'without locking your knees'), 'sem travar os joelhos');
+    _addPhrase(_u(r'without locking the elbows'), 'sem travar os cotovelos');
+    _addPhrase(_u(r'without locking the knees'), 'sem travar os joelhos');
+    _addPhrase(_u(r'do not lock your elbows'), 'não trave os cotovelos');
+    _addPhrase(_u(r'do not lock your knees'), 'não trave os joelhos');
+
+    _addPhrase(_u(r'to stand back up'), 'para ficar em pé novamente');
+    _addPhrase(_u(r'stand back up'), 'fique em pé novamente');
+
+    _addPhrase(_u(r'squeeze your shoulder blades together'), 'aproxime bem as escápulas');
+    _addPhrase(_u(r'squeezing your shoulder blades together'), 'aproximando bem as escápulas');
+    _addPhrase(_u(r'squeeze your shoulder blades'), 'aproxime as escápulas');
+    _addPhrase(_u(r'squeezing your shoulder blades'), 'aproximando as escápulas');
+    _addPhrase(_u(r'squeezing your biceps'), 'contraindo os bíceps');
+    _addPhrase(_u(r'squeezing your triceps'), 'contraindo os tríceps');
+    _addPhrase(_u(r'squeezing your glutes'), 'contraindo os glúteos');
+    _addPhrase(_u(r'squeezing your chest'), 'contraindo o peitoral');
+    _addPhrase(_u(r'squeeze your biceps'), 'contraia os bíceps');
+    _addPhrase(_u(r'squeeze your triceps'), 'contraia os tríceps');
+    _addPhrase(_u(r'squeeze your glutes'), 'contraia os glúteos');
+    _addPhrase(_u(r'squeeze your chest'), 'contraia o peitoral');
+    _addPhrase(_u(r'squeeze'), 'contraia');
+    _addPhrase(_u(r'squeezing'), 'contraindo');
+
+    _addPhrase(_u(r'pause for a moment at the peak of the movement'), 'faça uma breve pausa no pico do movimento');
+    _addPhrase(_u(r'pause for a moment at the peak'), 'faça uma breve pausa no pico');
+    _addPhrase(_u(r'pause for a moment at the bottom'), 'faça uma breve pausa embaixo');
+    _addPhrase(_u(r'pause for a moment at the top'), 'faça uma breve pausa no topo');
+    _addPhrase(_u(r'pause for a moment'), 'faça uma breve pausa');
+    _addPhrase(_u(r'pause briefly at the top'), 'faça uma pausa breve no topo');
+    _addPhrase(_u(r'pause briefly at the bottom'), 'faça uma pausa breve embaixo');
+    _addPhrase(_u(r'pause briefly'), 'faça uma breve pausa');
+    _addPhrase(_u(r'pause'), 'faça uma pausa');
+    _addPhrase(_u(r'pausing'), 'pausando');
+
+    _addPhrase(_u(r'hold for a moment at the top'), 'segure por um instante no topo');
+    _addPhrase(_u(r'hold for a moment'), 'segure por um instante');
+    _addPhrase(_u(r'hold for a second'), 'segure por um segundo');
+    _addPhrase(_u(r'hold for a brief pause'), 'faça uma breve pausa');
+    _addPhrase(_u(r'hold the contracted position'), 'sustente a posição contraída');
+    _addPhrase(_u(r'hold this position'), 'sustente essa posição');
+    _addPhrase(_u(r'hold the position'), 'sustente a posição');
+
+    _addPhrase(_u(r'slowly return to the starting position'), 'retorne lentamente à posição inicial');
+    _addPhrase(_u(r'slowly return to starting position'), 'retorne lentamente à posição inicial');
+    _addPhrase(_u(r'to return to the starting position'), 'para retornar à posição inicial');
+    _addPhrase(_u(r'to return to starting position'), 'para retornar à posição inicial');
+    _addPhrase(_u(r'return to the starting position'), 'retorne à posição inicial');
+    _addPhrase(_u(r'return to starting position'), 'retorne à posição inicial');
+    _addPhrase(_u(r'slowly lower back down to the starting position'), 'desça lentamente de volta à posição inicial');
+    _addPhrase(_u(r'slowly lower back to the starting position'), 'desça lentamente de volta à posição inicial');
+    _addPhrase(_u(r'slowly lower down to the starting position'), 'desça lentamente à posição inicial');
+    _addPhrase(_u(r'slowly lower the weights back to the starting position'), 'desça os pesos lentamente de volta à posição inicial');
+    _addPhrase(_u(r'slowly lower the dumbbells back to the starting position'), 'desça os halteres lentamente de volta à posição inicial');
+    _addPhrase(_u(r'slowly lower the dumbbell back to the starting position'), 'desça o halter lentamente de volta à posição inicial');
+    _addPhrase(_u(r'slowly lower the barbell back to the starting position'), 'desça a barra lentamente de volta à posição inicial');
+    _addPhrase(_u(r'slowly lower the bar back to the starting position'), 'desça a barra lentamente de volta à posição inicial');
+    _addPhrase(_u(r'back down to the starting position'), 'de volta à posição inicial');
+    _addPhrase(_u(r'back to the starting position'), 'de volta à posição inicial');
+    _addPhrase(_u(r'to the starting position'), 'à posição inicial');
+    _addPhrase(_u(r'to starting position'), 'à posição inicial');
+    _addPhrase(_u(r'starting position'), 'posição inicial');
+
+    _addPhrase(_u(r'Repeat on the other side'), 'Repita do outro lado');
+    _addPhrase(_u(r'repeat on the other side'), 'repita do outro lado');
+    _addPhrase(_u(r'Repeat on the opposite side'), 'Repita no lado oposto');
+    _addPhrase(_u(r'repeat on the opposite side'), 'repita no lado oposto');
+    _addPhrase(_u(r'Repeat the movement to the other side'), 'Repita o movimento para o outro lado');
+    _addPhrase(_u(r'Repeat the movement on the opposite side'), 'Repita o movimento no lado oposto');
+    _addPhrase(_u(r'Repeat the movement'), 'Repita o movimento');
+    _addPhrase(_u(r'repeat the movement'), 'repita o movimento');
+    _addPhrase(_u(r'Repeat with the other'), 'Repita com o outro');
+    _addPhrase(_u(r'repeat with the other'), 'repita com o outro');
+    _addPhrase(_u(r'Repeat with the opposite'), 'Repita com o lado oposto');
+    _addPhrase(_u(r'Repeat for the desired'), 'Repita pelo número desejado');
+    _addPhrase(_u(r'repeat for the desired'), 'repita pelo número desejado');
+    _addPhrase(_u(r'for the desired number of repetitions'), 'pelo número desejado de repetições');
+    _addPhrase(_u(r'desired number of repetitions'), 'número desejado de repetições');
+    _addPhrase(_u(r'desired repetitions'), 'repetições desejadas');
+    _addPhrase(_u(r'desired weight and height settings'), 'ajustes desejados de carga e altura');
+    _addPhrase(_u(r'desired weight and height'), 'carga e altura desejadas');
+    _addPhrase(_u(r'desired height'), 'altura desejada');
+    _addPhrase(_u(r'desired weight'), 'carga desejada');
+
+    _addPhrase(_u(r'press one dumbbell overhead while keeping the other dumbbell at shoulder height'), 'empurre um halter acima da cabeça enquanto mantém o outro na altura do ombro');
+
+    _addPhrase(_u(r'twist your torso to the right'), 'gire o tronco para a direita');
+    _addPhrase(_u(r'twist your torso to the left'), 'gire o tronco para a esquerda');
+    _addPhrase(_u(r'to the right side of your body'), 'para o lado direito do corpo');
+    _addPhrase(_u(r'to the left side of your body'), 'para o lado esquerdo do corpo');
+    _addPhrase(_u(r'towards the right side of your body'), 'em direção ao lado direito do corpo');
+    _addPhrase(_u(r'towards the left side of your body'), 'em direção ao lado esquerdo do corpo');
+    _addPhrase(_u(r'towards the right side'), 'em direção ao lado direito');
+    _addPhrase(_u(r'towards the left side'), 'em direção ao lado esquerdo');
+    _addPhrase(_u(r'towards your right heel'), 'em direção ao calcanhar direito');
+    _addPhrase(_u(r'towards your left heel'), 'em direção ao calcanhar esquerdo');
+    _addPhrase(_u(r'towards your right knee'), 'em direção ao joelho direito');
+    _addPhrase(_u(r'towards your left knee'), 'em direção ao joelho esquerdo');
+    _addPhrase(_u(r'towards your right side'), 'em direção ao lado direito');
+    _addPhrase(_u(r'towards your left side'), 'em direção ao lado esquerdo');
+    _addPhrase(_u(r'towards your chest'), 'em direção ao peitoral');
+    _addPhrase(_u(r'towards your hips'), 'em direção ao quadril');
+    _addPhrase(_u(r'towards your shoulders'), 'em direção aos ombros');
+    _addPhrase(_u(r'towards your glutes'), 'em direção aos glúteos');
+    _addPhrase(_u(r'towards the floor'), 'em direção ao chão');
+    _addPhrase(_u(r'towards the ground'), 'em direção ao chão');
+    _addPhrase(_u(r'to the right'), 'para a direita');
+    _addPhrase(_u(r'to the left'), 'para a esquerda');
+    _addPhrase(_u(r'on the right'), 'à direita');
+    _addPhrase(_u(r'on the left'), 'à esquerda');
+    _addPhrase(_u(r'on the right side'), 'no lado direito');
+    _addPhrase(_u(r'on the left side'), 'no lado esquerdo');
+
+    _addPhrase(_u(r'right hand'), 'mão direita');
+    _addPhrase(_u(r'left hand'), 'mão esquerda');
+    _addPhrase(_u(r'right leg'), 'perna direita');
+    _addPhrase(_u(r'left leg'), 'perna esquerda');
+    _addPhrase(_u(r'right arm'), 'braço direito');
+    _addPhrase(_u(r'left arm'), 'braço esquerdo');
+    _addPhrase(_u(r'right foot'), 'pé direito');
+    _addPhrase(_u(r'left foot'), 'pé esquerdo');
+    _addPhrase(_u(r'right knee'), 'joelho direito');
+    _addPhrase(_u(r'left knee'), 'joelho esquerdo');
+    _addPhrase(_u(r'right elbow'), 'cotovelo direito');
+    _addPhrase(_u(r'left elbow'), 'cotovelo esquerdo');
+    _addPhrase(_u(r'right heel'), 'calcanhar direito');
+    _addPhrase(_u(r'left heel'), 'calcanhar esquerdo');
+    _addPhrase(_u(r'right thigh'), 'coxa direita');
+    _addPhrase(_u(r'left thigh'), 'coxa esquerda');
+    _addPhrase(_u(r'right ankle'), 'tornozelo direito');
+    _addPhrase(_u(r'left ankle'), 'tornozelo esquerdo');
+    _addPhrase(_u(r'right side'), 'lado direito');
+    _addPhrase(_u(r'left side'), 'lado esquerdo');
+    _addPhrase(_u(r'right shoulder'), 'ombro direito');
+    _addPhrase(_u(r'left shoulder'), 'ombro esquerdo');
+
+    _addPhrase(_u(r'opposite side'), 'lado oposto');
+    _addPhrase(_u(r'opposite leg'), 'perna oposta');
+    _addPhrase(_u(r'opposite arm'), 'braço oposto');
+    _addPhrase(_u(r'opposite knee'), 'joelho oposto');
+    _addPhrase(_u(r'opposite hand'), 'mão oposta');
+    _addPhrase(_u(r'opposite foot'), 'pé oposto');
+    _addPhrase(_u(r'opposite'), 'oposto');
+
+    _addPhrase(_u(r'simultaneously'), 'simultaneamente');
+    _addPhrase(_u(r'pedaling motion'), 'movimento de pedalada');
+    _addPhrase(_u(r'have a partner or use a resistance band to secure your ankles'), 'peça a um parceiro de treino ou use um elástico para prender os tornozelos');
+    _addPhrase(_u(r'have a partner or use a resistance band'), 'peça a um parceiro ou use um elástico');
+    _addPhrase(_u(r'have a partner'), 'peça a um parceiro de treino');
+    _addPhrase(_u(r'secure your ankles'), 'prenda os tornozelos');
+    _addPhrase(_u(r'secure your knees on the pad'), 'trave os joelhos no apoio');
+    _addPhrase(_u(r'secure your knees'), 'trave os joelhos');
+    _addPhrase(_u(r'secure your feet'), 'trave os pés');
+    _addPhrase(_u(r'secured under the pads'), 'travados sob os apoios');
+    _addPhrase(_u(r'secured'), 'travado');
+    _addPhrase(_u(r'securing'), 'travando');
+    _addPhrase(_u(r'secure'), 'trave');
+    _addPhrase(_u(r'partner'), 'parceiro de treino');
+    _addPhrase(_u(r'ankles'), 'tornozelos');
+    _addPhrase(_u(r'ankle'), 'tornozelo');
+    _addPhrase(_u(r'thighs'), 'coxas');
+    _addPhrase(_u(r'thigh'), 'coxa');
+    _addPhrase(_u(r'pivoting on'), 'girando sobre');
+
+    _addPhrase(_u(r'push yourself back up to the starting position'), 'empurre o corpo para cima de volta à posição inicial');
+    _addPhrase(_u(r'push yourself back up'), 'empurre o corpo para cima novamente');
+    _addPhrase(_u(r'push yourself up'), 'empurre o corpo para cima');
+    _addPhrase(_u(r'push yourself'), 'empurre o corpo');
+    _addPhrase(_u(r'parallel bars'), 'barras paralelas');
+    _addPhrase(_u(r'parallel bar'), 'barra paralela');
+
+    _addPhrase(_u(r'off the ground'), 'do chão');
+    _addPhrase(_u(r'off the floor'), 'do chão');
+    _addPhrase(_u(r'off the bench'), 'do banco');
+    _addPhrase(_u(r'off the rack'), 'do suporte');
+    _addPhrase(_u(r'off the ball'), 'da bola');
+    _addPhrase(_u(r'off the pad'), 'do apoio');
+    _addPhrase(_u(r'off the kettlebells'), 'dos kettlebells');
+    _addPhrase(_u(r'off the kettlebell'), 'do kettlebell');
+    _addPhrase(_u(r'hanging off the edge'), 'livres para fora da borda');
+    _addPhrase(_u(r'hang off the edge'), 'livres para fora da borda');
+    _addPhrase(_u(r'hanging off'), 'livres para fora');
+    _addPhrase(_u(r'hang off'), 'livres para fora');
+    _addPhrase(_u(r'off the edge'), 'da borda');
+    _addPhrase(_u(r'push off with'), 'impulsione-se com');
+    _addPhrase(_u(r'push off the'), 'impulsione-se a partir de');
+    _addPhrase(_u(r'push off'), 'impulsione-se');
+    _addPhrase(_u(r'jump off'), 'salte de');
+    _addPhrase(_u(r'off the'), 'do');
+    _addVocab(_u(r'off'), 'de');
+
+    _addPhrase(_u(r'then slowly lower'), 'em seguida desça lentamente');
+    _addPhrase(_u(r'then slowly return'), 'em seguida retorne lentamente');
+    _addPhrase(_u(r'then slowly release'), 'em seguida solte lentamente');
+    _addPhrase(_u(r'then slowly'), 'em seguida lentamente');
+    _addPhrase(_u(r'then push'), 'em seguida empurre');
+    _addPhrase(_u(r'then pull'), 'em seguida puxe');
+    _addPhrase(_u(r'then return'), 'em seguida retorne');
+    _addPhrase(_u(r'then lower'), 'em seguida desça');
+    _addPhrase(_u(r'then lift'), 'em seguida levante');
+    _addPhrase(_u(r'then raise'), 'em seguida eleve');
+    _addPhrase(_u(r'then twist'), 'em seguida gire');
+    _addPhrase(_u(r'then rotate'), 'em seguida gire');
+    _addPhrase(_u(r'then pause'), 'em seguida faça uma pausa');
+    _addPhrase(_u(r'then repeat'), 'em seguida repita');
+    _addPhrase(_u(r'then switch'), 'em seguida troque');
+    _addPhrase(_u(r'then'), 'em seguida');
+
+    // 3. VOCABULARY & POSSESSIVES
+    final possessives = [
+      ['knees', 'os joelhos'], ['knee', 'o joelho'],
+      ['elbows', 'os cotovelos'], ['elbow', 'o cotovelo'],
+      ['arms', 'os braços'], ['arm', 'o braço'],
+      ['legs', 'as pernas'], ['leg', 'a perna'],
+      ['chest', 'o peitoral'], ['back', 'as costas'],
+      ['hips', 'o quadril'], ['hip', 'o quadril'],
+      ['feet', 'os pés'], ['foot', 'o pé'],
+      ['hands', 'as mãos'], ['hand', 'a mão'],
+      ['head', 'a cabeça'], ['neck', 'o pescoço'],
+      ['shoulders', 'os ombros'], ['shoulder', 'o ombro'],
+      ['core', 'o core'], ['abs', 'o abdômen'],
+      ['body', 'o corpo'], ['torso', 'o tronco'],
+      ['heels', 'os calcanhares'], ['heel', 'o calcanhar'],
+      ['toes', 'as pontas dos pés'], ['toe', 'a ponta do pé'],
+      ['biceps', 'os bíceps'], ['triceps', 'os tríceps'],
+      ['glutes', 'os glúteos'], ['quadriceps', 'os quadríceps'],
+      ['quads', 'os quadríceps'], ['hamstrings', 'os posteriores de coxa'],
+      ['calves', 'as panturrilhas'], ['lats', 'as dorsais'],
+      ['upper body', 'o tronco'], ['lower body', 'os membros inferiores'],
+      ['upper arms', 'os braços'], ['upper arm', 'o braço'],
+      ['forearms', 'os antebraços'], ['forearm', 'o antebraço'],
+      ['thighs', 'as coxas'], ['thigh', 'a coxa'],
+      ['wrists', 'os punhos'], ['wrist', 'o punho'],
+      ['shoulder blades', 'as escápulas'], ['spine', 'a coluna'],
+      ['chin', 'o queixo'], ['face', 'o rosto'],
+    ];
+
+    for (final p in possessives) {
+      _addVocab(_u('your ${p[0]}'), p[1]);
+    }
+
+    _addVocab(_u(r'your'), 'seu');
+
+    _addVocab(_u(r'the barbell'), 'a barra');
+    _addVocab(_u(r'a barbell'), 'uma barra');
+    _addVocab(_u(r'the dumbbells'), 'os halteres');
+    _addVocab(_u(r'the dumbbell'), 'o halter');
+    _addVocab(_u(r'a dumbbell'), 'um halter');
+    _addVocab(_u(r'dumbbells'), 'halteres');
+    _addVocab(_u(r'dumbbell'), 'halter');
+    _addVocab(_u(r'barbells'), 'barras');
+    _addVocab(_u(r'barbell'), 'barra');
+    _addVocab(_u(r'the bar'), 'a barra');
+    _addVocab(_u(r'a bar'), 'uma barra');
+    _addVocab(_u(r'the handles'), 'as manoplas');
+    _addVocab(_u(r'the handle'), 'a manopla');
+    _addVocab(_u(r'handles'), 'manoplas');
+    _addVocab(_u(r'handle'), 'manopla');
+    _addVocab(_u(r'the cable'), 'o cabo');
+    _addVocab(_u(r'cables'), 'cabos');
+    _addVocab(_u(r'cable'), 'cabo');
+    _addVocab(_u(r'the machine'), 'o aparelho');
+    _addVocab(_u(r'machines'), 'aparelhos');
+    _addVocab(_u(r'machine'), 'aparelho');
+    _addVocab(_u(r'the bench'), 'o banco');
+    _addVocab(_u(r'a bench'), 'um banco');
+    _addVocab(_u(r'bench'), 'banco');
+    _addVocab(_u(r'the pad'), 'o apoio');
+    _addVocab(_u(r'pads'), 'apoios');
+    _addVocab(_u(r'pad'), 'apoio');
+    _addVocab(_u(r'the rope'), 'a corda');
+    _addVocab(_u(r'ropes'), 'cordas');
+    _addVocab(_u(r'rope'), 'corda');
+    _addVocab(_u(r'the floor'), 'o chão');
+    _addVocab(_u(r'the ground'), 'o chão');
+    _addVocab(_u(r'floor'), 'chão');
+    _addVocab(_u(r'ground'), 'chão');
+    _addVocab(_u(r'the weights'), 'os pesos');
+    _addVocab(_u(r'the weight'), 'a carga');
+    _addVocab(_u(r'weights'), 'pesos');
+    _addVocab(_u(r'weight'), 'peso');
+
+    _addVocab(_u(r'knees'), 'joelhos');
+    _addVocab(_u(r'knee'), 'joelho');
+    _addVocab(_u(r'elbows'), 'cotovelos');
+    _addVocab(_u(r'elbow'), 'cotovelo');
+    _addVocab(_u(r'arms'), 'braços');
+    _addVocab(_u(r'arm'), 'braço');
+    _addVocab(_u(r'legs'), 'pernas');
+    _addVocab(_u(r'leg'), 'perna');
+    _addVocab(_u(r'hands'), 'mãos');
+    _addVocab(_u(r'hand'), 'mão');
+    _addVocab(_u(r'feet'), 'pés');
+    _addVocab(_u(r'foot'), 'pé');
+    _addVocab(_u(r'shoulders'), 'ombros');
+    _addVocab(_u(r'shoulder'), 'ombro');
+    _addVocab(_u(r'hips'), 'quadril');
+    _addVocab(_u(r'hip'), 'quadril');
+    _addVocab(_u(r'chest'), 'peitoral');
+    _addVocab(_u(r'heels'), 'calcanhares');
+    _addVocab(_u(r'heel'), 'calcanhar');
+    _addVocab(_u(r'toes'), 'pontas dos pés');
+    _addVocab(_u(r'toe'), 'ponta do pé');
+    _addVocab(_u(r'torso'), 'tronco');
+    _addVocab(_u(r'body'), 'corpo');
+    _addVocab(_u(r'head'), 'cabeça');
+    _addVocab(_u(r'neck'), 'pescoço');
+
+    _addVocab(_u(r'stand'), 'fique em pé');
+    _addVocab(_u(r'sit'), 'sente-se');
+    _addVocab(_u(r'lie'), 'deite-se');
+    _addVocab(_u(r'hold'), 'segure');
+    _addVocab(_u(r'holding'), 'segurando');
+    _addVocab(_u(r'grasp'), 'segure');
+    _addVocab(_u(r'place'), 'posicione');
+    _addVocab(_u(r'position'), 'posição');
+    _addVocab(_u(r'lower'), 'desça');
+    _addVocab(_u(r'lowers'), 'desce');
+    _addVocab(_u(r'lowering'), 'descendo');
+    _addVocab(_u(r'raise'), 'eleve');
+    _addVocab(_u(r'raising'), 'elevando');
+    _addVocab(_u(r'lift'), 'levante');
+    _addVocab(_u(r'lifting'), 'levantando');
+    _addVocab(_u(r'push'), 'empurre');
+    _addVocab(_u(r'pushing'), 'empurrando');
+    _addVocab(_u(r'pull'), 'puxe');
+    _addVocab(_u(r'pulling'), 'puxando');
+    _addVocab(_u(r'press'), 'empurre');
+    _addVocab(_u(r'pressing'), 'empurrando');
+    _addVocab(_u(r'curl'), 'flexione');
+    _addVocab(_u(r'curling'), 'flexionando');
+    _addVocab(_u(r'bend'), 'flexione');
+    _addVocab(_u(r'bending'), 'flexionando');
+    _addVocab(_u(r'extend'), 'estenda');
+    _addVocab(_u(r'extending'), 'estendendo');
+    _addVocab(_u(r'reach'), 'alcance');
+    _addVocab(_u(r'reaching'), 'alcançando');
+    _addVocab(_u(r'touch'), 'toque');
+    _addVocab(_u(r'touching'), 'tocando');
+    _addVocab(_u(r'rotate'), 'gire');
+    _addVocab(_u(r'rotating'), 'girando');
+    _addVocab(_u(r'twist'), 'gire');
+    _addVocab(_u(r'twisting'), 'girando');
+    _addVocab(_u(r'lean'), 'incline');
+    _addVocab(_u(r'leaning'), 'inclinando');
+    _addVocab(_u(r'step'), 'dê um passo');
+    _addVocab(_u(r'jump'), 'salte');
+    _addVocab(_u(r'jumping'), 'saltando');
+    _addVocab(_u(r'land'), 'aterrisse');
+    _addVocab(_u(r'landing'), 'aterrissando');
+    _addVocab(_u(r'rest'), 'apoie');
+    _addVocab(_u(r'resting'), 'apoiando');
+    _addVocab(_u(r'switch'), 'troque');
+    _addVocab(_u(r'alternate'), 'alterne');
+    _addVocab(_u(r'alternating'), 'alternando');
+    _addVocab(_u(r'reverse'), 'inverta');
+    _addVocab(_u(r'maintain'), 'mantenha');
+    _addVocab(_u(r'maintaining'), 'mantendo');
+    _addVocab(_u(r'contract'), 'contraia');
+    _addVocab(_u(r'contracting'), 'contraindo');
+    _addVocab(_u(r'release'), 'solte');
+    _addVocab(_u(r'releasing'), 'soltando');
+    _addVocab(_u(r'continue'), 'continue');
+    _addVocab(_u(r'repeat'), 'repita');
+    _addVocab(_u(r'exhale'), 'expire');
+    _addVocab(_u(r'inhale'), 'inspire');
+    _addVocab(_u(r'drive'), 'empurre com força');
+    _addVocab(_u(r'hinge'), 'incline o tronco');
+    _addVocab(_u(r'facing'), 'virado para');
+    _addVocab(_u(r'adjust'), 'ajuste');
+    _addVocab(_u(r'attach'), 'prenda');
+    _addVocab(_u(r'attached'), 'preso');
+    _addVocab(_u(r'engage'), 'contraia');
+    _addVocab(_u(r'engaging'), 'contraindo');
+    _addVocab(_u(r'bring'), 'aproxime');
+    _addVocab(_u(r'bringing'), 'aproximando');
+    _addVocab(_u(r'return'), 'retorne');
+    _addVocab(_u(r'returning'), 'retornando');
+    _addVocab(_u(r'straightening'), 'estendendo');
+    _addVocab(_u(r'crossing'), 'cruzando');
+    _addVocab(_u(r'cross'), 'cruze');
+
+    _addPhrase(_u(r'as you slowly lower'), 'enquanto desce lentamente');
+    _addPhrase(_u(r'as you slowly return'), 'enquanto retorna lentamente');
+    _addPhrase(_u(r'as you slowly'), 'enquanto lentamente');
+    _addPhrase(_u(r'as you'), 'ao');
+    _addVocab(_u(r'contraction'), 'contração');
+    _addVocab(_u(r'brief'), 'breve');
+
+    _addPhrase(_u(r'keep your back straight and your core engaged'), 'mantenha a coluna ereta e o abdômen contraído');
+    _addPhrase(_u(r'keep your back straight and chest lifted'), 'mantenha a coluna ereta e o peito erguido');
+    _addPhrase(_u(r'keep your back straight and chest up'), 'mantenha a coluna ereta e o peito erguido');
+    _addPhrase(_u(r'keep your back straight'), 'mantenha a coluna ereta');
+    _addPhrase(_u(r'keep your core engaged'), 'mantenha o abdômen contraído');
+    _addPhrase(_u(r'keep your core tight'), 'mantenha o abdômen firme');
+    _addPhrase(_u(r'keep your chest up'), 'mantenha o peito erguido');
+    _addPhrase(_u(r'keep your arms straight'), 'mantenha os braços estendidos');
+    _addPhrase(_u(r'keep your elbows close to your body'), 'mantenha os cotovelos junto ao corpo');
+    _addPhrase(_u(r'keep your elbows close to your ears'), 'mantenha os cotovelos próximos às orelhas');
+    _addPhrase(_u(r'keep your elbows tucked in'), 'mantenha os cotovelos fechados');
+    _addPhrase(_u(r'keep your'), 'mantenha seu');
+    _addPhrase(_u(r'keep the'), 'mantenha o');
+    _addPhrase(_u(r'keep'), 'mantenha');
+
+    _addPhrase(_u(r'fully extended'), 'totalmente estendido');
+    _addPhrase(_u(r'extended straight'), 'estendido em linha reta');
+    _addPhrase(_u(r'arms extended'), 'braços estendidos');
+    _addPhrase(_u(r'legs extended'), 'pernas estendidas');
+    _addPhrase(_u(r'extended'), 'estendido');
+
+    _addPhrase(_u(r'slightly bent'), 'levemente flexionados');
+    _addPhrase(_u(r'bent at a 90-degree angle'), 'flexionado a 90 graus');
+    _addPhrase(_u(r'bent'), 'flexionado');
+
+    _addPhrase(_u(r'until your torso is at a 45-degree angle'), 'até o tronco formar um ângulo de 45 graus');
+    _addPhrase(_u(r'until your torso is parallel to the ground'), 'até o tronco ficar paralelo ao chão');
+    _addPhrase(_u(r'until your torso is parallel to the floor'), 'até o tronco ficar paralelo ao chão');
+    _addPhrase(_u(r'until your thighs are parallel to the ground'), 'até as coxas ficarem paralelas ao chão');
+    _addPhrase(_u(r'until your thighs are parallel to the floor'), 'até as coxas ficarem paralelas ao chão');
+    _addPhrase(_u(r'until your thigh is parallel to the ground'), 'até a coxa ficar paralela ao chão');
+    _addPhrase(_u(r'until your thigh is parallel to the floor'), 'até a coxa ficar paralela ao chão');
+    _addPhrase(_u(r'is parallel to the ground'), 'está paralelo ao chão');
+    _addPhrase(_u(r'is parallel to the floor'), 'está paralelo ao chão');
+    _addPhrase(_u(r'is parallel to'), 'está paralelo a');
+    _addPhrase(_u(r'is at a 45-degree angle'), 'forma um ângulo de 45 graus');
+    _addPhrase(_u(r'is at a'), 'está em um');
+
+    _addPhrase(_u(r'to one side'), 'para um lado');
+    _addPhrase(_u(r'on one side'), 'de um lado');
+    _addPhrase(_u(r'one side'), 'um lado');
+    _addPhrase(_u(r'one hand'), 'uma mão');
+    _addPhrase(_u(r'one arm'), 'um braço');
+    _addPhrase(_u(r'one leg'), 'uma perna');
+    _addPhrase(_u(r'one foot'), 'um pé');
+    _addPhrase(_u(r'one dumbbell'), 'um halter');
+    _addPhrase(_u(r'one at a time'), 'um de cada vez');
+
+    _addPhrase(_u(r'in front of your chest'), 'em frente ao peitoral');
+    _addPhrase(_u(r'in front of your body'), 'em frente ao corpo');
+    _addPhrase(_u(r'in front of you'), 'à sua frente');
+    _addPhrase(_u(r'in front of'), 'em frente a');
+
+    _addPhrase(_u(r'so that your'), 'de modo que seu');
+    _addPhrase(_u(r'so that the'), 'de modo que o');
+    _addPhrase(_u(r'so that'), 'de modo que');
+
+    _addPhrase(_u(r'start by'), 'comece');
+    _addPhrase(_u(r'start with'), 'comece com');
+    _addPhrase(_u(r'starting with'), 'começando com');
+
+    _addPhrase(_u(r'overhead'), 'acima da cabeça');
+    _addPhrase(_u(r'above your head'), 'acima da cabeça');
+    _addPhrase(_u(r'behind your head'), 'atrás da cabeça');
+    _addPhrase(_u(r'above'), 'acima');
+
+    _addPhrase(_u(r'at the top of the movement'), 'no topo do movimento');
+    _addPhrase(_u(r'at the bottom of the movement'), 'embaixo no movimento');
+    _addPhrase(_u(r'at the top'), 'no topo');
+    _addPhrase(_u(r'at the bottom'), 'embaixo');
+
+    _addPhrase(_u(r'close to your body'), 'junto ao corpo');
+    _addPhrase(_u(r'close to your ears'), 'junto às orelhas');
+    _addPhrase(_u(r'close grip'), 'pegada fechada');
+    _addPhrase(_u(r'close to'), 'próximo a');
+    _addPhrase(_u(r'close'), 'fechado');
+
+    _addPhrase(_u(r'through your heels'), 'pelos calcanhares');
+    _addPhrase(_u(r'through your heel'), 'pelo calcanhar');
+    _addPhrase(_u(r'through'), 'através de');
+
+    _addPhrase(_u(r'feel a stretch in your'), 'sentir um alongamento em seu');
+    _addPhrase(_u(r'feel a stretch'), 'sentir um alongamento');
+    _addPhrase(_u(r'stretch in your'), 'alongamento em seu');
+    _addPhrase(_u(r'stretch'), 'alongamento');
+
+    _addPhrase(_u(r'resistance band'), 'elástico de resistência');
+    _addPhrase(_u(r'band'), 'elástico');
+    _addPhrase(_u(r'ball'), 'bola');
+
+    _addVocab(_u(r'one'), 'um');
+    _addVocab(_u(r'two'), 'dois');
+    _addVocab(_u(r'three'), 'três');
+    _addVocab(_u(r'four'), 'quatro');
+    _addVocab(_u(r'you'), 'você');
+    _addVocab(_u(r'are'), 'estão');
+    _addVocab(_u(r'is'), 'está');
+    _addVocab(_u(r'it'), 'o peso');
+    _addVocab(_u(r'them'), 'os pesos');
+    _addVocab(_u(r'of'), 'de');
+    _addVocab(_u(r'top'), 'topo');
+    _addVocab(_u(r'high'), 'alto');
+    _addVocab(_u(r'low'), 'baixo');
+    _addVocab(_u(r'start'), 'inicie');
+
+    // Unicode safe boundaries on all short words
+    _addVocab(_u(r'the'), 'o');
+    _addVocab(_u(r'with'), 'com');
+    _addVocab(_u(r'without'), 'sem');
+    _addVocab(_u(r'until'), 'até');
+    _addVocab(_u(r'while'), 'enquanto');
+    _addVocab(_u(r'and'), 'e');
+    _addVocab(_u(r'or'), 'ou');
+    _addVocab(_u(r'back'), 'de volta');
+    _addVocab(_u(r'down'), 'para baixo');
+    _addVocab(_u(r'up'), 'para cima');
+    _addVocab(_u(r'out'), 'para fora');
+    _addVocab(_u(r'in'), 'em');
+    _addVocab(_u(r'on'), 'em');
+    _addVocab(_u(r'at'), 'em');
+    _addVocab(_u(r'from'), 'de');
+    _addVocab(_u(r'to'), 'para');
+    _addVocab(_u(r'for'), 'por');
+    _addVocab(_u(r'by'), 'por');
+    _addVocab(_u(r'over'), 'sobre');
+    _addVocab(_u(r'under'), 'sob');
+    _addVocab(_u(r'across'), 'através de');
+    _addVocab(_u(r'against'), 'contra');
+    _addVocab(_u(r'between'), 'entre');
+    _addVocab(_u(r'both'), 'ambos os');
+    _addVocab(_u(r'each'), 'cada');
+    _addVocab(_u(r'other'), 'outro');
+    _addVocab(_u(r'forward'), 'para a frente');
+    _addVocab(_u(r'backward'), 'para trás');
+    _addVocab(_u(r'upward'), 'para cima');
+    _addVocab(_u(r'downward'), 'para baixo');
+    _addVocab(_u(r'outward'), 'para fora');
+    _addVocab(_u(r'inward'), 'para dentro');
+    _addVocab(_u(r'slowly'), 'lentamente');
+    _addVocab(_u(r'slightly'), 'levemente');
+    _addVocab(_u(r'fully'), 'totalmente');
+    _addVocab(_u(r'straight'), 'reto');
+    _addVocab(_u(r'flat'), 'apoiado');
+    _addVocab(_u(r'apart'), 'afastados');
+    _addVocab(_u(r'together'), 'juntos');
+    _addVocab(_u(r'parallel'), 'paralelo');
+    _addVocab(_u(r'height'), 'altura');
+    _addVocab(_u(r'degrees'), 'graus');
+    _addVocab(_u(r'movement'), 'movimento');
+    _addVocab(_u(r'motion'), 'movimento');
+    _addVocab(_u(r'contracted'), 'contraído');
+    _addVocab(_u(r'level'), 'altura');
+    _addVocab(_u(r'width'), 'largura');
+    _addVocab(_u(r'angle'), 'ângulo');
+    _addVocab(_u(r'grip'), 'pegada');
+    _addVocab(_u(r'sides'), 'lados');
+    _addVocab(_u(r'side'), 'lado');
+    _addVocab(_u(r'front'), 'frente');
+    _addVocab(_u(r'away'), 'longe');
+    _addVocab(_u(r'behind'), 'atrás');
+    _addVocab(_u(r'towards'), 'em direção a');
+    _addVocab(_u(r'moment'), 'instante');
+    _addVocab(_u(r'desired'), 'desejado');
+    _addVocab(_u(r'repetitions'), 'repetições');
+  }
+
+
+  static String translate(String s) {
+    _init();
+    final text = s.trim();
+    if (text.isEmpty) return text;
+    if (_exact.containsKey(text)) return _exact[text]!;
+    var res = text;
+    for (final e in _clausePatterns) {
+      res = res.replaceAll(e.key, e.value);
+    }
+    for (final e in _phrasePatterns) {
+      res = res.replaceAll(e.key, e.value);
+    }
+    for (final e in _vocabPatterns) {
+      res = res.replaceAll(e.key, e.value);
+    }
+    return _postProcess(res);
+  }
+
+  static String _postProcess(String text) {
+    var res = text;
+    res = res.replaceAll(RegExp(r'(?<![a-zA-ZÀ-ÿ])de o(?![a-zA-ZÀ-ÿ])'), 'do')
+             .replaceAll(RegExp(r'(?<![a-zA-ZÀ-ÿ])de a(?![a-zA-ZÀ-ÿ])'), 'da')
+             .replaceAll(RegExp(r'(?<![a-zA-ZÀ-ÿ])de os(?![a-zA-ZÀ-ÿ])'), 'dos')
+             .replaceAll(RegExp(r'(?<![a-zA-ZÀ-ÿ])de as(?![a-zA-ZÀ-ÿ])'), 'das')
+             .replaceAll(RegExp(r'(?<![a-zA-ZÀ-ÿ])em o(?![a-zA-ZÀ-ÿ])'), 'no')
+             .replaceAll(RegExp(r'(?<![a-zA-ZÀ-ÿ])em a(?![a-zA-ZÀ-ÿ])'), 'na')
+             .replaceAll(RegExp(r'(?<![a-zA-ZÀ-ÿ])em os(?![a-zA-ZÀ-ÿ])'), 'nos')
+             .replaceAll(RegExp(r'(?<![a-zA-ZÀ-ÿ])em as(?![a-zA-ZÀ-ÿ])'), 'nas')
+             .replaceAll(RegExp(r'(?<![a-zA-ZÀ-ÿ])a o(?![a-zA-ZÀ-ÿ])'), 'ao')
+             .replaceAll(RegExp(r'(?<![a-zA-ZÀ-ÿ])a os(?![a-zA-ZÀ-ÿ])'), 'aos')
+             .replaceAll(RegExp(r'(?<![a-zA-ZÀ-ÿ])a a(?![a-zA-ZÀ-ÿ])'), 'à')
+             .replaceAll(RegExp(r'(?<![a-zA-ZÀ-ÿ])a as(?![a-zA-ZÀ-ÿ])'), 'às')
+             .replaceAll(RegExp(r'(?<![a-zA-ZÀ-ÿ])por o(?![a-zA-ZÀ-ÿ])'), 'pelo')
+             .replaceAll(RegExp(r'(?<![a-zA-ZÀ-ÿ])por a(?![a-zA-ZÀ-ÿ])'), 'pela')
+             .replaceAll(RegExp(r'(?<![a-zA-ZÀ-ÿ])por os(?![a-zA-ZÀ-ÿ])'), 'pelos')
+             .replaceAll(RegExp(r'(?<![a-zA-ZÀ-ÿ])por as(?![a-zA-ZÀ-ÿ])'), 'pelas')
+             .replaceAll(RegExp(r'(?<![a-zA-ZÀ-ÿ])para o(?![a-zA-ZÀ-ÿ])'), 'para o')
+             .replaceAll(RegExp(r'(?<![a-zA-ZÀ-ÿ])para a(?![a-zA-ZÀ-ÿ])'), 'para a');
+
+    res = res.replaceAll(RegExp(r'\s+'), ' ').trim();
+    if (res.isNotEmpty) {
+      res = res[0].toUpperCase() + res.substring(1);
+    }
+    return res;
+  }
+}
+
 
 /// Normalizador de texto para buscas insensíveis a acentos e maiúsculas/minúsculas
 String normalizeSearchText(String input) {

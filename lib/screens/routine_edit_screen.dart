@@ -71,6 +71,7 @@ class _RoutineEditScreenState extends State<RoutineEditScreen> {
       }
       if (_muscleFilter != null &&
           ex.primary != _muscleFilter &&
+          !ex.secondaryMuscles.contains(_muscleFilter) &&
           !ex.secondary.contains(_muscleFilter)) {
         return false;
       }
@@ -129,7 +130,7 @@ class _RoutineEditScreenState extends State<RoutineEditScreen> {
                 } else if (_tab == 0) {
                   final muscleId = kFilterMuscles[itemIndex];
                   final count = fit.allExercises
-                      .where((e) => e.primary == muscleId || e.secondary.contains(muscleId))
+                      .where((e) => e.primary == muscleId || e.secondaryMuscles.contains(muscleId) || e.secondary.contains(muscleId))
                       .length;
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 12),
@@ -721,7 +722,7 @@ class _RoutineEditScreenState extends State<RoutineEditScreen> {
               children: [
                 Text(exerciseName(ex), style: AppTheme.s(14, weight: FontWeight.w600, color: gc.text)),
                 const SizedBox(height: 2),
-                Text('${muscleLabel(ex.primary)} · ${t.equipment(ex.equipment)}', style: AppTheme.s(12, color: gc.textSecondary)),
+                Text('${muscleLabel(ex.primary)} · ${ex.getLocalizedEquipment(context)}', style: AppTheme.s(12, color: gc.textSecondary)),
               ],
             ),
           ),

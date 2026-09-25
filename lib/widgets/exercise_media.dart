@@ -13,45 +13,66 @@ class ExerciseMedia extends StatelessWidget {
   const ExerciseMedia({
     super.key,
     required this.ex,
-    this.height = 210,
+    this.height,
+    this.width,
+    this.aspectRatio,
     this.radius = 20,
     this.live = false,
+    this.fit,
   });
 
   final Exercise ex;
-  final double height;
+  final double? height;
+  final double? width;
+  final double? aspectRatio;
   final double radius;
   final bool live;
+  final BoxFit? fit;
 
   @override
   Widget build(BuildContext context) {
+    final effectiveHeight = height ?? (aspectRatio != null ? null : 210.0);
+    final effectiveFit = fit ?? (aspectRatio != null ? BoxFit.cover : BoxFit.contain);
+
     final path = ex.media.isEmpty ? null : MediaStore.pathFor(ex.media);
     if (path == null) {
       final gif = ex.gifPath.isNotEmpty ? ex.gifPath : 'assets/exercises/${ex.id}.gif';
       return ExerciseGifView(
         gifPath: gif,
-        height: height,
+        height: effectiveHeight,
+        width: width,
+        aspectRatio: aspectRatio,
         radius: radius,
-        isThumbnail: !live && height <= 80,
+        fit: effectiveFit,
+        isThumbnail: !live && (effectiveHeight != null && effectiveHeight <= 80),
       );
     }
     final isVideo = MediaStore.isVideo(ex.media);
     if (isVideo && live) {
-      return _VideoTile(key: ValueKey(path), path: path, height: height, radius: radius);
+      return _VideoTile(
+        key: ValueKey(path),
+        path: path,
+        height: effectiveHeight,
+        width: width,
+        aspectRatio: aspectRatio,
+        radius: radius,
+      );
     }
     return _MediaFrame(
-      height: height,
+      height: effectiveHeight,
+      width: width,
+      aspectRatio: aspectRatio,
       radius: radius,
       child: isVideo
-          ? _VideoPoster(height: height)
+          ? _VideoPoster(height: effectiveHeight ?? 180)
           : Center(
               child: Image.file(
                 File(path),
                 key: ValueKey(ex.media),
-                fit: BoxFit.contain,
+                fit: effectiveFit,
                 alignment: Alignment.center,
                 gaplessPlayback: true,
-                errorBuilder: (_, _, _) => _fallbackIcon(context, height),
+                errorBuilder: (_, _, _) => _fallbackIcon(context, effectiveHeight ?? 180),
               ),
             ),
     );
@@ -64,16 +85,25 @@ Widget _fallbackIcon(BuildContext context, double height) => Center(
     );
 
 class _MediaFrame extends StatelessWidget {
-  const _MediaFrame({required this.child, required this.height, required this.radius});
+  const _MediaFrame({
+    required this.child,
+    this.height,
+    this.width,
+    this.aspectRatio,
+    required this.radius,
+  });
   final Widget child;
-  final double height;
+  final double? height;
+  final double? width;
+  final double? aspectRatio;
   final double radius;
 
   @override
   Widget build(BuildContext context) {
     final gc = context.gc;
-    return Container(
-      height: height,
+    Widget frame = Container(
+      width: width ?? (aspectRatio != null ? double.infinity : null),
+      height: aspectRatio != null ? null : height,
       decoration: BoxDecoration(
         color: gc.bgRaised2,
         borderRadius: BorderRadius.circular(radius),
@@ -82,6 +112,13 @@ class _MediaFrame extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: child,
     );
+    if (aspectRatio != null) {
+      frame = AspectRatio(
+        aspectRatio: aspectRatio!,
+        child: frame,
+      );
+    }
+    return frame;
   }
 }
 
@@ -100,9 +137,18 @@ class _VideoPoster extends StatelessWidget {
 }
 
 class _VideoTile extends StatefulWidget {
-  const _VideoTile({super.key, required this.path, required this.height, required this.radius});
+  const _VideoTile({
+    super.key,
+    required this.path,
+    this.height,
+    this.width,
+    this.aspectRatio,
+    required this.radius,
+  });
   final String path;
-  final double height;
+  final double? height;
+  final double? width;
+  final double? aspectRatio;
   final double radius;
 
   @override
@@ -149,6 +195,7 @@ class _VideoTileState extends State<_VideoTile> {
   @override
   Widget build(BuildContext context) {
     Widget child;
+    final effectiveHeight = widget.height ?? 180;
     if (_ok && _c != null) {
       child = FittedBox(
         fit: BoxFit.cover,
@@ -160,12 +207,21 @@ class _VideoTileState extends State<_VideoTile> {
         ),
       );
     } else if (_failed) {
-      child = _fallbackIcon(context, widget.height);
+      child = _fallbackIcon(context, effectiveHeight);
     } else {
       child = const Center(
         child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2)),
       );
     }
-    return _MediaFrame(height: widget.height, radius: widget.radius, child: child);
+    final effectiveRatio = (_ok && _c != null && _c!.value.aspectRatio > 0)
+        ? _c!.value.aspectRatio
+        : widget.aspectRatio;
+    return _MediaFrame(
+      height: widget.height,
+      width: widget.width,
+      aspectRatio: effectiveRatio,
+      radius: widget.radius,
+      child: child,
+    );
   }
 }

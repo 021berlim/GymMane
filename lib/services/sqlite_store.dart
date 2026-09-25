@@ -81,7 +81,7 @@ class SqliteStore {
 
       final checkSetting = await db.query(
         'app_settings',
-        where: "key = 'catalog_brazilian_v1_synced'",
+        where: "key = 'catalog_brazilian_v2_synced'",
       );
       final countQuery = await db.rawQuery(
         'SELECT COUNT(*) as total FROM ${ExerciseRepository.tableExercises}',
@@ -99,7 +99,7 @@ class SqliteStore {
         );
         await db.insert(
           'app_settings',
-          {'key': 'catalog_brazilian_v1_synced', 'value': 'true'},
+          {'key': 'catalog_brazilian_v2_synced', 'value': 'true'},
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
       }
@@ -123,7 +123,7 @@ class SqliteStore {
     );
     await db.insert(
       'app_settings',
-      {'key': 'catalog_brazilian_v1_synced', 'value': 'true'},
+      {'key': 'catalog_brazilian_v2_synced', 'value': 'true'},
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
     final allDbExercises = await ExerciseRepository.instance.getAllExercises(db);
