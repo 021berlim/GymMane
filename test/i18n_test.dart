@@ -373,6 +373,20 @@ void main() {
       'Excluir',
       'Trocar Foto',
       'Toque aqui para abrir galeria ou câmera',
+      'Série anterior',
+      'Próxima série',
+      'EXECUÇÃO PASSO A PASSO',
+      'Voltar ao Treino',
+      'Opções da Sessão',
+      'Escolha como deseja prosseguir com seu treino em andamento.',
+      'Minimizar Treino',
+      'Continua contando o tempo enquanto você navega no app',
+      'Salva suas séries e exibe o resumo completo',
+      'Descartar Treino',
+      'Cancela a sessão sem salvar no histórico',
+      'Descartar treino?',
+      'Todo o progresso desta sessão será perdido.',
+      'Descartar',
     };
 
     final offenders = <String>[];

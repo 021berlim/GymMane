@@ -149,9 +149,6 @@ class _MuscleDistributionScreenState extends State<MuscleDistributionScreen> {
           decoration: BoxDecoration(
             color: isSelected ? gc.accent : Colors.transparent,
             borderRadius: BorderRadius.circular(24),
-            boxShadow: isSelected
-                ? [BoxShadow(color: gc.accent.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 2))]
-                : null,
           ),
           child: Text(
             label.toUpperCase(),
