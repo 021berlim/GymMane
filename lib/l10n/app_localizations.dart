@@ -885,6 +885,60 @@ abstract class AppLocalizations {
   /// **'{pct}% of target'**
   String ofTarget(int pct);
 
+  /// No description provided for @recoveryTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery'**
+  String get recoveryTab;
+
+  /// No description provided for @recoveryOverall.
+  ///
+  /// In en, this message translates to:
+  /// **'Body {pct}% recovered'**
+  String recoveryOverall(int pct);
+
+  /// No description provided for @recoveryAllFresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything is recovered. Good day to train anything.'**
+  String get recoveryAllFresh;
+
+  /// No description provided for @recoveryStill.
+  ///
+  /// In en, this message translates to:
+  /// **'Still recovering: {muscles}'**
+  String recoveryStill(String muscles);
+
+  /// No description provided for @recoveryTired.
+  ///
+  /// In en, this message translates to:
+  /// **'Fatigued'**
+  String get recoveryTired;
+
+  /// No description provided for @recoveryFresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Fresh'**
+  String get recoveryFresh;
+
+  /// No description provided for @recoveryHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a muscle to see how recovered it is. Recent sets weigh more, and harder ones (by RPE) more still.'**
+  String get recoveryHint;
+
+  /// No description provided for @recoveryPct.
+  ///
+  /// In en, this message translates to:
+  /// **'{pct}% recovered'**
+  String recoveryPct(int pct);
+
+  /// No description provided for @readyInHours.
+  ///
+  /// In en, this message translates to:
+  /// **'ready in ~{h} h'**
+  String readyInHours(int h);
+
   /// No description provided for @muscleSplit.
   ///
   /// In en, this message translates to:

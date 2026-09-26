@@ -104,9 +104,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
     try {
       final picked = await _picker.pickImage(
         source: source,
-        maxWidth: 1920,
-        maxHeight: 1920,
-        imageQuality: 90,
+        imageQuality: 100,
       );
       if (picked != null) {
         final bytes = await File(picked.path).readAsBytes();

@@ -60,6 +60,23 @@ class MainActivity : FlutterActivity() {
             }
         }
 
+        val live = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "gymmane/live")
+        live.setMethodCallHandler { call, result ->
+            when (call.method) {
+                "update" -> {
+                    val args = call.arguments as? Map<*, *>
+                    if (args != null) LiveNotifier.update(this, args)
+                    result.success(null)
+                }
+                "end" -> {
+                    LiveNotifier.cancel(this)
+                    result.success(null)
+                }
+                else -> result.notImplemented()
+            }
+        }
+        LiveNotifier.dart = live
+
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "com.fitiron.app/install").setMethodCallHandler {
             call, result ->
             when (call.method) {
@@ -132,5 +149,11 @@ class MainActivity : FlutterActivity() {
         FileOutputStream(file).use { it.write(bytes) }
         MediaStore.Images.Media.insertImage(contentResolver, file.absolutePath, name, null)
         return true
+    }
+
+    override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
+        LiveNotifier.dart = null
+        if (isFinishing) LiveNotifier.cancel(this)
+        super.cleanUpFlutterEngine(flutterEngine)
     }
 }

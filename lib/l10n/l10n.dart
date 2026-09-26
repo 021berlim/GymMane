@@ -207,6 +207,72 @@ extension GymL10n on AppLocalizations {
 
   List<String> catalogSteps(String id, List<String> fallback) =>
       _catalogSteps[appLanguage]?[id] ?? fallback;
+
+  String get liveChannel => switch (appLanguage) {
+        'pt' => 'Treino em andamento',
+        'es' => 'Entrenamiento activo',
+        _ => 'Active workout',
+      };
+
+  String get liveChannelWhy => switch (appLanguage) {
+        'pt' => 'Mostra o exercício atual, série e tempo de descanso durante o treino',
+        'es' => 'Muestra el ejercicio actual, serie y descanso durante el entreno',
+        _ => 'Shows current exercise, set and rest timer during workout',
+      };
+
+  String liveSet(int n, int total) => switch (appLanguage) {
+        'pt' => 'Série $n de $total',
+        'es' => 'Serie $n de $total',
+        _ => 'Set $n of $total',
+      };
+
+  String get liveResting => switch (appLanguage) {
+        'pt' => 'Descanso',
+        'es' => 'Descanso',
+        _ => 'Rest',
+      };
+
+  String get liveAllDone => switch (appLanguage) {
+        'pt' => 'Todas as séries concluídas',
+        'es' => 'Todas las series completas',
+        _ => 'All sets done',
+      };
+
+  String get liveDoneSet => switch (appLanguage) {
+        'pt' => 'Série feita',
+        'es' => 'Serie hecha',
+        _ => 'Done set',
+      };
+
+  String get liveSkipRest => switch (appLanguage) {
+        'pt' => 'Pular descanso',
+        'es' => 'Saltar descanso',
+        _ => 'Skip rest',
+      };
+
+  String get livePause => switch (appLanguage) {
+        'pt' => 'Pausar',
+        'es' => 'Pausar',
+        _ => 'Pause',
+      };
+
+  String get liveResume => switch (appLanguage) {
+        'pt' => 'Retomar',
+        'es' => 'Reanudar',
+        _ => 'Resume',
+      };
+
+  String get liveNext => switch (appLanguage) {
+        'pt' => 'Próximo',
+        'es' => 'Siguiente',
+        _ => 'Next',
+      };
+
+  String liveUpNext(String name) => switch (appLanguage) {
+        'pt' => 'Depois: $name',
+        'es' => 'Siguiente: $name',
+        _ => 'Next: $name',
+      };
 }
 
 String _capitalize(String s) => s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);

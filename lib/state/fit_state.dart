@@ -24,6 +24,7 @@ import '../services/media_store.dart';
 import '../services/rest_alarm.dart';
 import '../services/exercise_match.dart';
 import '../services/workout_import.dart';
+import '../services/exercise_signals.dart';
 import '../services/recommendation_service.dart';
 import '../services/goal_progress_calculator.dart';
 import '../services/ofensiva_calculator.dart';

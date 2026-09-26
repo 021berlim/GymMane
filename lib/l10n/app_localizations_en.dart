@@ -462,6 +462,42 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get recoveryTab => 'Recovery';
+
+  @override
+  String recoveryOverall(int pct) {
+    return 'Body $pct% recovered';
+  }
+
+  @override
+  String get recoveryAllFresh => 'Everything is recovered. Good day to train anything.';
+
+  @override
+  String recoveryStill(String muscles) {
+    return 'Still recovering: $muscles';
+  }
+
+  @override
+  String get recoveryTired => 'Fatigued';
+
+  @override
+  String get recoveryFresh => 'Fresh';
+
+  @override
+  String get recoveryHint =>
+      'Tap a muscle to see how recovered it is. Recent sets weigh more, and harder ones (by RPE) more still.';
+
+  @override
+  String recoveryPct(int pct) {
+    return '$pct% recovered';
+  }
+
+  @override
+  String readyInHours(int h) {
+    return 'ready in ~$h h';
+  }
+
+  @override
   String get muscleSplit => 'MUSCLE SPLIT';
 
   @override

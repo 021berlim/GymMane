@@ -6,6 +6,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../l10n/fitness_translator.dart';
 import '../l10n/l10n.dart';
+import '../models/exercise.dart';
 import '../models/goal.dart';
 import '../models/workout.dart';
 import '../services/weight_trend_calculator.dart';
@@ -120,13 +121,63 @@ class _MuscleMapCardState extends State<_MuscleMapCard> {
         _focus = null;
       });
 
+  Widget _modes() => SegToggle(
+        [
+          SegOption(t.days7, _days == 7, () => _setDays(7)),
+          SegOption(t.days30, _days == 30, () => _setDays(30)),
+          SegOption(t.recoveryTab, _days == 0, () => _setDays(0)),
+        ],
+        hPad: 10,
+        vPad: 5,
+        fontSize: 11,
+      );
+
   @override
   Widget build(BuildContext context) {
     final gc = context.gc;
-    final sets = fit.muscleSetsOver(_days);
-    final heat = fit.muscleHeatOver(_days);
+    final isRecovery = _days == 0;
     final focus = _focus;
-    final behind = fit.neglectedMuscles(_days);
+
+    // Recovery data
+    final recovery = isRecovery ? fit.muscleRecovery() : const <String, double>{};
+    final overall = isRecovery ? fit.overallRecovery() : 0;
+    final tired = isRecovery ? fit.stillRecovering() : const <String>[];
+
+    // Volume data
+    final sets = !isRecovery ? fit.muscleSetsOver(_days) : const <String, double>{};
+    final heat = !isRecovery ? fit.muscleHeatOver(_days) : const <String, double>{};
+    final behind = !isRecovery ? fit.neglectedMuscles(_days) : const <String>[];
+
+    final double avgHeat;
+    final int heatPct;
+    if (!isRecovery) {
+      final heatValues = heat.values;
+      avgHeat = heatValues.isEmpty
+          ? 0.0
+          : (heatValues.reduce((a, b) => a + b) / kMuscles.length).clamp(0.0, 1.0);
+      heatPct = (avgHeat * 100).round();
+    } else {
+      avgHeat = 0.0;
+      heatPct = 0;
+    }
+
+    final ringValue = isRecovery ? (overall / 100).clamp(0.0, 1.0) : avgHeat;
+    final ringColor = isRecovery ? recoveryColor(gc, overall / 100) : heatColor(gc, avgHeat);
+    final ringLabel = isRecovery ? '$overall' : '$heatPct';
+
+    final summaryTitle = isRecovery
+        ? t.recoveryOverall(overall)
+        : t.ofTarget(heatPct);
+
+    final summarySubtitle = isRecovery
+        ? (tired.isEmpty
+            ? t.recoveryAllFresh
+            : t.recoveryStill(tired.take(3).map(t.muscle).join(' · ')))
+        : (sets.isEmpty
+            ? t.muscleMapEmpty
+            : (behind.isEmpty
+                ? t.muscleMapHint
+                : t.muscleMapBehind(behind.take(3).map(t.muscle).join(' · '))));
 
     return SoftCard(
       radius: 20,
@@ -138,60 +189,161 @@ class _MuscleMapCardState extends State<_MuscleMapCard> {
             children: [
               Text(t.muscleMap.toUpperCase(),
                   style: AppTheme.d(14, weight: FontWeight.w600, color: gc.text, letterSpacing: 1)),
-              SegToggle(
-                [
-                  SegOption(t.days7, _days == 7, () => _setDays(7)),
-                  SegOption(t.days30, _days == 30, () => _setDays(30)),
-                ],
-                hPad: 11,
-                vPad: 5,
-                fontSize: 11,
-              ),
+              _modes(),
             ],
           ),
-          const SizedBox(height: 16),
-          BodyHeatMap(
-            intensity: heat,
-            focus: focus,
-            onTap: (id) => setState(() => _focus = focus == id ? null : id),
-          ),
-          const SizedBox(height: 16),
-          Row(children: [
-            Text(t.heatLow, style: AppTheme.s(11, color: gc.textTertiary)),
-            const SizedBox(width: 8),
-            for (int i = 0; i <= heatLevels; i++) ...[
-              if (i > 0) const SizedBox(width: 3),
-              Expanded(
-                child: Container(
-                  height: 7,
-                  decoration: BoxDecoration(
-                    color: heatLevelColor(gc, i),
-                    borderRadius: BorderRadius.circular(2),
+          const SizedBox(height: 14),
+          SizedBox(
+            height: 46,
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 46,
+                  height: 46,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      SizedBox.expand(
+                        child: CircularProgressIndicator(
+                          value: ringValue,
+                          strokeWidth: 4.5,
+                          strokeCap: StrokeCap.round,
+                          backgroundColor: gc.bgRaised2,
+                          color: ringColor,
+                        ),
+                      ),
+                      Text(
+                        ringLabel,
+                        style: AppTheme.f(14, weight: FontWeight.w800, color: gc.text),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-            ],
-            const SizedBox(width: 8),
-            Text(t.heatHigh, style: AppTheme.s(11, color: gc.textTertiary)),
-          ]),
-          const SizedBox(height: 14),
-          Container(
-            constraints: const BoxConstraints(minHeight: 36),
-            alignment: Alignment.centerLeft,
-            child: focus != null
-                ? _readout(gc, focus, sets[focus] ?? 0, heat[focus] ?? 0)
-                : Text(
-                    sets.isEmpty
-                        ? t.muscleMapEmpty
-                        : behind.isEmpty
-                            ? t.muscleMapHint
-                            : t.muscleMapBehind(behind.map(t.muscle).join(' · ')),
-                    style: AppTheme.s(13, color: gc.textSecondary),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        summaryTitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTheme.f(15, weight: FontWeight.w700, color: gc.text),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        summarySubtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTheme.s(12, color: gc.textSecondary),
+                      ),
+                    ],
                   ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          if (isRecovery)
+            BodyRecoveryMap(
+              recovery: recovery,
+              focus: focus,
+              onTap: (id) => setState(() => _focus = focus == id ? null : id),
+            )
+          else
+            BodyHeatMap(
+              intensity: heat,
+              focus: focus,
+              onTap: (id) => setState(() => _focus = focus == id ? null : id),
+            ),
+          const SizedBox(height: 16),
+          if (isRecovery)
+            Row(children: [
+              Text(t.recoveryTired, style: AppTheme.s(11, color: gc.textTertiary)),
+              const SizedBox(width: 8),
+              for (var i = 0; i <= 4; i++) ...[
+                if (i > 0) const SizedBox(width: 3),
+                Expanded(
+                  child: Container(
+                    height: 7,
+                    decoration: BoxDecoration(
+                      color: recoveryColor(gc, i / 4),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(width: 8),
+              Text(t.recoveryFresh, style: AppTheme.s(11, color: gc.textTertiary)),
+            ])
+          else
+            Row(children: [
+              Text(t.heatLow, style: AppTheme.s(11, color: gc.textTertiary)),
+              const SizedBox(width: 8),
+              for (int i = 0; i <= heatLevels; i++) ...[
+                if (i > 0) const SizedBox(width: 3),
+                Expanded(
+                  child: Container(
+                    height: 7,
+                    decoration: BoxDecoration(
+                      color: heatLevelColor(gc, i),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(width: 8),
+              Text(t.heatHigh, style: AppTheme.s(11, color: gc.textTertiary)),
+            ]),
+          const SizedBox(height: 14),
+          SizedBox(
+            height: 38,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: isRecovery
+                  ? (focus != null
+                      ? _recoveryReadout(gc, focus, recovery[focus] ?? 1)
+                      : Text(
+                          t.recoveryHint,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTheme.s(12, color: gc.textSecondary),
+                        ))
+                  : (focus != null
+                      ? _readout(gc, focus, sets[focus] ?? 0, heat[focus] ?? 0)
+                      : Text(
+                          t.muscleMapHint,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTheme.s(12, color: gc.textSecondary),
+                        )),
+            ),
           ),
         ],
       ),
     );
+  }
+
+  Widget _recoveryReadout(GymColors gc, String id, double value) {
+    final hours = fit.hoursUntilRecovered(id);
+    return Row(children: [
+      Container(
+        width: 10,
+        height: 10,
+        decoration: BoxDecoration(color: recoveryColor(gc, value), shape: BoxShape.circle),
+      ),
+      const SizedBox(width: 8),
+      Text(t.muscle(id), style: AppTheme.s(13, weight: FontWeight.w600, color: gc.text)),
+      const SizedBox(width: 8),
+      Expanded(
+        child: Text(
+            hours == null
+                ? t.recoveryPct((value * 100).round())
+                : '${t.recoveryPct((value * 100).round())} · ${t.readyInHours(hours)}',
+            style: AppTheme.s(13, color: gc.textSecondary)),
+      ),
+    ]);
   }
 
   Widget _readout(GymColors gc, String id, double sets, double heat) {

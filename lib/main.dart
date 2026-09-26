@@ -6,10 +6,15 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'app/fitiron_app.dart';
 import 'services/alarm_store.dart';
 import 'services/home_widget_bridge.dart';
+import 'services/live_workout.dart';
 import 'services/local_store.dart';
 import 'services/media_store.dart';
 import 'services/rest_alarm.dart';
 import 'state/fit_state.dart';
+
+void _sessionSideEffects() {
+  LiveWorkout.sync();
+}
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,6 +33,9 @@ Future<void> main() async {
   } catch (e, stack) {
     debugPrint('Erro no carregamento dos dados de inicialização: $e\n$stack');
   }
+
+  fit.addListener(_sessionSideEffects);
+  _sessionSideEffects();
 
   fit.onWidgetsShouldUpdate = HomeWidgetBridge.update;
   runApp(const FitIronApp());

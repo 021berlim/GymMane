@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 const String kDefaultName = 'InlitX';
 const String kDefaultHandle = 'inlitx';
 
@@ -16,7 +18,8 @@ class Profile {
     this.badge = 'blue',
     this.banner = '',
     this.since,
-  });
+    int? recommendationSeed,
+  }) : recommendationSeed = recommendationSeed ?? _generateSeed();
 
   String name;
   String sex;
@@ -31,6 +34,12 @@ class Profile {
   String badge;
   String banner;
   DateTime? since;
+  int recommendationSeed;
+
+  static int _generateSeed() {
+    final r = math.Random();
+    return (r.nextInt(1 << 30) ^ DateTime.now().microsecondsSinceEpoch) & 0x7FFFFFFF;
+  }
 
   Map<String, dynamic> toJson() => {
         'name': name,
@@ -41,6 +50,7 @@ class Profile {
         'act': activity,
         'goal': weeklyGoal,
         'focus': trainingFocus,
+        'recommendationSeed': recommendationSeed,
         if (photo.isNotEmpty) 'photo': photo,
         if (handle.isNotEmpty) 'handle': handle,
         'badge': badge,
@@ -61,5 +71,6 @@ class Profile {
         badge: (j['badge'] as String?) ?? 'blue',
         banner: (j['banner'] as String?) ?? '',
         since: DateTime.tryParse((j['since'] as String?) ?? ''),
+        recommendationSeed: (j['recommendationSeed'] ?? j['seed'] as num?)?.toInt(),
       );
 }

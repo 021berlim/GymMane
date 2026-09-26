@@ -1,17 +1,57 @@
 export 'weight_entry.dart';
 
-class LoggedSet {
+enum SetKind { normal, warmup, drop, failure, restPause }
 
-  LoggedSet(this.reps, this.weight);
+SetKind setKindFrom(Object? raw) {
+  final i = (raw as num?)?.toInt() ?? 0;
+  return SetKind.values[i.clamp(0, SetKind.values.length - 1)];
+}
+
+const _rpeTable = [
+  1.0, .978, .955, .939, .922, .907, .892, .878, .863, .85, .837, .824, .811, .799, .786, .774,
+  .762, .751, .739, .723, .707, .694, .68, .667, .653, .64, .626, .613, .599, .586, .574,
+];
+
+double? rpePercent(int reps, double? rpe) {
+  if (rpe == null || rpe < 6 || rpe > 10 || reps < 1 || reps > 12) return null;
+  final i = (reps - 1) * 2 + ((10 - rpe) * 2).round();
+  return i < _rpeTable.length ? _rpeTable[i] : null;
+}
+
+class LoggedSet {
+  LoggedSet(this.reps, this.weight, {this.kind = SetKind.normal, this.rpe, this.sec, this.km});
   final int reps;
   final double weight;
+  final SetKind kind;
+  final double? rpe;
+  final int? sec;
+  final double? km;
+
+  bool get counts => kind != SetKind.warmup;
   double get volume => reps * weight;
 
-  double get oneRm => weight * (1 + reps / 30);
+  double get oneRm {
+    if (reps <= 0) return 0;
+    final pct = rpePercent(reps, rpe);
+    return pct == null ? weight * (1 + reps / 30) : weight / pct;
+  }
 
-  Map<String, dynamic> toJson() => {'r': reps, 'w': weight};
-  factory LoggedSet.fromJson(Map<String, dynamic> j) =>
-      LoggedSet((j['r'] as num).toInt(), (j['w'] as num).toDouble());
+  Map<String, dynamic> toJson() => {
+        'r': reps,
+        'w': weight,
+        if (kind != SetKind.normal) 'k': kind.index,
+        if (rpe != null) 'e': rpe,
+        if (sec != null) 't': sec,
+        if (km != null) 'km': km,
+      };
+  factory LoggedSet.fromJson(Map<String, dynamic> j) => LoggedSet(
+        (j['r'] as num).toInt(),
+        (j['w'] as num).toDouble(),
+        kind: setKindFrom(j['k']),
+        rpe: (j['e'] as num?)?.toDouble(),
+        sec: (j['t'] as num?)?.toInt(),
+        km: (j['km'] as num?)?.toDouble(),
+      );
 }
 
 class LoggedExercise {
@@ -21,6 +61,7 @@ class LoggedExercise {
   final String primary;
   final List<LoggedSet> sets;
 
+  Iterable<LoggedSet> get workingSets => sets.where((s) => s.counts);
   double get volume => sets.fold(0.0, (s, x) => s + x.volume);
   double get topWeight => sets.isEmpty ? 0 : sets.map((s) => s.weight).reduce((a, b) => a > b ? a : b);
   double get bestOneRm => sets.isEmpty ? 0 : sets.map((s) => s.oneRm).reduce((a, b) => a > b ? a : b);

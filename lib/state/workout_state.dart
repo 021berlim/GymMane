@@ -456,6 +456,28 @@ mixin WorkoutState on FitCore, SettingsState, LibraryState, StatsState, Routines
 
   void prevExercise() => goToExercise((session?.currentIndex ?? 0) - 1);
 
+  int? pendingAfter(int exIdx) {
+    final s = session;
+    if (s == null) return null;
+    final n = s.exercises.length;
+    for (var k = 1; k < n; k++) {
+      final i = (exIdx + k) % n;
+      if (s.exercises[i].sets.any((st) => !st.done)) return i;
+    }
+    return null;
+  }
+
+  void goNextPending() {
+    final s = session;
+    if (s == null) return;
+    final next = pendingAfter(s.currentIndex);
+    if (next == null) {
+      nextExercise();
+      return;
+    }
+    goToExercise(next);
+  }
+
   void finishSession() {
     _sessionTimer?.cancel();
     _restTimer?.cancel();

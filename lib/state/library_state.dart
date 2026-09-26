@@ -273,5 +273,17 @@ mixin LibraryState on FitCore {
 
   bool isCustom(String id) => id.startsWith('c');
 
-  List<Exercise> get focusRecommendations => RecommendationService.getRecommendations(profile.trainingFocus);
+  List<Exercise> get focusRecommendations {
+    final stats = this is StatsState ? (this as StatsState) : null;
+    return RecommendationService.getRecommendations(
+      catalog: allExercises,
+      profile: profile,
+      lastTrainedByMuscleGroup: stats?.lastTrainedByMuscleGroup ??
+          ExerciseSignals.lastTrainedByMuscleGroup(sessions),
+      recentUseCountByExerciseId: stats?.recentUseCountByExerciseId ??
+          ExerciseSignals.recentUseCountByExerciseId(sessions),
+      favorites: favorites,
+      totalSessions: stats?.totalSessions ?? sessions.length,
+    );
+  }
 }

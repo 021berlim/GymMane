@@ -5,6 +5,7 @@
          legítimo aquí: un temporizador de descanso ES un temporizador, y un
          aviso inexacto que llega dos minutos tarde no sirve de nada. -->
   <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+  <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS"/>
   <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
   <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
   <uses-permission android:name="android.permission.VIBRATE"/>
@@ -17,6 +18,10 @@
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
   <!-- Sideloaded APK: the in-app updater needs to install downloaded releases. -->
   <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
+  <!-- Image picker camera permission -->
+  <uses-permission android:name="android.permission.CAMERA"/>
+  <uses-feature android:name="android.hardware.camera" android:required="false"/>
+
   <application
         android:label="FIT//IRON"
         android:name="${applicationName}"
@@ -45,6 +50,9 @@
         <category android:name="android.intent.category.LAUNCHER"/>
       </intent-filter>
     </activity>
+    <receiver
+        android:name=".LiveActionReceiver"
+        android:exported="false" />
     <receiver
         android:name="com.dexterous.flutterlocalnotifications.ActionBroadcastReceiver"
         android:exported="false" />

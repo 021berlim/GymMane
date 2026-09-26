@@ -24,6 +24,8 @@ class GymColors extends ThemeExtension<GymColors> {
     required this.sageSoft,
     required this.mutedFill,
     required this.heatEmpty,
+    required this.warn,
+    required this.danger,
   });
 
   final Color pageBg;
@@ -47,6 +49,8 @@ class GymColors extends ThemeExtension<GymColors> {
   final Color sageSoft;
   final Color mutedFill;
   final Color heatEmpty;
+  final Color warn;
+  final Color danger;
 
   static const dark = GymColors(
     pageBg: Color(0xFF090B08),
@@ -70,6 +74,8 @@ class GymColors extends ThemeExtension<GymColors> {
     sageSoft: Color(0x29A3E635),
     mutedFill: Color(0xFF2A2A2A),
     heatEmpty: Color(0xFF181818),
+    warn: Color(0xFFE0B15A),
+    danger: Color(0xFFE5674C),
   );
 
   static const light = GymColors(
@@ -94,6 +100,8 @@ class GymColors extends ThemeExtension<GymColors> {
     sageSoft: Color(0x2365A30D),
     mutedFill: Color(0xFFD7E4CE),
     heatEmpty: Color(0xFFE3ECDD),
+    warn: Color(0xFF9A6A12),
+    danger: Color(0xFFC0392B),
   );
 
   @override
@@ -119,6 +127,8 @@ class GymColors extends ThemeExtension<GymColors> {
     Color? sageSoft,
     Color? mutedFill,
     Color? heatEmpty,
+    Color? warn,
+    Color? danger,
   }) {
     return GymColors(
       pageBg: pageBg ?? this.pageBg,
@@ -142,6 +152,8 @@ class GymColors extends ThemeExtension<GymColors> {
       sageSoft: sageSoft ?? this.sageSoft,
       mutedFill: mutedFill ?? this.mutedFill,
       heatEmpty: heatEmpty ?? this.heatEmpty,
+      warn: warn ?? this.warn,
+      danger: danger ?? this.danger,
     );
   }
 
@@ -171,6 +183,8 @@ class GymColors extends ThemeExtension<GymColors> {
       sageSoft: c(sageSoft, other.sageSoft),
       mutedFill: c(mutedFill, other.mutedFill),
       heatEmpty: c(heatEmpty, other.heatEmpty),
+      warn: c(warn, other.warn),
+      danger: c(danger, other.danger),
     );
   }
 }

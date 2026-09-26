@@ -1,14 +1,17 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../l10n/l10n.dart';
 import '../models/exercise.dart';
 import '../models/goal.dart';
+import '../services/goal_progress_calculator.dart';
 import '../state/fit_state.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import '../widgets/charts.dart';
 import '../widgets/exercise_media.dart';
-import '../widgets/goal_progress_widgets.dart';
 import '../widgets/svg_icon.dart';
 import '../widgets/ui_kit.dart';
 
@@ -40,37 +43,6 @@ class HomeScreen extends StatelessWidget {
 
         final pinnedGoal = fit.pinnedGoal;
         final pinnedProgress = fit.calculateGoalProgress(pinnedGoal);
-
-        Widget goalTrailing;
-        String goalValueStr;
-        String? goalUnit;
-
-        if (pinnedGoal.type == GoalType.weeklyFrequency || pinnedGoal.type == GoalType.sessionsWeekly) {
-          goalValueStr = '${pinnedProgress.currentValue.round()}/${pinnedProgress.targetValue.round()}';
-          goalTrailing = GoalProgressRing(
-            progressRatio: pinnedProgress.progressRatio,
-            currentValue: pinnedProgress.currentValue,
-            targetValue: pinnedProgress.targetValue,
-            size: 38,
-          );
-        } else if (pinnedGoal.type == GoalType.weightTarget || pinnedGoal.type == GoalType.bodyweight) {
-          goalValueStr = pinnedProgress.hasNoData ? '--' : '${pinnedProgress.progressPercentage}';
-          goalUnit = pinnedProgress.hasNoData ? '' : '%';
-          goalTrailing = SizedBox(
-            width: 76,
-            child: GoalProgressBar(
-              progressRatio: pinnedProgress.progressRatio,
-              currentValue: pinnedProgress.currentValue,
-              targetValue: pinnedProgress.targetValue,
-              hasNoData: pinnedProgress.hasNoData,
-              etaDate: pinnedProgress.etaDate,
-            ),
-          );
-        } else {
-          goalValueStr = '${pinnedProgress.progressPercentage}';
-          goalUnit = '%';
-          goalTrailing = GoalProgressWidget(goal: pinnedGoal, result: pinnedProgress, ringSize: 38);
-        }
 
         return SafeArea(
           bottom: false,
@@ -117,60 +89,18 @@ class HomeScreen extends StatelessWidget {
                     children: [for (int i = 0; i < 7; i++) _weekDay(gc, i)],
                   ),
                 ),
-                const SizedBox(height: 22),
-                Text(t.thisWeek,
-                    style: AppTheme.d(12, weight: FontWeight.w600, color: gc.textSecondary, letterSpacing: 3)),
-                const SizedBox(height: 10),
-                IntrinsicHeight(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Expanded(
-                        child: _statCard(
-                          gc,
-                          label: t.volume,
-                          value: fit.volumeValue(fit.volumeThisWeekKg),
-                          unit: ' ${fit.volumeUnit}',
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _statCard(
-                          gc,
-                          label: t.setsCaps,
-                          value: '${fit.setsThisWeek}',
-                        ),
-                      ),
-                    ],
-                  ),
+                const SizedBox(height: 24),
+                Text(
+                  _titleCase(t.thisWeek),
+                  style: AppTheme.d(18, weight: FontWeight.w700, color: gc.text),
                 ),
                 const SizedBox(height: 12),
-                IntrinsicHeight(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Expanded(
-                        child: _statCard(
-                          gc,
-                          label: t.prs,
-                          value: '${fit.prsThisWeek}',
-                          valueColor: gc.accent,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _statCard(
-                          gc,
-                          label: fit.primaryGoalLabel,
-                          value: goalValueStr,
-                          unit: goalUnit,
-                          trailingWidget: goalTrailing,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 22),
+                _thisWeekCard(gc, pinnedGoal, pinnedProgress),
+                const SizedBox(height: 24),
+                _activityHeader(gc),
+                const SizedBox(height: 12),
+                _activityCard(gc),
+                const SizedBox(height: 24),
                 Text(t.recommended,
                     style: AppTheme.d(12, weight: FontWeight.w600, color: gc.textSecondary, letterSpacing: 3)),
                 const SizedBox(height: 10),
@@ -206,100 +136,202 @@ class HomeScreen extends StatelessWidget {
     final done = fit.isDayDone(i);
     final isToday = i == fit.todayIndex;
     final isFuture = i > fit.todayIndex;
-    Color fill = gc.bgRaised2;
-    Border? border;
-    double opacity = 1;
-    if (done) {
-      fill = gc.ember;
-    } else if (isToday) {
-      border = Border.all(color: gc.ember, width: 2);
-    } else if (isFuture) {
-      fill = gc.bgRaised2;
-      opacity = 0.7;
-    } else {
-      border = Border.all(color: gc.textTertiary, width: 1.5);
-    }
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: isFuture ? null : () => fit.toggleCheckin(i),
-      child: Opacity(
-        opacity: opacity,
-        child: Column(
-          children: [
-            Text(t.weekdayInitial(i + 1),
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: isToday ? gc.ember : gc.textTertiary)),
-            const SizedBox(height: 8),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeOut,
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: fill,
-                shape: BoxShape.circle,
-                border: border,
-              ),
-              child: done ? Center(child: SvgPathIcon(Ic.checkBold, size: 14, color: gc.onEmber)) : null,
+      child: Column(
+        children: [
+          Text(
+            t.weekdayInitial(i + 1),
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: isToday ? FontWeight.w700 : FontWeight.w500,
+              color: isToday ? gc.text : gc.textTertiary,
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 8),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: done ? gc.text : gc.bgRaised2,
+              shape: BoxShape.circle,
+            ),
+            child: done
+                ? Center(
+                    child: Icon(
+                      Icons.check,
+                      size: 16,
+                      color: gc.bg,
+                    ),
+                  )
+                : null,
+          ),
+        ],
       ),
     );
   }
 
-  Widget _statCard(
-    GymColors gc, {
-    required String label,
-    required String value,
-    String? unit,
-    Color? valueColor,
-    Widget? trailingWidget,
-  }) {
+  Widget _thisWeekCard(GymColors gc, Goal pinnedGoal, GoalProgressResult pinnedProgress) {
     return SoftCard(
-      radius: 18,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Row(
+      radius: 20,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      child: Stack(
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  label.toUpperCase(),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTheme.s(10, weight: FontWeight.w700, color: gc.textSecondary, letterSpacing: 1),
-                ),
-                const SizedBox(height: 4),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: RichText(
-                    text: TextSpan(
-                      text: value,
-                      style: AppTheme.d(24, weight: FontWeight.w700, color: valueColor ?? gc.text),
-                      children: [
-                        if (unit != null)
-                          TextSpan(
-                            text: unit,
-                            style: AppTheme.d(14, weight: FontWeight.w700, color: gc.textSecondary),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+          SizedBox(
+            width: 0,
+            height: 0,
+            child: OverflowBox(
+              maxWidth: 0,
+              maxHeight: 0,
+              child: Text(
+                fit.primaryGoalLabel,
+                style: const TextStyle(fontSize: 0, color: Colors.transparent),
+              ),
             ),
           ),
-          if (trailingWidget != null) ...[
-            const SizedBox(width: 8),
-            trailingWidget,
-          ],
+          Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      t.volume.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTheme.s(10, weight: FontWeight.w700, color: gc.textTertiary, letterSpacing: 0.8),
+                    ),
+                    const SizedBox(height: 6),
+                    RichText(
+                      text: TextSpan(
+                        text: fit.volumeValue(fit.volumeThisWeekKg),
+                        style: AppTheme.d(24, weight: FontWeight.w700, color: gc.text),
+                        children: [
+                          TextSpan(
+                            text: ' ${fit.volumeUnit}',
+                            style: AppTheme.d(13, weight: FontWeight.w600, color: gc.textSecondary),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                flex: 3,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      t.setsToday.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTheme.s(10, weight: FontWeight.w700, color: gc.textTertiary, letterSpacing: 0.8),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      '${fit.setsToday}',
+                      style: AppTheme.d(24, weight: FontWeight.w700, color: gc.text),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                flex: 3,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      t.personalRecords.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTheme.s(10, weight: FontWeight.w700, color: gc.textTertiary, letterSpacing: 0.8),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      '${fit.prsThisWeek}',
+                      style: AppTheme.d(24, weight: FontWeight.w700, color: gc.text),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 38,
+                    height: 38,
+                    child: CustomPaint(
+                      painter: _MiniGoalRingPainter(
+                        pct: pinnedProgress.progressRatio.clamp(0.0, 1.0),
+                        trackColor: gc.bgRaised2,
+                        accentColor: gc.accent,
+                        strokeWidth: 4.5,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    (pinnedGoal.type == GoalType.weeklyFrequency || pinnedGoal.type == GoalType.sessionsWeekly)
+                        ? '${pinnedProgress.currentValue.round()}/${pinnedProgress.targetValue.round()}'
+                        : '${pinnedProgress.progressPercentage}%',
+                    style: AppTheme.d(11, weight: FontWeight.w700, color: gc.textSecondary),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ],
       ),
     );
+  }
+
+  Widget _activityHeader(GymColors gc) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: fit.goProgress,
+      child: Row(
+        children: [
+          Text(
+            _titleCase(t.activityLabel),
+            style: AppTheme.d(18, weight: FontWeight.w700, color: gc.text),
+          ),
+          const Spacer(),
+          Icon(
+            PhosphorIconsRegular.caretRight,
+            size: 16,
+            color: gc.textTertiary,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _activityCard(GymColors gc) {
+    return GestureDetector(
+      onTap: fit.goProgress,
+      child: SoftCard(
+        radius: 20,
+        padding: const EdgeInsets.all(18),
+        child: Heatmap(levels: fit.heatmapLevels),
+      ),
+    );
+  }
+
+  String _titleCase(String text) {
+    if (text.isEmpty) return text;
+    final lower = text.toLowerCase();
+    return lower[0].toUpperCase() + lower.substring(1);
   }
 
   Widget _quick(GymColors gc, Widget iconWidget, String label, VoidCallback onTap) {
@@ -418,4 +450,52 @@ class _FocusHero extends StatelessWidget {
       ),
     );
   }
+}
+
+class _MiniGoalRingPainter extends CustomPainter {
+  _MiniGoalRingPainter({
+    required this.pct,
+    required this.trackColor,
+    required this.accentColor,
+    required this.strokeWidth,
+  });
+
+  final double pct;
+  final Color trackColor;
+  final Color accentColor;
+  final double strokeWidth;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = (size.width - strokeWidth) / 2;
+
+    final trackPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..color = trackColor;
+    canvas.drawCircle(center, radius, trackPaint);
+
+    if (pct > 0) {
+      final accentPaint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth
+        ..strokeCap = StrokeCap.round
+        ..color = accentColor;
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        -math.pi / 2,
+        pct * 2 * math.pi,
+        false,
+        accentPaint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_MiniGoalRingPainter old) =>
+      old.pct != pct ||
+      old.trackColor != trackColor ||
+      old.accentColor != accentColor ||
+      old.strokeWidth != strokeWidth;
 }

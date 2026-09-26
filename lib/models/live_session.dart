@@ -49,7 +49,39 @@ class WorkoutSession {
   List<SessionExercise> exercises = [];
   int currentIndex = 0;
   bool complete = false;
-  int? restRemaining;
+  bool manual = false;
+  DateTime? loggedAt;
+  DateTime? restEndsAt;
+  int? restFrozen;
+  int? _legacyRestRemaining;
+
+  int? get restRemaining {
+    final frozen = restFrozen;
+    if (frozen != null) return frozen;
+    final end = restEndsAt;
+    if (end != null) {
+      final left = end.difference(DateTime.now()).inMilliseconds;
+      return left <= 0 ? null : (left / 1000).ceil();
+    }
+    return _legacyRestRemaining;
+  }
+
+  set restRemaining(int? val) {
+    _legacyRestRemaining = val;
+    if (val == null) {
+      restEndsAt = null;
+      restFrozen = null;
+    } else {
+      restEndsAt = DateTime.now().add(Duration(seconds: val));
+    }
+  }
+
+  void clearRest() {
+    restEndsAt = null;
+    restFrozen = null;
+    _legacyRestRemaining = null;
+  }
+
   int? summaryVolume;
   int? summarySets;
   int? summaryDuration;
@@ -88,6 +120,11 @@ class WorkoutSession {
         'ex': exercises.map((e) => e.toJson()).toList(),
         'i': currentIndex,
         'c': complete,
+        if (manual) 'm': true,
+        if (loggedAt != null) 'at': loggedAt!.toIso8601String(),
+        if (restEndsAt != null) 're': restEndsAt!.toIso8601String(),
+        if (restFrozen != null) 'rf': restFrozen,
+        if (restRemaining != null) 'rr': restRemaining,
         'sv': summaryVolume,
         'ss': summarySets,
         'sd': summaryDuration,
@@ -113,6 +150,11 @@ class WorkoutSession {
           (j['ex'] as List).map((e) => SessionExercise.fromJson((e as Map).cast<String, dynamic>())).toList()
       ..currentIndex = (j['i'] as num?)?.toInt() ?? 0
       ..complete = j['c'] as bool? ?? false
+      ..manual = j['m'] as bool? ?? false
+      ..loggedAt = DateTime.tryParse((j['at'] as String?) ?? '')
+      ..restEndsAt = DateTime.tryParse((j['re'] as String?) ?? '')
+      ..restFrozen = (j['rf'] as num?)?.toInt()
+      .._legacyRestRemaining = (j['rr'] as num?)?.toInt()
       ..summaryVolume = (j['sv'] as num?)?.toInt()
       ..summarySets = (j['ss'] as num?)?.toInt()
       ..summaryDuration = (j['sd'] as num?)?.toInt()

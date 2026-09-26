@@ -67,6 +67,9 @@ class SqliteStore {
           await _db!.execute('ALTER TABLE profiles ADD COLUMN $col TEXT');
         } catch (_) {}
       }
+      try {
+        await _db!.execute('ALTER TABLE profiles ADD COLUMN recommendation_seed INTEGER');
+      } catch (_) {}
       await _migrateLegacyDataIfNeeded();
       await _syncCatalogExercisesIfNeeded();
     } catch (e, stack) {
@@ -221,7 +224,8 @@ class SqliteStore {
         handle TEXT,
         badge TEXT,
         banner TEXT,
-        since TEXT
+        since TEXT,
+        recommendation_seed INTEGER
       )
     ''');
 
@@ -355,6 +359,8 @@ class SqliteStore {
           if (pRow['badge'] != null) 'badge': pRow['badge'],
           if (pRow['banner'] != null) 'banner': pRow['banner'],
           if (pRow['since'] != null) 'since': pRow['since'],
+          if (pRow['recommendation_seed'] != null)
+            'recommendationSeed': pRow['recommendation_seed'],
         };
       }
     } catch (e) {
@@ -679,6 +685,8 @@ class SqliteStore {
           'badge': (pMap['badge'] as String?) ?? 'blue',
           'banner': (pMap['banner'] as String?) ?? '',
           'since': (pMap['since'] as String?) ?? '',
+          if (pMap['recommendationSeed'] != null || pMap['seed'] != null)
+            'recommendation_seed': (pMap['recommendationSeed'] ?? pMap['seed'] as num?)?.toInt(),
         });
       }
 

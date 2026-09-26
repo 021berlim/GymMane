@@ -50,6 +50,22 @@ class AppTheme {
         height: height,
       );
 
+  static TextStyle f(
+    double size, {
+    FontWeight weight = FontWeight.w700,
+    Color? color,
+    double? letterSpacing,
+    double height = 1.15,
+  }) =>
+      TextStyle(
+        fontFamily: sans,
+        fontSize: size,
+        fontWeight: weight,
+        color: color,
+        letterSpacing: letterSpacing,
+        height: height,
+      );
+
   static TextStyle s(
     double size, {
     FontWeight weight = FontWeight.w400,

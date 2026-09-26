@@ -1,30 +1,57 @@
-# LOCAL_MAP.md — Mapeamento de Transições e Animações (Origem InlitX/GymMane → Destino Local)
+# LOCAL_MAP.md — Reconhecimento e Mapeamento da Tela "Compartilhar Foto"
 
-## 1. Diagnóstico do Histórico Git
-- **Origem (upstream)**: `https://github.com/InlitX/GymMane.git`
-- **Destino (local / origin)**: `git@github.com:021berlim/GymMane.git` (package: `fitiron`)
-- **Histórico compartilhado**: Sim, possuem ancestral comum (`086bdc0514e67a1e1daa164e6c188ca9bb8d3e0f`).
-- **Estratégia de portabilidade**:
-  Embora compartilhem histórico, o repositório local divergiu expressivamente:
-  - Nome do pacote Flutter local é `fitiron` (em vez de `gymmane`).
-  - Biblioteca de ícones no local é `phosphor_flutter: ^2.1.0` (em vez de `phosphoricons_flutter: ^0.3.0`).
-  - O repositório local possui implementações específicas (catálogo SQLite pt-BR, arquitetura de persistência, telas como `gallery_screen.dart`, etc.).
-  - Portanto, a estratégia recomendada e adotada é a **extração isolada e adaptação fiel** (preservando rigorosamente `Duration`, `Curve`, `Interval` e dinâmicas de renderização), evitando conflitos de mesclagem estrutural.
+## 1. Arquivo da Tela Local
+- **Arquivo**: `lib/widgets/share_photo_sheet.dart`
+- **Widgets e Métodos Públicos**:
+  - `showSharePhotoSheet(...)`: Abre a visualização em modal sheet via `showAppSheet`.
+  - `showSharePhotoScreen(...)`: Abre a visualização em tela cheia via `pushFadeSlideRoute` (transição Fade+Slide adaptada de GymMane).
+  - `SharePhotoSheet`: `StatefulWidget` que renderiza o editor de fotos e stickers/marca d'água.
 
----
+## 2. Call Sites Preservados (Intocados)
+1. **Conclusão de Treino**: `lib/screens/session_screen.dart` (~L1217)
+   ```dart
+   showSharePhotoSheet(
+     context,
+     durationStr: durStr,
+     prCount: prCount,
+     volumeKg: volKg,
+     calories: calories,
+     muscleGroupsStr: muscles,
+   );
+   ```
+2. **Galeria de Fotos do Treino**: `lib/screens/gallery_screen.dart` (~L611)
+   ```dart
+   showSharePhotoSheet(
+     context,
+     durationStr: '$durMins MIN',
+     prCount: 0,
+     volumeKg: photo.session.volume,
+     calories: (durMins * 5 + photo.session.volume * 0.02).round().clamp(20, 2000),
+     muscleGroupsStr: '',
+     initialImageBase64: photo.data,
+   );
+   ```
+3. **Contrato de API**:
+   - Assinatura preservada: `durationStr`, `prCount`, `volumeKg`, `calories`, `muscleGroupsStr`, `initialImagePath`, `initialImageBase64`.
+   - Transições de entrada (`showAppSheet` e `pushFadeSlideRoute`) permanecem inalteradas.
 
-## 2. Tabela de Mapeamento de Animações
+## 3. Diagnóstico dos Widgets e Estado Internos Atuais (A Substituir)
+- **Exigência rígida de foto prévia**: A tela atual bloqueia salvar/compartilhar se não houver foto carregada (`_photoFile == null`), emitindo toast de erro. Não possui opção "Sem foto" (checkerboard).
+- **Controles separados**: Utiliza slider isolado para escala (`_watermarkScale`) e pan gesture limitado (`onPanUpdate`). Não há suporte a pinça para zoom nem rotação angular contínua por gestos.
+- **Estilos limitados**: Oferece apenas 3 chips de texto ("Completo", "Compacto", "Mínimo"), sem suporte aos 6 layouts visuais nem à paleta de 6 swatches de cor.
+- **Sem modo de sequência**: Não possui o toggle Treino vs. Sequência (Streak) nem alternador dinâmico de exibição da data.
 
-| # | Animação / Componente na Origem | Arquivo Origem | Arquivo Local Correspondente | Status / Estratégia de Adaptação |
-|---|---|---|---|---|
-| **1a** | Shell Route Transition (`_animatedScreen`)<br>• `AnimatedSwitcher` 380ms<br>• In: `Interval(0.3, 1, easeOutCubic)`<br>• Out: `Interval(0.7, 1, easeInCubic)`<br>• Slide direcional (lateral vs profundidade) + Blur (`ImageFilter.blur`) + Scale + Fade | `lib/app/app_shell.dart`<br>(~L284-330) | `lib/app/app_shell.dart` | **Substituir transição atual** (atual tem apenas slide 0.018 + fade em 280ms). Adicionar tracking de `_lastRoute`, `_lastDepth`, `_sideways` e `_forward` compatível com o `fit.route` local. |
-| **1b** | Liquid Pill Nav Indicator (`_LiquidPill`)<br>• `_move`: 460ms (`Curves.easeOutCubic` / `easeInOutCubic`) com squash dinâmico<br>• `_lift`: 260ms / reverso 380ms (`Cubic(0.3, 1.25, 0.5, 1)`) | `lib/app/app_shell.dart`<br>(~L654-705) | `lib/app/app_shell.dart` | **Substituir indicador estático** do `_NavBar`. O indicador atual usa `AnimatedPositioned` simples (340ms). Portar o widget animado `_LiquidPill` com física de squash e elevação. |
-| **2** | Glass Sheet / Dialog PageRoute Helper<br>• `_GlassSheetRoute` / `_GlassDialogRoute`<br>• FadeTransition + ScaleTransition (0.92 → 1, `easeOutBack`/`easeInCubic`)<br>• `_BlurBarrier` com backdrop blur progressivo (`kSheetBlur = 14`, `Curves.easeOut`) | `lib/widgets/glass.dart`<br>(~L78) | `lib/widgets/glass.dart`<br>*(novo arquivo no local)* | **Criar novo arquivo**. Disponibilizar `showAppSheet`, `showAppDialog`, `_GlassSheetRoute`, `_GlassDialogRoute` e `_BlurBarrier` para uso global no app. |
-| **3** | Full-screen Photo Hero Viewer<br>• `PageRouteBuilder` 280ms / 220ms reverso, `opaque: false`<br>• `Hero` com animação de expansão<br>• `BackdropFilter` blur progressivo (sigma `20 * v`, `Curves.easeOutCubic`) + fade | `lib/screens/moments_screen.dart`<br>(~L55, L185, L283) | `lib/screens/gallery_screen.dart` | **Adaptar no arquivo local**. Substituir a transição opaca padrão de `_openPhotoDetail` e adicionar tags `Hero` nas miniaturas e no visualizador em tela cheia com backdrop blur translúcido. |
-| **4** | Sheet / Modal PageRouteBuilder<br>• `PageRouteBuilder` 340ms / 240ms reverso<br>• `CurvedAnimation` `Curves.easeOutCubic`<br>• FadeTransition + SlideTransition (Offset(0, 0.04) → 0) | `lib/screens/sticker_screen.dart`<br>(~L23-31) | `lib/widgets/share_photo_sheet.dart` / `lib/widgets/ui_kit.dart` | **Adaptar / Disponibilizar**. Portar como helper reutilizável de rota de tela cheia/sheet (`fadeSlideRoute`) e integrar no fluxo de compartilhamento de fotos. |
-| **5** | Media / Note Full-screen Viewer<br>• `PageRouteBuilder` 360ms / 300ms reverso<br>• `Hero` com escopo dinâmico<br>• `FadeTransition` (`Curves.easeOut`)<br>• `InteractiveViewer` zoom 5x | `lib/widgets/note_kit.dart`<br>(~L578-691) | `lib/widgets/media_viewer.dart`<br>*(novo helper ou integrado)* | **Criar novo widget/helper**. Criar `showMediaViewer` reutilizável para fotos de notas/exercícios/galeria com suporte a Hero e pan/zoom. |
-| **6a** | Staggered Entrance Animations (`Rise` & `RiseScope`)<br>• Animação escalonada: atraso `40 + index * 70ms`<br>• Movimento 560ms (`Curves.easeOutCubic`)<br>• Translate Y (`22 * (1 - v)`) + Scale (`0.97 + 0.03 * v`) + Fade | `lib/widgets/entrance.dart`<br>(usado em `session_screen.dart` ~L1139-1230) | `lib/widgets/entrance.dart`<br>+ `lib/screens/session_screen.dart` | **Criar `entrance.dart` e integrar em `session_screen.dart`**. Aplicar `Rise` nas seções da tela de conclusão do treino (`_complete`), proporcionando a entrada suave dos cartões de resumo. |
-| **6b** | Session Exercise Slide Transition (`_ExerciseSlider`)<br>• `AnimatedSwitcher` 520ms<br>• In: `Interval(0.3, 1, easeOutCubic)`<br>• Out: `Interval(0.55, 1, easeInCubic)`<br>• Fade + Slide (`Offset(0.5 * dir, 0)`) + Scale (`0.94 → 1.0`) | `lib/screens/session_screen.dart`<br>(~L1504-1525) | `lib/screens/session_screen.dart` | **Portar para componente reutilizável / sessão ativa**. Criar widget `ExerciseSlideTransition` fiel à especificação de curvas e transformações. |
-| **7** | Wear OS Shell Transition<br>• `AnimatedSwitcher` 300ms (easeOutCubic / easeInCubic)<br>• Slide vertical + Fade para relógio | `lib/wear/wear_shell.dart`<br>(~L175, ~L1245) | *Sem equivalente direto* | **Reportado sem correspondência**. O projeto local não contém módulo de Wear OS (`lib/wear`). Conforme diretrizes da missão, a transição é extraída para `/extracted/wear_shell_transition.dart`, mas não é forçada no app mobile. |
-| **8a** | Muscle Radar Switcher Transition<br>• `AnimatedSwitcher` 220ms com fade suave de texto | `lib/widgets/muscle_radar.dart`<br>(~L100-105) | `lib/screens/muscle_distribution_screen.dart` | **Referência de estilo / integrar**. Aplicar `AnimatedSwitcher` (220ms, fade) nas legendas dinâmicas de músculos selecionados. |
-| **8b** | Rolling Number & Text Animation (`RollingText` & `RollIn`)<br>• `RollingText`: `AnimatedSize` 240ms (`Curves.easeOutCubic`) + carrossel individual de dígitos (420ms)<br>• `RollIn`: odômetro progressivo de 1150ms (`Curves.easeOutCubic`) | `lib/widgets/rolling_text.dart`<br>e `lib/widgets/entrance.dart` | `lib/widgets/rolling_text.dart` | **Criar widget no local**. Muito útil para odômetro numérico nos cards de resumo do treino (`session_screen`) e cronômetros. |
+## 4. Análise de Dependências (`pubspec.yaml`)
+- `image_picker: ^1.2.3`: **Presente** no `pubspec.yaml`.
+- `share_plus: ^12.0.2`: **Presente** no `pubspec.yaml`.
+- `path_provider: ^2.1.6`: **Presente** no `pubspec.yaml`.
+- `phosphor_flutter: ^2.1.0`: **Presente** no `pubspec.yaml`.
+- Serviço de salvamento na galeria: `saveImageToGallery(Uint8List png, String name)` já implementado em `lib/services/gallery.dart` via MethodChannel `gymmane/gallery` no `MainActivity.kt`.
+- **Gaps de dependências**: Nenhum pacote novo precisa ser adicionado ao `pubspec.yaml`.
+
+## 5. Análise de Permissões
+- **Android (`android/app/src/main/AndroidManifest.xml`)**:
+  - `CAMERA`: Não declarada no manifest. Necessário adicionar `<uses-permission android:name="android.permission.CAMERA" />` e `<uses-feature android:name="android.hardware.camera" android:required="false" />` para suportar `ImageSource.camera` de maneira resiliente em todas as OEMs.
+  - `READ_MEDIA_IMAGES` / `READ_EXTERNAL_STORAGE`: Declarar opcionalmente com `maxSdkVersion="32"` para compatibilidade com versões legadas do Android.
+- **iOS (`ios/Runner/Info.plist`)**:
+  - O projeto atual não possui diretório `ios/` (focado em Android/Linux). Caso venha a ser compilado para iOS futuramente, são necessárias as chaves `NSCameraUsageDescription` e `NSPhotoLibraryUsageDescription`.

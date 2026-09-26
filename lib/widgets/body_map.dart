@@ -73,6 +73,11 @@ class BodyMap extends StatelessWidget {
   }
 }
 
+String heatToken(Map<String, double> intensity) {
+  final keys = intensity.keys.toList()..sort();
+  return keys.map((k) => '$k${(intensity[k]! * 100).round()}').join(',');
+}
+
 class BodyHeatMap extends StatelessWidget {
   const BodyHeatMap({super.key, required this.intensity, this.focus, this.onTap});
 
@@ -80,10 +85,7 @@ class BodyHeatMap extends StatelessWidget {
   final String? focus;
   final ValueChanged<String>? onTap;
 
-  String get _token {
-    final keys = intensity.keys.toList()..sort();
-    return keys.map((k) => '$k${(intensity[k]! * 100).round()}').join(',');
-  }
+  String get _token => heatToken(intensity);
 
   @override
   Widget build(BuildContext context) {
@@ -94,6 +96,35 @@ class BodyHeatMap extends StatelessWidget {
         gc: gc,
         token: _token,
         color: (id) => heatColor(gc, intensity[id] ?? 0),
+        outline: focus,
+      ),
+    );
+  }
+}
+
+Color recoveryColor(GymColors gc, double recovered) {
+  final v = recovered.clamp(0.0, 1.0);
+  final fresh = Color.lerp(idleMuscle(gc), gc.sage, 0.62)!;
+  if (v < 0.5) return Color.lerp(gc.danger, gc.warn, v / 0.5)!;
+  return Color.lerp(gc.warn, fresh, (v - 0.5) / 0.5)!;
+}
+
+class BodyRecoveryMap extends StatelessWidget {
+  const BodyRecoveryMap({super.key, required this.recovery, this.focus, this.onTap});
+
+  final Map<String, double> recovery;
+  final String? focus;
+  final ValueChanged<String>? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final gc = context.gc;
+    return _BodyCanvas(
+      onTap: onTap,
+      painter: _BodyPainter(
+        gc: gc,
+        token: 'r${heatToken(recovery)}',
+        color: (id) => recoveryColor(gc, recovery[id] ?? 1),
         outline: focus,
       ),
     );
