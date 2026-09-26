@@ -14,6 +14,8 @@ import 'package:share_plus/share_plus.dart';
 import '../state/fit_state.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import 'fade_slide_route.dart';
+import 'glass.dart';
 import 'photo_source_sheet.dart';
 import 'ui_kit.dart';
 
@@ -21,7 +23,7 @@ import 'ui_kit.dart';
 // Public API — unchanged signature for callers
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Opens the interactive watermark photo editor and sharing modal.
+/// Opens the interactive watermark photo editor and sharing modal with glass blur backdrop.
 void showSharePhotoSheet(
   BuildContext context, {
   required String durationStr,
@@ -32,7 +34,7 @@ void showSharePhotoSheet(
   String? initialImagePath,
   String? initialImageBase64,
 }) {
-  showModalBottomSheet(
+  showAppSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
@@ -44,6 +46,34 @@ void showSharePhotoSheet(
       muscleGroupsStr: muscleGroupsStr,
       initialImagePath: initialImagePath,
       initialImageBase64: initialImageBase64,
+    ),
+  );
+}
+
+/// Opens the interactive watermark photo editor using the full-screen Fade+Slide transition adapted from GymMane.
+Future<void> showSharePhotoScreen(
+  BuildContext context, {
+  required String durationStr,
+  required int prCount,
+  required double volumeKg,
+  required int calories,
+  required String muscleGroupsStr,
+  String? initialImagePath,
+  String? initialImageBase64,
+}) {
+  return pushFadeSlideRoute(
+    context,
+    (_) => Scaffold(
+      backgroundColor: Colors.transparent,
+      body: SharePhotoSheet(
+        durationStr: durationStr,
+        prCount: prCount,
+        volumeKg: volumeKg,
+        calories: calories,
+        muscleGroupsStr: muscleGroupsStr,
+        initialImagePath: initialImagePath,
+        initialImageBase64: initialImageBase64,
+      ),
     ),
   );
 }
