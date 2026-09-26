@@ -16,6 +16,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/share_photo_sheet.dart';
 import '../widgets/ui_kit.dart';
+import '../widgets/glass.dart';
 
 String _getWorkoutTitle(LoggedSession session) {
   final sessionExIds = session.exercises.map((e) => e.id).toSet();
@@ -122,7 +123,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
 
   void _showNoSessionsWarning() {
     final gc = context.gc;
-    showModalBottomSheet(
+    showAppSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (_) => Container(
@@ -171,7 +172,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
     LoggedSession selectedSession = sessions.first;
     bool isBefore = false;
 
-    showModalBottomSheet(
+    showAppSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -344,7 +345,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
 
   void _showAddPhotoOptions() {
     final gc = context.gc;
-    showModalBottomSheet(
+    showAppSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (_) => Container(
@@ -855,7 +856,7 @@ class _FullScreenPhotoViewerState extends State<_FullScreenPhotoViewer> {
   }
 
   void _confirmDelete(GymColors gc, _GalleryItem photo) {
-    showDialog(
+    showAppDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: gc.bgRaised,

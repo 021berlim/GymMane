@@ -10,10 +10,11 @@ import '../models/weight_entry.dart';
 import '../state/fit_state.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import 'glass.dart';
 import 'ui_kit.dart';
 
 Future<void> showBodyweightSheet(BuildContext context, {bool? beforeWorkout}) {
-  return showModalBottomSheet<void>(
+  return showAppSheet<void>(
     context: context,
     backgroundColor: Colors.transparent,
     isScrollControlled: true,

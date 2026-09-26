@@ -4,6 +4,7 @@ import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import 'svg_icon.dart';
+import 'glass.dart';
 export 'app_toast.dart';
 
 class SoftCard extends StatelessWidget {
@@ -344,7 +345,7 @@ Future<bool> showConfirmDeleteModal({
   String? cancelLabel,
 }) async {
   final gc = context.gc;
-  final result = await showDialog<bool>(
+  final result = await showAppDialog<bool>(
     context: context,
     builder: (dctx) => AlertDialog(
       backgroundColor: gc.bgRaised,

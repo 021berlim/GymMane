@@ -30,6 +30,7 @@ import '../theme/app_theme.dart';
 import '../widgets/app_background.dart';
 import '../widgets/award_celebration.dart';
 import '../widgets/update_dialog.dart';
+import '../widgets/glass.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
@@ -167,7 +168,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
 
   Future<bool> _confirmDiscard(BuildContext context) async {
     final gc = context.gc;
-    final ok = await showDialog<bool>(
+    final ok = await showAppDialog<bool>(
       context: context,
       builder: (dctx) => AlertDialog(
         backgroundColor: gc.bgRaised,

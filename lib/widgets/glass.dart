@@ -14,8 +14,13 @@ Future<T?> showAppSheet<T>({
   bool isDismissible = true,
   bool enableDrag = true,
   bool useSafeArea = false,
+  Color? barrierColor,
+  bool useRootNavigator = false,
+  Clip? clipBehavior,
+  BoxConstraints? constraints,
+  double blur = kSheetBlur,
 }) {
-  final nav = Navigator.of(context);
+  final nav = Navigator.of(context, rootNavigator: useRootNavigator);
   return nav.push(GlassSheetRoute<T>(
     builder: builder,
     isScrollControlled: isScrollControlled,
@@ -24,9 +29,12 @@ Future<T?> showAppSheet<T>({
     isDismissible: isDismissible,
     enableDrag: enableDrag,
     useSafeArea: useSafeArea,
-    modalBarrierColor: Colors.black.withValues(alpha: 0.32),
+    clipBehavior: clipBehavior,
+    constraints: constraints,
+    modalBarrierColor: barrierColor ?? Colors.black.withValues(alpha: 0.32),
     capturedThemes: InheritedTheme.capture(from: context, to: nav.context),
     barrierLabel: MaterialLocalizations.of(context).scrimLabel,
+    blur: blur,
   ));
 }
 
@@ -40,14 +48,19 @@ class GlassSheetRoute<T> extends ModalBottomSheetRoute<T> {
     super.isDismissible,
     super.enableDrag,
     super.useSafeArea,
+    super.clipBehavior,
+    super.constraints,
     super.modalBarrierColor,
     super.capturedThemes,
     super.barrierLabel,
+    this.blur = kSheetBlur,
   });
+
+  final double blur;
 
   @override
   Widget buildModalBarrier() =>
-      BlurBarrier(animation: animation!, child: super.buildModalBarrier());
+      BlurBarrier(animation: animation!, blur: blur, child: super.buildModalBarrier());
 }
 
 /// Exibe diálogo modal central com animação combinada de Fade + Scale (0.92 -> 1)
@@ -55,14 +68,22 @@ class GlassSheetRoute<T> extends ModalBottomSheetRoute<T> {
 Future<T?> showAppDialog<T>({
   required BuildContext context,
   required WidgetBuilder builder,
+  bool barrierDismissible = true,
+  Color? barrierColor,
+  bool useRootNavigator = true,
+  RouteSettings? routeSettings,
+  double blur = kSheetBlur,
 }) {
-  final nav = Navigator.of(context);
+  final nav = Navigator.of(context, rootNavigator: useRootNavigator);
   return nav.push(GlassDialogRoute<T>(
     context: context,
     builder: builder,
-    barrierColor: Colors.black.withValues(alpha: 0.36),
+    barrierDismissible: barrierDismissible,
+    barrierColor: barrierColor ?? Colors.black.withValues(alpha: 0.36),
     themes: InheritedTheme.capture(from: context, to: nav.context),
     barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+    settings: routeSettings,
+    blur: blur,
   ));
 }
 
@@ -71,14 +92,19 @@ class GlassDialogRoute<T> extends DialogRoute<T> {
   GlassDialogRoute({
     required super.context,
     required super.builder,
+    super.barrierDismissible = true,
     super.barrierColor,
     super.themes,
     super.barrierLabel,
+    super.settings,
+    this.blur = kSheetBlur,
   });
+
+  final double blur;
 
   @override
   Widget buildModalBarrier() =>
-      BlurBarrier(animation: animation!, child: super.buildModalBarrier());
+      BlurBarrier(animation: animation!, blur: blur, child: super.buildModalBarrier());
 
   @override
   Widget buildTransitions(
@@ -104,10 +130,16 @@ class GlassDialogRoute<T> extends DialogRoute<T> {
 
 /// Barreira modal com BackdropFilter e desfoque progressivo baseado na animação da rota.
 class BlurBarrier extends StatelessWidget {
-  const BlurBarrier({super.key, required this.animation, required this.child});
+  const BlurBarrier({
+    super.key,
+    required this.animation,
+    required this.child,
+    this.blur = kSheetBlur,
+  });
 
   final Animation<double> animation;
   final Widget child;
+  final double blur;
 
   @override
   Widget build(BuildContext context) {
@@ -115,7 +147,7 @@ class BlurBarrier extends StatelessWidget {
       animation: animation,
       child: child,
       builder: (context, barrier) {
-        final sigma = kSheetBlur * Curves.easeOut.transform(animation.value.clamp(0.0, 1.0));
+        final sigma = blur * Curves.easeOut.transform(animation.value.clamp(0.0, 1.0));
         if (sigma < 0.3) return barrier!;
         return BackdropFilter(
           filter: ui.ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),

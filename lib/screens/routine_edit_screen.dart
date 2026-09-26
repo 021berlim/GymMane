@@ -12,6 +12,7 @@ import '../widgets/exercise_category_widgets.dart';
 import '../widgets/exercise_media.dart';
 import '../widgets/svg_icon.dart';
 import '../widgets/ui_kit.dart';
+import '../widgets/glass.dart';
 
 class RoutineEditScreen extends StatefulWidget {
   const RoutineEditScreen({super.key});
@@ -662,7 +663,7 @@ class _RoutineEditScreenState extends State<RoutineEditScreen> {
     final controller = TextEditingController(text: initial)
       ..selection = TextSelection(baseOffset: 0, extentOffset: initial.length);
 
-    final raw = await showDialog<String>(
+    final raw = await showAppDialog<String>(
       context: context,
       builder: (dctx) => AlertDialog(
         backgroundColor: gc.bgRaised,
@@ -745,7 +746,7 @@ class _RoutineEditScreenState extends State<RoutineEditScreen> {
 
   void _confirmDelete() {
     final gc = context.gc;
-    showModalBottomSheet<void>(
+    showAppSheet<void>(
       context: context,
       backgroundColor: gc.bgRaised,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),

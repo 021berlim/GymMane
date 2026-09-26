@@ -19,6 +19,7 @@ import '../widgets/charts.dart';
 import '../widgets/goal_progress_widgets.dart';
 import '../widgets/svg_icon.dart';
 import '../widgets/ui_kit.dart';
+import '../widgets/glass.dart';
 import 'muscle_distribution_screen.dart';
 import 'weekly_progress_detail_screen.dart';
 
@@ -95,7 +96,7 @@ class ProgressScreen extends StatelessWidget {
 
   void _showDay(BuildContext context, int index) {
     final date = fit.heatmapDate(index);
-    showModalBottomSheet(
+    showAppSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (_) => _DaySheet(date: date),
@@ -474,7 +475,7 @@ class _DaySheet extends StatelessWidget {
   Future<void> _confirmDelete(BuildContext context, LoggedSession s, LoggedExercise e) async {
     final gc = context.gc;
     final name = fit.exerciseById(e.id)?.localizedName(context) ?? (appLanguage == 'pt' ? FitnessTranslator.translateExerciseName(e.name) : t.catalogName(e.id, e.name));
-    final ok = await showDialog<bool>(
+    final ok = await showAppDialog<bool>(
       context: context,
       builder: (dctx) => AlertDialog(
         backgroundColor: gc.bgRaised,
@@ -1580,7 +1581,7 @@ class _GoalsCard extends StatelessWidget {
   }
 
   void _showAddGoalSheet(BuildContext context) {
-    showModalBottomSheet(
+    showAppSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,

@@ -133,45 +133,40 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _weekDay(GymColors gc, int i) {
-    final done = fit.isDayDone(i);
+    final done = fit.isSessionDay(i);
     final isToday = i == fit.todayIndex;
-    final isFuture = i > fit.todayIndex;
 
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: isFuture ? null : () => fit.toggleCheckin(i),
-      child: Column(
-        children: [
-          Text(
-            t.weekdayInitial(i + 1),
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: isToday ? FontWeight.w700 : FontWeight.w500,
-              color: isToday ? gc.text : gc.textTertiary,
-            ),
+    return Column(
+      children: [
+        Text(
+          t.weekdayInitial(i + 1),
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: isToday ? FontWeight.w700 : FontWeight.w500,
+            color: isToday ? gc.text : gc.textTertiary,
           ),
-          const SizedBox(height: 8),
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeOut,
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: done ? gc.text : gc.bgRaised2,
-              shape: BoxShape.circle,
-            ),
-            child: done
-                ? Center(
-                    child: Icon(
-                      Icons.check,
-                      size: 16,
-                      color: gc.bg,
-                    ),
-                  )
-                : null,
+        ),
+        const SizedBox(height: 8),
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+          width: 34,
+          height: 34,
+          decoration: BoxDecoration(
+            color: done ? gc.text : gc.bgRaised2,
+            shape: BoxShape.circle,
           ),
-        ],
-      ),
+          child: done
+              ? Center(
+                  child: Icon(
+                    Icons.check,
+                    size: 16,
+                    color: gc.bg,
+                  ),
+                )
+              : null,
+        ),
+      ],
     );
   }
 

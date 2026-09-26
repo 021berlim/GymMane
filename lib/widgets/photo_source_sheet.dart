@@ -5,10 +5,11 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import 'glass.dart';
 import 'ui_kit.dart';
 
 Future<ImageSource?> pickPhotoSource(BuildContext context) =>
-    showModalBottomSheet<ImageSource>(
+    showAppSheet<ImageSource>(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (_) => const PhotoSourceSheet(),

@@ -5,6 +5,7 @@ import '../l10n/l10n.dart';
 import '../models/exercise.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import 'glass.dart';
 import 'muscle_icon.dart';
 import 'svg_icon.dart';
 import 'ui_kit.dart';
@@ -409,7 +410,7 @@ void showFilterSelectorBottomSheet<T>({
   required ValueChanged<T?> onSelected,
 }) {
   final gc = context.gc;
-  showModalBottomSheet<void>(
+  showAppSheet<void>(
     context: context,
     backgroundColor: Colors.transparent,
     builder: (sheetCtx) => Container(

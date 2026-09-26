@@ -6,6 +6,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/svg_icon.dart';
 import '../widgets/ui_kit.dart';
+import '../widgets/glass.dart';
 
 class ToolDetailScreen extends StatelessWidget {
   const ToolDetailScreen({super.key});
@@ -147,7 +148,7 @@ class ToolDetailScreen extends StatelessWidget {
     final controller = TextEditingController(text: initial)
       ..selection = TextSelection(baseOffset: 0, extentOffset: initial.length);
 
-    final raw = await showDialog<String>(
+    final raw = await showAppDialog<String>(
       context: context,
       builder: (dctx) => AlertDialog(
         backgroundColor: gc.bgRaised,

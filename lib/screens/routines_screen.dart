@@ -8,6 +8,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/svg_icon.dart';
 import '../widgets/ui_kit.dart';
+import '../widgets/glass.dart';
 
 class RoutinesScreen extends StatelessWidget {
   const RoutinesScreen({super.key});
@@ -137,7 +138,7 @@ class RoutinesScreen extends StatelessWidget {
 
   void _pickRoutine(BuildContext context, int weekday) {
     final gc = context.gc;
-    showModalBottomSheet<void>(
+    showAppSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (_) => Container(

@@ -16,6 +16,7 @@ import '../widgets/svg_icon.dart';
 import '../widgets/ui_kit.dart';
 
 import '../widgets/exercise_category_widgets.dart';
+import '../widgets/glass.dart';
 
 class ExercisesScreen extends StatefulWidget {
   const ExercisesScreen({super.key});
@@ -548,7 +549,7 @@ void showCreateExerciseSheet(BuildContext context, {void Function(String id)? on
   bool advanced = false;
   String? mediaPath;
   bool busy = false;
-  showModalBottomSheet<void>(
+  showAppSheet<void>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,

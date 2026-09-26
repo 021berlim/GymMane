@@ -24,6 +24,7 @@ import '../theme/app_theme.dart';
 import '../widgets/profile_avatar.dart';
 import '../widgets/ui_kit.dart';
 import '../widgets/update_dialog.dart';
+import '../widgets/glass.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -316,7 +317,7 @@ class SettingsScreen extends StatelessWidget {
 
   Future<void> _resetAll(BuildContext context) async {
     final gc = context.gc;
-    final ok = await showDialog<bool>(
+    final ok = await showAppDialog<bool>(
       context: context,
       builder: (dctx) => AlertDialog(
         backgroundColor: gc.bgRaised,
@@ -353,7 +354,7 @@ class SettingsScreen extends StatelessWidget {
 
   Future<void> _importBackup(BuildContext context) async {
     final gc = context.gc;
-    final ok = await showDialog<bool>(
+    final ok = await showAppDialog<bool>(
       context: context,
       builder: (dctx) => AlertDialog(
         backgroundColor: gc.bgRaised,
@@ -542,7 +543,7 @@ class SettingsScreen extends StatelessWidget {
 
   Future<bool?> _askImportUnit(BuildContext context) {
     final gc = context.gc;
-    return showDialog<bool>(
+    return showAppDialog<bool>(
       context: context,
       builder: (dctx) => AlertDialog(
         backgroundColor: gc.bgRaised,
@@ -617,7 +618,7 @@ class SettingsScreen extends StatelessWidget {
   }
 
   void _editLanguage(BuildContext context) {
-    showModalBottomSheet(
+    showAppSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (_) => _LanguageSheet(),
@@ -625,7 +626,7 @@ class SettingsScreen extends StatelessWidget {
   }
 
   void _editAlarmSound(BuildContext context) {
-    showModalBottomSheet(
+    showAppSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (_) => _AlarmSoundSheet(
@@ -897,7 +898,7 @@ Color badgeColor(String id) => switch (id) {
 const AssetImage kDefaultBanner = AssetImage('assets/img/banner_default.jpg');
 
 void showProfileSheet(BuildContext context) {
-  showModalBottomSheet(
+  showAppSheet(
     context: context,
     backgroundColor: Colors.transparent,
     isScrollControlled: true,
@@ -1122,7 +1123,7 @@ class _ProfileSheetState extends State<_ProfileSheet> {
   }
 
   Future<void> _pickBanner() async {
-    final source = await showModalBottomSheet<ImageSource>(
+    final source = await showAppSheet<ImageSource>(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (sheetCtx) => _SourceSheet(),
@@ -1142,7 +1143,7 @@ class _ProfileSheetState extends State<_ProfileSheet> {
   }
 
   Future<void> _pickPhoto() async {
-    final source = await showModalBottomSheet<ImageSource>(
+    final source = await showAppSheet<ImageSource>(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (sheetCtx) => _SourceSheet(),

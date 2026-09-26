@@ -16,6 +16,7 @@ import '../widgets/exercise_media.dart';
 import '../widgets/share_photo_sheet.dart';
 import '../widgets/svg_icon.dart';
 import '../widgets/ui_kit.dart';
+import '../widgets/glass.dart';
 
 class SessionScreen extends StatefulWidget {
   const SessionScreen({super.key});
@@ -840,7 +841,7 @@ class _SessionScreenState extends State<SessionScreen> {
 
   void _showExecutionSheet(BuildContext context, Exercise def) {
     final gc = context.gc;
-    showModalBottomSheet<void>(
+    showAppSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: gc.bgRaised,
@@ -967,7 +968,7 @@ class _SessionScreenState extends State<SessionScreen> {
   }
 
   Future<void> _confirmExit(BuildContext context, GymColors gc) async {
-    await showModalBottomSheet<void>(
+    await showAppSheet<void>(
       context: context,
       backgroundColor: gc.bgRaised,
       shape: const RoundedRectangleBorder(
@@ -1048,7 +1049,7 @@ class _SessionScreenState extends State<SessionScreen> {
               tileColor: gc.bgRaised2,
               onTap: () async {
                 Navigator.of(bctx).pop();
-                final ok = await showDialog<bool>(
+                final ok = await showAppDialog<bool>(
                   context: context,
                   builder: (dctx) => AlertDialog(
                     backgroundColor: gc.bgRaised,
@@ -1088,7 +1089,7 @@ class _SessionScreenState extends State<SessionScreen> {
 
   Future<void> _confirmDrop(BuildContext context, int exIdx, String name) async {
     final gc = context.gc;
-    final ok = await showDialog<bool>(
+    final ok = await showAppDialog<bool>(
       context: context,
       builder: (dctx) => AlertDialog(
         backgroundColor: gc.bgRaised,
@@ -1121,7 +1122,7 @@ class _SessionScreenState extends State<SessionScreen> {
     final controller = TextEditingController(text: initial)
       ..selection = TextSelection(baseOffset: 0, extentOffset: initial.length);
 
-    final raw = await showDialog<String>(
+    final raw = await showAppDialog<String>(
       context: context,
       builder: (dctx) => AlertDialog(
         backgroundColor: gc.bgRaised,

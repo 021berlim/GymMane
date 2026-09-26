@@ -176,7 +176,7 @@ object LiveNotifier {
         p.color = fill
         c.drawRoundRect(RectF(inset, inset, w - inset, h - inset), r, r, p)
         p.color = ink
-        p.typeface = font ?: runCatching { ctx.resources.getFont(R.font.nunito_extrabold) }.getOrNull().also { font = it }
+        p.typeface = font ?: runCatching { ctx.resources.getFont(R.font.oswald_bold) }.getOrNull().also { font = it }
         p.textSize = h * 0.56f
         val digit = (0..9).maxOf { p.measureText(it.toString()) }
         fun width(ch: Char) = if (ch.isDigit()) digit else p.measureText(ch.toString())

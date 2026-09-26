@@ -9,6 +9,7 @@ import '../state/fit_state.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/ui_kit.dart';
+import '../widgets/glass.dart';
 
 enum MuscleDistributionGrain { week, month, year }
 
@@ -291,7 +292,7 @@ class _DistributionCard extends StatelessWidget {
   final String previousLegend;
 
   void _showInfoSheet(BuildContext context, GymColors gc) {
-    showModalBottomSheet(
+    showAppSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,

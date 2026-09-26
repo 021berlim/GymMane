@@ -4,6 +4,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../services/update_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import 'glass.dart';
 import 'ui_kit.dart';
 
 /// Shows an in-app update bottom sheet with clean patch notes and download progress.
@@ -11,7 +12,7 @@ import 'ui_kit.dart';
 /// Designed after Samsung OneUI, Xiaomi HyperOS, and Discord update sheets while
 /// preserving FIT//IRON's signature dark neon design system.
 void showUpdateDialog(BuildContext context, UpdateInfo info) {
-  showModalBottomSheet(
+  showAppSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
