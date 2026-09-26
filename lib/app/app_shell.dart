@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io' show Platform;
+import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -43,6 +44,17 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   Timer? _awardWait;
   AwardId? _celebrating;
   bool _celebratedOne = false;
+  String _lastRoute = '';
+  int _lastDepth = 0;
+  bool _sideways = false;
+  bool _forward = true;
+
+  static int _depthFor(String route) {
+    const tabs = {'home', 'progress', 'exercises', 'settings'};
+    if (tabs.contains(route)) return 0;
+    if (route == 'routine-edit' || route == 'tools-detail') return 2;
+    return 1;
+  }
 
   @override
   void initState() {
@@ -179,24 +191,56 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   }
 
   Widget _animatedScreen() {
+    final route = fit.route;
+    if (route != _lastRoute) {
+      final from = _NavBar._routes.indexOf(_lastRoute);
+      final to = _NavBar._routes.indexOf(route);
+      _sideways = from >= 0 && to >= 0;
+      final curDepth = _depthFor(route);
+      _forward = _sideways ? to > from : curDepth >= _lastDepth;
+      _lastRoute = route;
+      _lastDepth = curDepth;
+    }
+    final sideways = _sideways;
+    final dir = _forward ? 1.0 : -1.0;
+
     return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 280),
-      switchInCurve: Curves.easeOutCubic,
-      switchOutCurve: Curves.easeInCubic,
+      duration: const Duration(milliseconds: 380),
+      switchInCurve: const Interval(0.3, 1, curve: Curves.easeOutCubic),
+      switchOutCurve: const Interval(0.7, 1, curve: Curves.easeInCubic),
       transitionBuilder: (child, animation) {
-        final slide = Tween<Offset>(
-          begin: const Offset(0, 0.018),
-          end: Offset.zero,
-        ).animate(animation);
-        return FadeTransition(
-          opacity: animation,
-          child: SlideTransition(position: slide, child: child),
+        final incoming = (child.key as ValueKey?)?.value == fit.route;
+        return AnimatedBuilder(
+          animation: animation,
+          child: child,
+          builder: (_, inner) {
+            final v = animation.value.clamp(0.0, 1.0);
+            final away = 1 - v;
+            final shift = sideways
+                ? Offset((incoming ? 26 : -18) * dir * away, 0)
+                : Offset(0, incoming ? 22 * dir * away : -8 * dir * away);
+            final blur = 10 * away;
+            return Opacity(
+              opacity: v,
+              child: ImageFiltered(
+                enabled: blur > 0.25,
+                imageFilter: ImageFilter.blur(sigmaX: blur, sigmaY: blur, tileMode: TileMode.decal),
+                child: Transform.translate(
+                  offset: shift,
+                  child: Transform.scale(
+                    scale: incoming ? 1 + 0.03 * away : 1 - 0.04 * away,
+                    child: inner,
+                  ),
+                ),
+              ),
+            );
+          },
         );
       },
       layoutBuilder: (currentChild, previousChildren) => Stack(
         children: <Widget>[
-          for (final c in previousChildren) Positioned.fill(child: c),
-          if (currentChild != null) Positioned.fill(child: currentChild),
+          for (final c in previousChildren) Positioned.fill(key: c.key, child: c),
+          if (currentChild != null) Positioned.fill(key: currentChild.key, child: currentChild),
         ],
       ),
       child: KeyedSubtree(key: ValueKey(fit.route), child: _screen()),
@@ -289,19 +333,10 @@ class _NavBar extends StatelessWidget {
             return Stack(
               alignment: Alignment.center,
               children: [
-                AnimatedPositioned(
-                  duration: const Duration(milliseconds: 340),
-                  curve: Curves.easeOutCubic,
+                _LiquidPill(
                   left: slotX(_selectedIndex),
-                  top: 8,
-                  bottom: 8,
                   width: _iw,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: gc.bgRaised2,
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                  ),
+                  color: gc.bgRaised2,
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -370,6 +405,108 @@ class _NavBar extends StatelessWidget {
         ),
         child: Icon(PhosphorIconsFill.play, size: 24, color: gc.bg),
       ),
+    );
+  }
+}
+
+class _LiquidPill extends StatefulWidget {
+  const _LiquidPill({required this.left, required this.width, required this.color});
+
+  final double left;
+  final double width;
+  final Color color;
+
+  @override
+  State<_LiquidPill> createState() => _LiquidPillState();
+}
+
+class _LiquidPillState extends State<_LiquidPill> with TickerProviderStateMixin {
+  late final AnimationController _move =
+      AnimationController(vsync: this, duration: const Duration(milliseconds: 460), value: 1);
+  late final AnimationController _lift = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 260),
+    reverseDuration: const Duration(milliseconds: 380),
+  );
+  late double _from = widget.left;
+  late double _shown = widget.left;
+
+  @override
+  void didUpdateWidget(_LiquidPill old) {
+    super.didUpdateWidget(old);
+    if (old.left == widget.left) return;
+    _from = _shown;
+    _move.forward(from: 0);
+  }
+
+  static double _lerp(double a, double b, double t) => a + (b - a) * t;
+
+  static const _liftCurve = Cubic(0.3, 1.25, 0.5, 1);
+
+  @override
+  void dispose() {
+    _move.dispose();
+    _lift.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: Listenable.merge([_move, _lift]),
+      builder: (context, _) {
+        final lift = _liftCurve.transform(_lift.value.clamp(0.0, 1.0));
+        final t = _move.value;
+        final to = widget.left;
+        final right = to >= _from;
+        final lead = Curves.easeOutCubic.transform(t);
+        final trail = Curves.easeInOutCubic.transform(t);
+        final l = _lerp(_from, to, right ? trail : lead);
+        final r = _lerp(_from + widget.width, to + widget.width, right ? lead : trail);
+        final squash = 1 - 0.14 * (1 - (2 * t - 1).abs()) * (to == _from ? 0 : 1);
+        _shown = l;
+        final base = Color.lerp(
+          widget.color,
+          widget.color.withValues(alpha: (widget.color.a * 2.4).clamp(0.0, 1.0)),
+          lift,
+        )!;
+        final grow = 6 * lift;
+        final inset = 8 + 10 * (1 - squash) - 4 * lift;
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Positioned(
+              left: l - grow,
+              width: r - l + 2 * grow,
+              top: inset,
+              bottom: inset,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(18 + grow),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.16 * lift), width: 1),
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Color.alphaBlend(Colors.white.withValues(alpha: 0.12 * lift), base),
+                      base,
+                    ],
+                  ),
+                  boxShadow: lift <= 0
+                      ? null
+                      : [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.28 * lift),
+                            blurRadius: 22,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
