@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -552,12 +553,18 @@ class _GalleryScreenState extends State<GalleryScreen> {
     return slivers;
   }
 
+  String _heroTagFor(_GalleryItem item) =>
+      'gallery_photo_${item.session.date.millisecondsSinceEpoch}_${item.isBefore}_${item.data.hashCode}';
+
   Widget _buildPhotoTile(GymColors gc, _GalleryItem item, List<_GalleryItem> allPhotos) {
     return GestureDetector(
       onTap: () => _openPhotoDetail(context, gc, item, allPhotos),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(2),
-        child: _buildImageWidget(item.data),
+        child: Hero(
+          tag: _heroTagFor(item),
+          child: _buildImageWidget(item.data),
+        ),
       ),
     );
   }
@@ -586,11 +593,15 @@ class _GalleryScreenState extends State<GalleryScreen> {
   void _openPhotoDetail(BuildContext context, GymColors gc, _GalleryItem item, List<_GalleryItem> allPhotos) {
     Navigator.of(context).push(
       PageRouteBuilder(
-        opaque: true,
+        opaque: false,
+        barrierColor: Colors.transparent,
+        transitionDuration: const Duration(milliseconds: 280),
+        reverseTransitionDuration: const Duration(milliseconds: 220),
         pageBuilder: (context, animation, secondaryAnimation) {
           return _FullScreenPhotoViewer(
             photos: allPhotos,
             initialIndex: allPhotos.indexOf(item),
+            animation: animation,
             onDelete: (photo) {
               fit.deleteSessionPhoto(photo.session, before: photo.isBefore, photoData: photo.data);
               Navigator.of(context).pop();
@@ -609,9 +620,6 @@ class _GalleryScreenState extends State<GalleryScreen> {
             },
           );
         },
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(opacity: animation, child: child);
-        },
       ),
     );
   }
@@ -620,12 +628,14 @@ class _GalleryScreenState extends State<GalleryScreen> {
 class _FullScreenPhotoViewer extends StatefulWidget {
   final List<_GalleryItem> photos;
   final int initialIndex;
+  final Animation<double> animation;
   final void Function(_GalleryItem) onDelete;
   final void Function(_GalleryItem) onShare;
 
   const _FullScreenPhotoViewer({
     required this.photos,
     required this.initialIndex,
+    required this.animation,
     required this.onDelete,
     required this.onShare,
   });
@@ -671,91 +681,121 @@ class _FullScreenPhotoViewerState extends State<_FullScreenPhotoViewer> {
     final gc = context.gc;
     final currentPhoto = widget.photos[_currentIndex];
 
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Top bar
-            Padding(
-              padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                  Expanded(
-                    child: Column(
-                      children: [
-                        Text(
-                          t.fullDate(currentPhoto.date),
-                          style: AppTheme.d(15, weight: FontWeight.w700, color: Colors.white),
-                          textAlign: TextAlign.center,
+    return AnimatedBuilder(
+      animation: widget.animation,
+      builder: (context, _) {
+        final v = Curves.easeOutCubic.transform(widget.animation.value);
+        return Scaffold(
+          backgroundColor: Colors.transparent,
+          body: Stack(
+            children: [
+              Positioned.fill(
+                child: BackdropFilter(
+                  filter: ui.ImageFilter.blur(sigmaX: 20 * v, sigmaY: 20 * v),
+                  child: ColoredBox(color: Colors.black.withValues(alpha: 0.90 * v)),
+                ),
+              ),
+              SafeArea(
+                child: Column(
+                  children: [
+                    // Top bar
+                    Opacity(
+                      opacity: v,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
+                        child: Row(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.arrow_back, color: Colors.white),
+                              onPressed: () => Navigator.of(context).pop(),
+                            ),
+                            Expanded(
+                              child: Column(
+                                children: [
+                                  Text(
+                                    t.fullDate(currentPhoto.date),
+                                    style: AppTheme.d(15, weight: FontWeight.w700, color: Colors.white),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  if (_getWorkoutTitle(currentPhoto.session).isNotEmpty)
+                                    Text(
+                                      _getWorkoutTitle(currentPhoto.session),
+                                      style: AppTheme.s(12, color: Colors.white70),
+                                      textAlign: TextAlign.center,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              icon: Icon(PhosphorIcons.downloadSimple(PhosphorIconsStyle.light), color: Colors.white),
+                              onPressed: () => _downloadImage(currentPhoto),
+                            ),
+                          ],
                         ),
-                        if (_getWorkoutTitle(currentPhoto.session).isNotEmpty)
-                          Text(
-                            _getWorkoutTitle(currentPhoto.session),
-                            style: AppTheme.s(12, color: Colors.white70),
-                            textAlign: TextAlign.center,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                      ],
+                      ),
                     ),
-                  ),
-                  IconButton(
-                    icon: Icon(PhosphorIcons.downloadSimple(PhosphorIconsStyle.light), color: Colors.white),
-                    onPressed: () => _downloadImage(currentPhoto),
-                  ),
-                ],
-              ),
-            ),
 
-            // Photo viewer with swipe and zoom
-            Expanded(
-              child: PageView.builder(
-                controller: _pageController,
-                itemCount: widget.photos.length,
-                onPageChanged: (index) {
-                  setState(() => _currentIndex = index);
-                },
-                itemBuilder: (context, index) {
-                  return InteractiveViewer(
-                    minScale: 1.0,
-                    maxScale: 5.0,
-                    child: Center(
-                      child: _buildImage(widget.photos[index].data),
+                    // Photo viewer with swipe and zoom
+                    Expanded(
+                      child: PageView.builder(
+                        controller: _pageController,
+                        itemCount: widget.photos.length,
+                        onPageChanged: (index) {
+                          setState(() => _currentIndex = index);
+                        },
+                        itemBuilder: (context, index) {
+                          final photo = widget.photos[index];
+                          final heroTag = 'gallery_photo_${photo.session.date.millisecondsSinceEpoch}_${photo.isBefore}_${photo.data.hashCode}';
+                          return InteractiveViewer(
+                            minScale: 1.0,
+                            maxScale: 5.0,
+                            child: Center(
+                              child: Hero(
+                                tag: heroTag,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: _buildImage(photo.data),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     ),
-                  );
-                },
-              ),
-            ),
 
-            // Bottom action bar (Samsung/Xiaomi style)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-              decoration: const BoxDecoration(
-                border: Border(top: BorderSide(color: Colors.white12)),
+                    // Bottom action bar (Samsung/Xiaomi style)
+                    Opacity(
+                      opacity: v,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                        decoration: const BoxDecoration(
+                          border: Border(top: BorderSide(color: Colors.white12)),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            _bottomAction(
+                              PhosphorIcons.export(PhosphorIconsStyle.light),
+                              () => widget.onShare(currentPhoto),
+                            ),
+                            _bottomAction(
+                              PhosphorIcons.trash(PhosphorIconsStyle.light),
+                              () => _confirmDelete(gc, currentPhoto),
+                              color: Colors.redAccent,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _bottomAction(
-                    PhosphorIcons.export(PhosphorIconsStyle.light),
-                    () => widget.onShare(currentPhoto),
-                  ),
-                  _bottomAction(
-                    PhosphorIcons.trash(PhosphorIconsStyle.light),
-                    () => _confirmDelete(gc, currentPhoto),
-                    color: Colors.redAccent,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+            ],
+          ),
+        );
+      },
     );
   }
 
