@@ -11,6 +11,7 @@ import '../state/fit_state.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/bodyweight_sheet.dart';
+import '../widgets/entrance.dart';
 import '../widgets/exercise_media.dart';
 import '../widgets/share_photo_sheet.dart';
 import '../widgets/svg_icon.dart';
@@ -1177,56 +1178,65 @@ class _SessionScreenState extends State<SessionScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _finishHero(gc, prs: prs, streak: streak, goalHit: goalHit),
+          Rise(index: 0, child: _finishHero(gc, prs: prs, streak: streak, goalHit: goalHit)),
           const SizedBox(height: 18),
-          Row(
-            children: [
-              Expanded(child: _sumCard(gc, t.duration, fit.summaryDurationLabel)),
-              const SizedBox(width: 10),
-              Expanded(child: _sumCard(gc, t.setsCaps, '${fit.session?.summarySets ?? 0}')),
-              const SizedBox(width: 10),
-              Expanded(child: _sumCard(gc, t.volume, fit.volumeLabel(vol))),
-            ],
+          Rise(
+            index: 1,
+            child: Row(
+              children: [
+                Expanded(child: _sumCard(gc, t.duration, fit.summaryDurationLabel)),
+                const SizedBox(width: 10),
+                Expanded(child: _sumCard(gc, t.setsCaps, '${fit.session?.summarySets ?? 0}')),
+                const SizedBox(width: 10),
+                Expanded(child: _sumCard(gc, t.volume, fit.volumeLabel(vol))),
+              ],
+            ),
           ),
           const SizedBox(height: 10),
-          if (vsLast != null && vsLast > 0) _vsLastCard(gc, vol, vsLast) else _firstTimeCard(gc),
+          Rise(
+            index: 2,
+            child: (vsLast != null && vsLast > 0) ? _vsLastCard(gc, vol, vsLast) : _firstTimeCard(gc),
+          ),
           if (beforeWeight != null && afterWeight != null) ...[
             const SizedBox(height: 18),
-            _bodyweightComparison(gc, beforeWeight, afterWeight),
+            Rise(index: 3, child: _bodyweightComparison(gc, beforeWeight, afterWeight)),
           ],
           const SizedBox(height: 18),
-          OutlinedButton.icon(
-            onPressed: () {
-              final durStr = fit.summaryDurationLabel;
-              final prCount = prs;
-              final volKg = vol;
-              final durSec = fit.session?.summaryDuration ?? 0;
-              final durationMins = durSec > 0 ? (durSec / 60).round() : 30;
-              final calories = (durationMins * 5 + volKg * 0.02).round().clamp(20, 2000);
-              final muscles = fit.activeRoutine?.name ?? 'Treino Completo';
+          Rise(
+            index: 4,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                final durStr = fit.summaryDurationLabel;
+                final prCount = prs;
+                final volKg = vol;
+                final durSec = fit.session?.summaryDuration ?? 0;
+                final durationMins = durSec > 0 ? (durSec / 60).round() : 30;
+                final calories = (durationMins * 5 + volKg * 0.02).round().clamp(20, 2000);
+                final muscles = fit.activeRoutine?.name ?? 'Treino Completo';
 
-              showSharePhotoSheet(
-                context,
-                durationStr: durStr,
-                prCount: prCount,
-                volumeKg: volKg,
-                calories: calories,
-                muscleGroupsStr: muscles,
-              );
-            },
-            icon: Icon(Icons.camera_alt, size: 18, color: gc.accent),
-            label: Text(
-              'Compartilhar Foto',
-              style: AppTheme.s(14, weight: FontWeight.w700, color: gc.text),
-            ),
-            style: OutlinedButton.styleFrom(
-              side: BorderSide(color: gc.accent),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              padding: const EdgeInsets.symmetric(vertical: 14),
+                showSharePhotoSheet(
+                  context,
+                  durationStr: durStr,
+                  prCount: prCount,
+                  volumeKg: volKg,
+                  calories: calories,
+                  muscleGroupsStr: muscles,
+                );
+              },
+              icon: Icon(Icons.camera_alt, size: 18, color: gc.accent),
+              label: Text(
+                'Compartilhar Foto',
+                style: AppTheme.s(14, weight: FontWeight.w700, color: gc.text),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: gc.accent),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
             ),
           ),
           const SizedBox(height: 10),
-          PrimaryButton(label: t.saveAndExit, onTap: fit.saveAndExit),
+          Rise(index: 5, child: PrimaryButton(label: t.saveAndExit, onTap: fit.saveAndExit)),
         ],
       ),
     );
