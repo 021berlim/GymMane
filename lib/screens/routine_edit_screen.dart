@@ -498,6 +498,12 @@ class _RoutineEditScreenState extends State<RoutineEditScreen> {
   Widget _chosenRow(GymColors gc, Exercise ex, int index) {
     final routine = fit.activeRoutine!;
     final cfg = routine.configFor(ex.id);
+    final isCardio = ex.isCardio;
+    final cardioType = ex.cardioType;
+    final currentSec = cfg.effectiveTimeSeconds;
+    final currentMin = (currentSec / 60).round();
+    final currentParam = cfg.effectiveCardioParam > 0 ? cfg.effectiveCardioParam : cardioType.defaultParam;
+    final currentSpeed = cfg.effectiveCardioSpeed > 0 ? cfg.effectiveCardioSpeed : cardioType.defaultSpeed;
     final weightStr = cfg.targetWeight > 0 ? fit.weightLabel(cfg.targetWeight) : '0 ${fit.units}';
 
     return Container(
@@ -573,64 +579,176 @@ class _RoutineEditScreenState extends State<RoutineEditScreen> {
               crossAxisAlignment: WrapCrossAlignment.center,
               spacing: 12,
               runSpacing: 8,
-              children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('${t.setsCaps}:',
-                        style: AppTheme.s(11, weight: FontWeight.w700, color: gc.textSecondary, letterSpacing: 1)),
-                    const SizedBox(width: 6),
-                    _miniStepBtn(gc, PhosphorIconsRegular.minus, () {
-                      fit.setRoutineExerciseSets(_id, ex.id, (cfg.targetSets - 1).clamp(1, 20));
-                    }),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
-                      child: Text('${cfg.targetSets}',
-                          style: AppTheme.d(14, weight: FontWeight.w700, color: gc.text)),
-                    ),
-                    _miniStepBtn(gc, PhosphorIconsRegular.plus, () {
-                      fit.setRoutineExerciseSets(_id, ex.id, (cfg.targetSets + 1).clamp(1, 20));
-                    }),
-                  ],
-                ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('${t.weightCol(fit.units.toUpperCase())}:',
-                        style: AppTheme.s(11, weight: FontWeight.w700, color: gc.textSecondary, letterSpacing: 1)),
-                    const SizedBox(width: 6),
-                    _miniStepBtn(gc, PhosphorIconsRegular.minus, () {
-                      final currentShown = fit.toDisplayWeight(cfg.targetWeight);
-                      final nextShown = math.max(0.0, (currentShown - fit.weightStep * 10).round() / 10);
-                      fit.setRoutineExerciseWeight(_id, ex.id, fit.fromDisplayWeight(nextShown));
-                    }),
-                    GestureDetector(
-                      onTap: () {
-                        _editTargetWeight(
-                          context,
-                          gc,
-                          initial: fit.weightValue(cfg.targetWeight),
-                          onSave: (shownVal) {
-                            fit.setRoutineExerciseWeight(_id, ex.id, fit.fromDisplayWeight(shownVal));
-                          },
-                        );
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 6),
-                        child: Text(
-                          weightStr,
-                          style: AppTheme.d(13, weight: FontWeight.w700, color: gc.text),
-                        ),
+              children: isCardio
+                  ? [
+                      // TEMPO: [-] 20 min [+]
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('${t.duration}:',
+                              style: AppTheme.s(11, weight: FontWeight.w700, color: gc.textSecondary, letterSpacing: 1)),
+                          const SizedBox(width: 6),
+                          _miniStepBtn(gc, PhosphorIconsRegular.minus, () {
+                            final nextMin = math.max(1, currentMin - (currentMin > 10 ? 5 : 1));
+                            fit.setRoutineCardioTime(_id, ex.id, nextMin * 60);
+                          }),
+                          GestureDetector(
+                            onTap: () {
+                              _editCardioTime(
+                                context,
+                                gc,
+                                initialMin: currentMin,
+                                onSave: (mins) {
+                                  fit.setRoutineCardioTime(_id, ex.id, mins * 60);
+                                },
+                              );
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 6),
+                              child: Text('$currentMin min',
+                                  style: AppTheme.d(14, weight: FontWeight.w700, color: gc.text)),
+                            ),
+                          ),
+                          _miniStepBtn(gc, PhosphorIconsRegular.plus, () {
+                            final nextMin = (currentMin + (currentMin >= 10 ? 5 : 1)).clamp(1, 180);
+                            fit.setRoutineCardioTime(_id, ex.id, nextMin * 60);
+                          }),
+                        ],
                       ),
-                    ),
-                    _miniStepBtn(gc, PhosphorIconsRegular.plus, () {
-                      final currentShown = fit.toDisplayWeight(cfg.targetWeight);
-                      final nextShown = ((currentShown + fit.weightStep) * 10).round() / 10;
-                      fit.setRoutineExerciseWeight(_id, ex.id, fit.fromDisplayWeight(nextShown));
-                    }),
-                  ],
-                ),
-              ],
+                      // VELOCIDADE: [-] 6.0 km/h [+] (apenas esteira)
+                      if (cardioType.hasSpeed)
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('${cardioType.speedLabel}:',
+                                style: AppTheme.s(11, weight: FontWeight.w700, color: gc.textSecondary, letterSpacing: 1)),
+                            const SizedBox(width: 6),
+                            _miniStepBtn(gc, PhosphorIconsRegular.minus, () {
+                              final next = math.max(cardioType.minSpeed, currentSpeed - cardioType.speedStep);
+                              fit.setRoutineCardioSpeed(_id, ex.id, (next * 10).round() / 10);
+                            }),
+                            GestureDetector(
+                              onTap: () {
+                                _editCardioSpeed(
+                                  context,
+                                  gc,
+                                  initial: currentSpeed,
+                                  onSave: (val) {
+                                    fit.setRoutineCardioSpeed(_id, ex.id, val);
+                                  },
+                                );
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 6),
+                                child: Text(
+                                  cardioType.formatSpeedWithUnit(currentSpeed),
+                                  style: AppTheme.d(13, weight: FontWeight.w700, color: gc.text),
+                                ),
+                              ),
+                            ),
+                            _miniStepBtn(gc, PhosphorIconsRegular.plus, () {
+                              final next = math.min(cardioType.maxSpeed, currentSpeed + cardioType.speedStep);
+                              fit.setRoutineCardioSpeed(_id, ex.id, (next * 10).round() / 10);
+                            }),
+                          ],
+                        ),
+                      // Parâmetro da Máquina (INCLINAÇÃO / RESISTÊNCIA / NÍVEL): [-] 2.0% [+]
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('${cardioType.paramLabel}:',
+                              style: AppTheme.s(11, weight: FontWeight.w700, color: gc.textSecondary, letterSpacing: 1)),
+                          const SizedBox(width: 6),
+                          _miniStepBtn(gc, PhosphorIconsRegular.minus, () {
+                            final next = math.max(cardioType.minParam, currentParam - cardioType.paramStep);
+                            fit.setRoutineCardioParam(_id, ex.id, (next * 10).round() / 10);
+                          }),
+                          GestureDetector(
+                            onTap: () {
+                              _editCardioParam(
+                                context,
+                                gc,
+                                title: cardioType.paramLabel,
+                                initial: currentParam,
+                                type: cardioType,
+                                onSave: (val) {
+                                  fit.setRoutineCardioParam(_id, ex.id, val);
+                                },
+                              );
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 6),
+                              child: Text(
+                                cardioType.formatParamWithUnit(currentParam),
+                                style: AppTheme.d(13, weight: FontWeight.w700, color: gc.text),
+                              ),
+                            ),
+                          ),
+                          _miniStepBtn(gc, PhosphorIconsRegular.plus, () {
+                            final next = math.min(cardioType.maxParam, currentParam + cardioType.paramStep);
+                            fit.setRoutineCardioParam(_id, ex.id, (next * 10).round() / 10);
+                          }),
+                        ],
+                      ),
+                    ]
+                  : [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('${t.setsCaps}:',
+                              style: AppTheme.s(11, weight: FontWeight.w700, color: gc.textSecondary, letterSpacing: 1)),
+                          const SizedBox(width: 6),
+                          _miniStepBtn(gc, PhosphorIconsRegular.minus, () {
+                            fit.setRoutineExerciseSets(_id, ex.id, (cfg.targetSets - 1).clamp(1, 20));
+                          }),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 6),
+                            child: Text('${cfg.targetSets}',
+                                style: AppTheme.d(14, weight: FontWeight.w700, color: gc.text)),
+                          ),
+                          _miniStepBtn(gc, PhosphorIconsRegular.plus, () {
+                            fit.setRoutineExerciseSets(_id, ex.id, (cfg.targetSets + 1).clamp(1, 20));
+                          }),
+                        ],
+                      ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('${t.weightCol(fit.units.toUpperCase())}:',
+                              style: AppTheme.s(11, weight: FontWeight.w700, color: gc.textSecondary, letterSpacing: 1)),
+                          const SizedBox(width: 6),
+                          _miniStepBtn(gc, PhosphorIconsRegular.minus, () {
+                            final currentShown = fit.toDisplayWeight(cfg.targetWeight);
+                            final nextShown = math.max(0.0, (currentShown - fit.weightStep * 10).round() / 10);
+                            fit.setRoutineExerciseWeight(_id, ex.id, fit.fromDisplayWeight(nextShown));
+                          }),
+                          GestureDetector(
+                            onTap: () {
+                              _editTargetWeight(
+                                context,
+                                gc,
+                                initial: fit.weightValue(cfg.targetWeight),
+                                onSave: (shownVal) {
+                                  fit.setRoutineExerciseWeight(_id, ex.id, fit.fromDisplayWeight(shownVal));
+                                },
+                              );
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 6),
+                              child: Text(
+                                weightStr,
+                                style: AppTheme.d(13, weight: FontWeight.w700, color: gc.text),
+                              ),
+                            ),
+                          ),
+                          _miniStepBtn(gc, PhosphorIconsRegular.plus, () {
+                            final currentShown = fit.toDisplayWeight(cfg.targetWeight);
+                            final nextShown = ((currentShown + fit.weightStep) * 10).round() / 10;
+                            fit.setRoutineExerciseWeight(_id, ex.id, fit.fromDisplayWeight(nextShown));
+                          }),
+                        ],
+                      ),
+                    ],
             ),
           ),
         ],
@@ -699,6 +817,180 @@ class _RoutineEditScreenState extends State<RoutineEditScreen> {
 
     final parsed = double.tryParse((raw ?? '').trim().replaceAll(',', '.'));
     if (parsed != null) onSave(parsed);
+  }
+
+  Future<void> _editCardioTime(
+    BuildContext context,
+    GymColors gc, {
+    required int initialMin,
+    required void Function(int) onSave,
+  }) async {
+    final controller = TextEditingController(text: '$initialMin')
+      ..selection = TextSelection(baseOffset: 0, extentOffset: '$initialMin'.length);
+
+    final raw = await showAppDialog<String>(
+      context: context,
+      builder: (dctx) => AlertDialog(
+        backgroundColor: gc.bgRaised,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: gc.border),
+        ),
+        title: Text(
+          t.duration,
+          style: AppTheme.d(14, weight: FontWeight.w700, color: gc.text, letterSpacing: 2),
+        ),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          keyboardType: TextInputType.number,
+          textAlign: TextAlign.center,
+          style: AppTheme.d(32, weight: FontWeight.w700, color: gc.text),
+          cursorColor: gc.accent,
+          onSubmitted: (v) => Navigator.of(dctx).pop(v),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: gc.bgRaised2,
+            suffixText: 'MIN',
+            suffixStyle: AppTheme.s(14, color: gc.textSecondary),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dctx).pop(),
+            child: Text(t.cancel, style: AppTheme.s(14, color: gc.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dctx).pop(controller.text),
+            child: Text(t.set, style: AppTheme.s(14, weight: FontWeight.w700, color: gc.accent)),
+          ),
+        ],
+      ),
+    );
+
+    final parsed = int.tryParse((raw ?? '').trim());
+    if (parsed != null && parsed > 0) onSave(parsed);
+  }
+
+  Future<void> _editCardioParam(
+    BuildContext context,
+    GymColors gc, {
+    required String title,
+    required double initial,
+    required CardioCategoryType type,
+    required void Function(double) onSave,
+  }) async {
+    final isDecimal = type == CardioCategoryType.treadmill;
+    final controller = TextEditingController(text: type.formatParam(initial))
+      ..selection = TextSelection(baseOffset: 0, extentOffset: type.formatParam(initial).length);
+
+    final raw = await showAppDialog<String>(
+      context: context,
+      builder: (dctx) => AlertDialog(
+        backgroundColor: gc.bgRaised,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: gc.border),
+        ),
+        title: Text(
+          title,
+          style: AppTheme.d(14, weight: FontWeight.w700, color: gc.text, letterSpacing: 2),
+        ),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          keyboardType: TextInputType.numberWithOptions(decimal: isDecimal),
+          textAlign: TextAlign.center,
+          style: AppTheme.d(32, weight: FontWeight.w700, color: gc.text),
+          cursorColor: gc.accent,
+          onSubmitted: (v) => Navigator.of(dctx).pop(v),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: gc.bgRaised2,
+            suffixText: type.paramUnit,
+            suffixStyle: AppTheme.s(14, color: gc.textSecondary),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dctx).pop(),
+            child: Text(t.cancel, style: AppTheme.s(14, color: gc.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dctx).pop(controller.text),
+            child: Text(t.set, style: AppTheme.s(14, weight: FontWeight.w700, color: gc.accent)),
+          ),
+        ],
+      ),
+    );
+
+    if (raw != null) {
+      final parsed = double.tryParse(raw.trim().replaceAll(',', '.'));
+      if (parsed != null && parsed >= type.minParam && parsed <= type.maxParam) {
+        onSave((parsed * 10).round() / 10);
+      }
+    }
+  }
+
+  Future<void> _editCardioSpeed(
+    BuildContext context,
+    GymColors gc, {
+    required double initial,
+    required void Function(double) onSave,
+  }) async {
+    final initialStr = (initial % 1 == 0) ? '${initial.toInt()}' : initial.toStringAsFixed(1);
+    final controller = TextEditingController(text: initialStr)
+      ..selection = TextSelection(baseOffset: 0, extentOffset: initialStr.length);
+
+    final raw = await showAppDialog<String>(
+      context: context,
+      builder: (dctx) => AlertDialog(
+        backgroundColor: gc.bgRaised,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: gc.border),
+        ),
+        title: Text(
+          'VELOCIDADE',
+          style: AppTheme.d(14, weight: FontWeight.w700, color: gc.text, letterSpacing: 2),
+        ),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          textAlign: TextAlign.center,
+          style: AppTheme.d(32, weight: FontWeight.w700, color: gc.text),
+          cursorColor: gc.accent,
+          onSubmitted: (v) => Navigator.of(dctx).pop(v),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: gc.bgRaised2,
+            suffixText: 'km/h',
+            suffixStyle: AppTheme.s(14, color: gc.textSecondary),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dctx).pop(),
+            child: Text(t.cancel, style: AppTheme.s(14, color: gc.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dctx).pop(controller.text),
+            child: Text(t.set, style: AppTheme.s(14, weight: FontWeight.w700, color: gc.accent)),
+          ),
+        ],
+      ),
+    );
+
+    if (raw != null) {
+      final parsed = double.tryParse(raw.trim().replaceAll(',', '.'));
+      if (parsed != null && parsed >= 0.1 && parsed <= 50.0) {
+        onSave((parsed * 10).round() / 10);
+      }
+    }
   }
 
   Widget _pickRow(GymColors gc, Exercise ex) {

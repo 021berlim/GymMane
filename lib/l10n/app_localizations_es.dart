@@ -591,7 +591,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get equipmentLabel => 'MATERIAL';
 
   @override
-  String get addExercise => 'AÑADIR EJERCICIO';
+  String get addExercise => 'Añadir Ejercicio';
 
   @override
   String get advanced => 'AVANZADO';
@@ -1787,4 +1787,55 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get awardHours100Line => 'Cien horas bajo la barra, cronómetro en mano.';
+
+  @override
+  String get registerWorkout => 'Registrar Entrenamiento';
+
+  @override
+  String get workoutDate => 'Fecha del Entrenamiento';
+
+  @override
+  String get workoutSource => 'Origen del Entrenamiento';
+
+  @override
+  String get existingRoutine => 'Rutina Guardada';
+
+  @override
+  String get manualExercises => 'Seleccionar Ejercicios';
+
+  @override
+  String get selectRoutineHint => 'Elige una rutina de tu lista';
+
+  @override
+  String get noRoutinesAvailable => 'No hay rutinas guardadas aún. Selecciona ejercicios manualmente.';
+
+  @override
+  String get sessionDuration => 'Duración Total (min)';
+
+  @override
+  String get saveWorkout => 'Guardar Entrenamiento';
+
+  @override
+  String get workoutSaved => '¡Entrenamiento registrado con éxito!';
+
+  @override
+  String get fillAllMetricsWarning => 'Por favor completa todas las métricas necesarias antes de guardar.';
+
+  @override
+  String get selectAtLeastOneExercise => 'Añade al menos un ejercicio al entrenamiento.';
+
+  @override
+  String get speed => 'Velocidad';
+
+  @override
+  String get incline => 'Inclinación';
+
+  @override
+  String get stage => 'Etapa';
+
+  @override
+  String get allCategories => 'Todos';
+
+  @override
+  String get rpeTitle => 'RPE';
 }

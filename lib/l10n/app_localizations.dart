@@ -1098,7 +1098,7 @@ abstract class AppLocalizations {
   /// No description provided for @addExercise.
   ///
   /// In en, this message translates to:
-  /// **'ADD EXERCISE'**
+  /// **'Add Exercise'**
   String get addExercise;
 
   /// No description provided for @advanced.
@@ -3308,6 +3308,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A hundred hours under the bar, stopwatch in hand.'**
   String get awardHours100Line;
+
+  /// No description provided for @registerWorkout.
+  ///
+  /// In en, this message translates to:
+  /// **'Register Workout'**
+  String get registerWorkout;
+
+  /// No description provided for @workoutDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Workout Date'**
+  String get workoutDate;
+
+  /// No description provided for @workoutSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Workout Source'**
+  String get workoutSource;
+
+  /// No description provided for @existingRoutine.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved Routine'**
+  String get existingRoutine;
+
+  /// No description provided for @manualExercises.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Exercises'**
+  String get manualExercises;
+
+  /// No description provided for @selectRoutineHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a routine from your list'**
+  String get selectRoutineHint;
+
+  /// No description provided for @noRoutinesAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No saved routines yet. Select exercises manually.'**
+  String get noRoutinesAvailable;
+
+  /// No description provided for @sessionDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Duration (min)'**
+  String get sessionDuration;
+
+  /// No description provided for @saveWorkout.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Workout'**
+  String get saveWorkout;
+
+  /// No description provided for @workoutSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Workout logged successfully!'**
+  String get workoutSaved;
+
+  /// No description provided for @fillAllMetricsWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Please fill in all required metrics before saving.'**
+  String get fillAllMetricsWarning;
+
+  /// No description provided for @selectAtLeastOneExercise.
+  ///
+  /// In en, this message translates to:
+  /// **'Add at least one exercise to the workout.'**
+  String get selectAtLeastOneExercise;
+
+  /// No description provided for @speed.
+  ///
+  /// In en, this message translates to:
+  /// **'Speed'**
+  String get speed;
+
+  /// No description provided for @incline.
+  ///
+  /// In en, this message translates to:
+  /// **'Incline'**
+  String get incline;
+
+  /// No description provided for @stage.
+  ///
+  /// In en, this message translates to:
+  /// **'Stage'**
+  String get stage;
+
+  /// No description provided for @allCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get allCategories;
+
+  /// No description provided for @rpeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'RPE'**
+  String get rpeTitle;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

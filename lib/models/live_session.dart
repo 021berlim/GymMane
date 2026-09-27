@@ -1,14 +1,52 @@
 class SessionSet {
-  SessionSet(this.reps, this.weight, this.done);
+  SessionSet(
+    this.reps,
+    this.weight,
+    this.done, {
+    this.timeSeconds,
+    this.cardioParam,
+    this.cardioSpeed,
+  });
   int reps;
   double weight;
   bool done;
+  int? timeSeconds;
+  double? cardioParam;
+  double? cardioSpeed;
 
-  Map<String, dynamic> toJson() => {'r': reps, 'w': weight, 'd': done};
+  int get effectiveTimeSeconds => timeSeconds ?? (reps > 30 ? reps : reps * 60);
+  set effectiveTimeSeconds(int s) {
+    timeSeconds = s;
+    reps = s;
+  }
+
+  double get effectiveCardioParam => cardioParam ?? weight;
+  set effectiveCardioParam(double p) {
+    cardioParam = p;
+    weight = p;
+  }
+
+  double get effectiveCardioSpeed => cardioSpeed ?? 6.0;
+  set effectiveCardioSpeed(double s) {
+    cardioSpeed = s;
+  }
+
+  Map<String, dynamic> toJson() => {
+        'r': reps,
+        'w': weight,
+        'd': done,
+        if (timeSeconds != null) 't': timeSeconds,
+        if (cardioParam != null) 'cp': cardioParam,
+        if (cardioSpeed != null) 'sp': cardioSpeed,
+      };
+
   factory SessionSet.fromJson(Map<String, dynamic> j) => SessionSet(
         (j['r'] as num).toInt(),
         (j['w'] as num).toDouble(),
         j['d'] as bool? ?? false,
+        timeSeconds: (j['t'] as num?)?.toInt(),
+        cardioParam: (j['cp'] as num?)?.toDouble(),
+        cardioSpeed: (j['sp'] as num?)?.toDouble(),
       );
 }
 
@@ -18,6 +56,8 @@ class SessionExercise {
   final String name;
   final String primary;
   final List<SessionSet> sets;
+
+  bool get isCardio => primary == 'cardio';
 
   Map<String, dynamic> toJson() => {
         'id': id,

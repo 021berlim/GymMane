@@ -237,6 +237,41 @@ mixin WorkoutState on FitCore, SettingsState, LibraryState, StatsState, Routines
     s.exercises = exs.map((ex) {
       final cfg = routine?.configs[ex.id];
       final last = lastSetsFor(ex.id);
+
+      if (ex.isCardio) {
+        final cardioType = ex.cardioType;
+        final targetTime = cfg?.targetTimeSeconds ??
+            (cfg != null && cfg.targetReps > 0
+                ? (cfg.targetReps > 30 ? cfg.targetReps : cfg.targetReps * 60)
+                : (last.isNotEmpty && (last.first.sec != null || last.first.reps > 30)
+                    ? (last.first.sec ?? last.first.reps)
+                    : cardioType.defaultSeconds));
+
+        final targetParam = cfg?.targetCardioParam ??
+            (cfg != null && cfg.targetWeight > 0.0
+                ? cfg.targetWeight
+                : (last.isNotEmpty && (last.first.cardioParam != null || last.first.weight > 0)
+                    ? (last.first.cardioParam ?? last.first.weight)
+                    : cardioType.defaultParam));
+
+        final targetSpeed = cfg?.targetSpeed ??
+            (last.isNotEmpty && last.first.speed != null
+                ? last.first.speed
+                : (cardioType.hasSpeed ? cardioType.defaultSpeed : null));
+
+        final sets = [
+          SessionSet(
+            targetTime,
+            targetParam,
+            false,
+            timeSeconds: targetTime,
+            cardioParam: targetParam,
+            cardioSpeed: targetSpeed,
+          ),
+        ];
+        return SessionExercise(ex.id, ex.localizedName(), 'cardio', sets);
+      }
+
       final hasConfiguredWeight = cfg != null && cfg.targetWeight > 0.0;
       final targetSetsCount = cfg?.targetSets ?? (last.isNotEmpty ? last.length : 3);
       final targetReps = (cfg?.targetReps ?? 10) > 0 ? (cfg?.targetReps ?? 10) : 10;
@@ -413,6 +448,66 @@ mixin WorkoutState on FitCore, SettingsState, LibraryState, StatsState, Routines
   void setSessionWeightShown(int exIdx, int setIdx, double shown) =>
       setSessionWeight(exIdx, setIdx, fromDisplayWeight(shown));
 
+  void bumpSessionCardioTime(int exIdx, int setIdx, int deltaSeconds) {
+    final sets = session?.exercises[exIdx].sets;
+    if (sets == null || setIdx < 0 || setIdx >= sets.length) return;
+    final st = sets[setIdx];
+    final cur = st.effectiveTimeSeconds;
+    final next = (cur + deltaSeconds).clamp(10, 14400);
+    st.effectiveTimeSeconds = next;
+    _persist();
+    notifyListeners();
+  }
+
+  void setSessionCardioTime(int exIdx, int setIdx, int seconds) {
+    final sets = session?.exercises[exIdx].sets;
+    if (sets == null || setIdx < 0 || setIdx >= sets.length) return;
+    final st = sets[setIdx];
+    st.effectiveTimeSeconds = seconds.clamp(10, 14400);
+    _persist();
+    notifyListeners();
+  }
+
+  void bumpSessionCardioParam(int exIdx, int setIdx, double delta, {double min = 0.0, double max = 30.0}) {
+    final sets = session?.exercises[exIdx].sets;
+    if (sets == null || setIdx < 0 || setIdx >= sets.length) return;
+    final st = sets[setIdx];
+    final cur = st.effectiveCardioParam;
+    final next = _round1((cur + delta).clamp(min, max));
+    st.effectiveCardioParam = next;
+    _persist();
+    notifyListeners();
+  }
+
+  void setSessionCardioParam(int exIdx, int setIdx, double val) {
+    final sets = session?.exercises[exIdx].sets;
+    if (sets == null || setIdx < 0 || setIdx >= sets.length) return;
+    final st = sets[setIdx];
+    st.effectiveCardioParam = _round1(val.clamp(0.0, 100.0));
+    _persist();
+    notifyListeners();
+  }
+
+  void bumpSessionCardioSpeed(int exIdx, int setIdx, double delta, {double min = 0.5, double max = 30.0}) {
+    final sets = session?.exercises[exIdx].sets;
+    if (sets == null || setIdx < 0 || setIdx >= sets.length) return;
+    final st = sets[setIdx];
+    final cur = st.effectiveCardioSpeed;
+    final next = _round1((cur + delta).clamp(min, max));
+    st.effectiveCardioSpeed = next;
+    _persist();
+    notifyListeners();
+  }
+
+  void setSessionCardioSpeed(int exIdx, int setIdx, double val) {
+    final sets = session?.exercises[exIdx].sets;
+    if (sets == null || setIdx < 0 || setIdx >= sets.length) return;
+    final st = sets[setIdx];
+    st.effectiveCardioSpeed = _round1(val.clamp(0.1, 50.0));
+    _persist();
+    notifyListeners();
+  }
+
   void removeSessionExercise(int exIdx) {
     final s = session!;
     if (exIdx < 0 || exIdx >= s.exercises.length) return;
@@ -431,14 +526,34 @@ mixin WorkoutState on FitCore, SettingsState, LibraryState, StatsState, Routines
     final ex = exerciseById(id);
     if (s == null || ex == null || s.exercises.any((e) => e.id == id)) return;
     final last = lastSetsFor(id);
-    s.exercises.add(SessionExercise(
-      ex.id,
-      ex.localizedName(),
-      ex.primary,
-      last.isNotEmpty
-          ? last.map((l) => SessionSet(l.reps, l.weight, false)).toList()
-          : [SessionSet(10, 20, false), SessionSet(10, 20, false), SessionSet(10, 20, false)],
-    ));
+
+    if (ex.isCardio) {
+      final cardioType = ex.cardioType;
+      final dur = last.isNotEmpty && (last.first.sec != null || last.first.reps > 30)
+          ? (last.first.sec ?? last.first.reps)
+          : cardioType.defaultSeconds;
+      final param = last.isNotEmpty && (last.first.cardioParam != null || last.first.weight > 0)
+          ? (last.first.cardioParam ?? last.first.weight)
+          : cardioType.defaultParam;
+      final speed = last.isNotEmpty && last.first.speed != null
+          ? last.first.speed
+          : (cardioType.hasSpeed ? cardioType.defaultSpeed : null);
+      s.exercises.add(SessionExercise(
+        ex.id,
+        ex.localizedName(),
+        'cardio',
+        [SessionSet(dur, param, false, timeSeconds: dur, cardioParam: param, cardioSpeed: speed)],
+      ));
+    } else {
+      s.exercises.add(SessionExercise(
+        ex.id,
+        ex.localizedName(),
+        ex.primary,
+        last.isNotEmpty
+            ? last.map((l) => SessionSet(l.reps, l.weight, false)).toList()
+            : [SessionSet(10, 20, false), SessionSet(10, 20, false), SessionSet(10, 20, false)],
+      ));
+    }
     s.currentIndex = s.exercises.length - 1;
     persistNow();
     notifyListeners();
@@ -489,7 +604,12 @@ mixin WorkoutState on FitCore, SettingsState, LibraryState, StatsState, Routines
         if (st.done) done.add(st);
       }
     }
-    s.summaryVolume = done.fold<double>(0, (sum, st) => sum + st.reps * st.weight).round();
+    s.summaryVolume = s.exercises
+        .where((e) => e.primary != 'cardio')
+        .expand((e) => e.sets)
+        .where((st) => st.done)
+        .fold<double>(0, (sum, st) => sum + st.reps * st.weight)
+        .round();
     s.summarySets = done.length;
     s.summaryDuration = sessionElapsed;
     s.complete = true;
@@ -500,7 +620,14 @@ mixin WorkoutState on FitCore, SettingsState, LibraryState, StatsState, Routines
     if (done.isNotEmpty || hasPhotos) {
       final logged = <LoggedExercise>[];
       for (final e in s.exercises) {
-        final doneSets = e.sets.where((st) => st.done).map((st) => LoggedSet(st.reps, st.weight)).toList();
+        final isCardio = e.primary == 'cardio';
+        final doneSets = e.sets.where((st) => st.done).map((st) => LoggedSet(
+          st.reps,
+          st.weight,
+          sec: st.timeSeconds ?? (isCardio ? st.reps : null),
+          cardioParam: st.cardioParam ?? (isCardio ? st.weight : null),
+          speed: st.cardioSpeed,
+        )).toList();
         if (doneSets.isNotEmpty) {
           logged.add(LoggedExercise(e.id, e.name, e.primary, doneSets));
         }

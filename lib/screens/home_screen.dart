@@ -11,6 +11,7 @@ import '../state/fit_state.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/charts.dart';
+import '../widgets/day_summary_sheet.dart';
 import '../widgets/exercise_media.dart';
 import '../widgets/svg_icon.dart';
 import '../widgets/ui_kit.dart';
@@ -55,15 +56,18 @@ class HomeScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(t.today,
-                            style: AppTheme.s(11, weight: FontWeight.w600, color: gc.textTertiary, letterSpacing: 1.5)),
-                        const SizedBox(height: 2),
-                        Text(dateLabel, style: AppTheme.d(20, weight: FontWeight.w600, color: gc.text)),
-                      ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(t.today,
+                              style: AppTheme.s(11, weight: FontWeight.w600, color: gc.textTertiary, letterSpacing: 1.5)),
+                          const SizedBox(height: 2),
+                          Text(dateLabel, style: AppTheme.d(20, weight: FontWeight.w600, color: gc.text)),
+                        ],
+                      ),
                     ),
+                    const SizedBox(width: 8),
                     GestureDetector(
                       onTap: fit.goProgress,
                       child: Container(
@@ -99,7 +103,7 @@ class HomeScreen extends StatelessWidget {
                 const SizedBox(height: 24),
                 _activityHeader(gc),
                 const SizedBox(height: 12),
-                _activityCard(gc),
+                _activityCard(context, gc),
                 const SizedBox(height: 24),
                 Text(t.recommended,
                     style: AppTheme.d(12, weight: FontWeight.w600, color: gc.textSecondary, letterSpacing: 3)),
@@ -312,13 +316,16 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _activityCard(GymColors gc) {
+  Widget _activityCard(BuildContext context, GymColors gc) {
     return GestureDetector(
       onTap: fit.goProgress,
       child: SoftCard(
         radius: 20,
         padding: const EdgeInsets.all(18),
-        child: Heatmap(levels: fit.heatmapLevels),
+        child: Heatmap(
+          levels: fit.heatmapLevels,
+          onTapDay: (i) => showDaySummarySheet(context, fit.heatmapDate(i)),
+        ),
       ),
     );
   }

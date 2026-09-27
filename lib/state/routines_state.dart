@@ -100,6 +100,30 @@ mixin RoutinesState on FitCore, LibraryState {
     notifyListeners();
   }
 
+  void setRoutineCardioTime(String routineId, String exId, int seconds) {
+    final r = _routine(routineId);
+    if (r == null) return;
+    r.configFor(exId).effectiveTimeSeconds = seconds.clamp(10, 14400);
+    _persist();
+    notifyListeners();
+  }
+
+  void setRoutineCardioParam(String routineId, String exId, double param) {
+    final r = _routine(routineId);
+    if (r == null) return;
+    r.configFor(exId).effectiveCardioParam = param.clamp(0.0, 100.0);
+    _persist();
+    notifyListeners();
+  }
+
+  void setRoutineCardioSpeed(String routineId, String exId, double speed) {
+    final r = _routine(routineId);
+    if (r == null) return;
+    r.configFor(exId).effectiveCardioSpeed = speed.clamp(0.1, 50.0);
+    _persist();
+    notifyListeners();
+  }
+
   bool routineHas(String routineId, String exId) => _routine(routineId)?.exerciseIds.contains(exId) ?? false;
 
   void reorderRoutineExercise(String routineId, int from, int to) {

@@ -308,6 +308,7 @@ void main() {
       'CALORIAS',
       'VOLUME',
       'REPS',
+      'RPE',
       'New version available',
       'Not now',
       'Update now',
@@ -386,6 +387,10 @@ void main() {
       'Descartar treino?',
       'Todo o progresso desta sessão será perdido.',
       'Descartar',
+      'CRONÔMETRO: ',
+      'VELOCIDADE',
+      'VELOCIDADE:',
+      'km/h',
     };
 
     final offenders = <String>[];

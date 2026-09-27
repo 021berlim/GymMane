@@ -292,6 +292,41 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
 
   Widget _historyRow(GymColors gc, ({DateTime date, LoggedExercise ex}) h, bool border) {
     final e = h.ex;
+    final def = fit.exerciseById(_exId);
+    final isCardio = (def != null && def.isCardio) || (e.primary == 'cardio');
+
+    final String subLeft;
+    final String topVal;
+    final String subVal;
+
+    if (isCardio) {
+      final totalSec = e.sets.fold<int>(0, (sum, s) => sum + (s.sec ?? 0));
+      final cardioType = def?.cardioType ??
+          detectCardioType(
+            id: e.id,
+            name: e.name,
+            namePt: '',
+            equipment: '',
+            equipmentPt: '',
+            bodyPart: '',
+            target: '',
+          );
+      final param = e.sets.map((s) => s.cardioParam).firstWhere((p) => p != null && p > 0, orElse: () => null);
+      final speed = e.sets.map((s) => s.speed).firstWhere((sp) => sp != null && sp > 0, orElse: () => null);
+
+      subLeft = cardioType.displayNamePt;
+      topVal = formatCardioDurationLabel(totalSec > 0 ? totalSec : 0);
+      if (cardioType.hasSpeed && speed != null) {
+        subVal = '${cardioType.formatSpeedWithUnit(speed)} · ${param != null ? cardioType.formatParamWithUnit(param) : cardioType.paramLabel}';
+      } else {
+        subVal = param != null ? cardioType.formatParamWithUnit(param) : cardioType.paramLabel;
+      }
+    } else {
+      subLeft = t.setCount(e.sets.length);
+      topVal = fit.weightLabel(e.topWeight);
+      subVal = t.volumeSuffix(fit.volumeLabel(e.volume));
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
@@ -305,15 +340,15 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
             children: [
               Text(_fmtDate(h.date), style: AppTheme.s(14, weight: FontWeight.w600, color: gc.text)),
               const SizedBox(height: 2),
-              Text(t.setCount(e.sets.length), style: AppTheme.s(12, color: gc.textSecondary)),
+              Text(subLeft, style: AppTheme.s(12, color: gc.textSecondary)),
             ],
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(fit.weightLabel(e.topWeight),
+              Text(topVal,
                   style: AppTheme.d(16, weight: FontWeight.w700, color: gc.text)),
-              Text(t.volumeSuffix(fit.volumeLabel(e.volume)), style: AppTheme.s(11, color: gc.textSecondary)),
+              Text(subVal, style: AppTheme.s(11, color: gc.textSecondary)),
             ],
           ),
         ],

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
@@ -28,6 +29,8 @@ class SessionScreen extends StatefulWidget {
 class _SessionScreenState extends State<SessionScreen> {
   late PageController _pageController;
   final Map<int, int> _activeSetIndices = {};
+  final Map<int, Stopwatch> _cardioStopwatches = {};
+  Timer? _cardioTicker;
 
   @override
   void initState() {
@@ -39,8 +42,39 @@ class _SessionScreenState extends State<SessionScreen> {
   @override
   void dispose() {
     fit.removeListener(_onFitChange);
+    _cardioTicker?.cancel();
     _pageController.dispose();
     super.dispose();
+  }
+
+  void _toggleCardioStopwatch(int exIdx) {
+    final sw = _cardioStopwatches.putIfAbsent(exIdx, () => Stopwatch());
+    setState(() {
+      if (sw.isRunning) {
+        sw.stop();
+        if (_cardioStopwatches.values.every((s) => !s.isRunning)) {
+          _cardioTicker?.cancel();
+          _cardioTicker = null;
+        }
+      } else {
+        sw.start();
+        _cardioTicker ??= Timer.periodic(const Duration(milliseconds: 500), (_) {
+          if (mounted) setState(() {});
+        });
+      }
+    });
+  }
+
+  void _resetCardioStopwatch(int exIdx) {
+    setState(() {
+      final sw = _cardioStopwatches[exIdx];
+      sw?.stop();
+      sw?.reset();
+      if (_cardioStopwatches.values.every((s) => !s.isRunning)) {
+        _cardioTicker?.cancel();
+        _cardioTicker = null;
+      }
+    });
   }
 
   void _onFitChange() {
@@ -67,6 +101,18 @@ class _SessionScreenState extends State<SessionScreen> {
   String? _lastSetLabel(String exId, int setIdx) {
     final lastSets = fit.lastSetsFor(exId);
     if (lastSets.isEmpty) return null;
+    final ex = fit.exerciseById(exId);
+    if (ex != null && ex.isCardio) {
+      final target = lastSets.first;
+      final durSec = target.sec ?? (target.reps > 30 ? target.reps : target.reps * 60);
+      final param = target.cardioParam ?? target.weight;
+      final mins = (durSec / 60).round();
+      final speed = target.speed;
+      if (ex.cardioType.hasSpeed && speed != null && speed > 0) {
+        return 'semana passada $mins min · ${ex.cardioType.formatSpeedWithUnit(speed)} · ${ex.cardioType.formatParamWithUnit(param)}';
+      }
+      return 'semana passada $mins min · ${ex.cardioType.formatParamWithUnit(param)}';
+    }
     final target = (setIdx < lastSets.length) ? lastSets[setIdx] : lastSets.last;
     return 'semana passada ${fit.weightValue(target.weight)} ${fit.units} × ${target.reps}';
   }
@@ -203,6 +249,7 @@ class _SessionScreenState extends State<SessionScreen> {
     final s = fit.session!;
     final ex = s.exercises[exIdx];
     final def = fit.exerciseById(ex.id) ?? kExercises.first;
+    final isCardio = def.isCardio || ex.primary == 'cardio';
     final displayName = def.localizedName(context).isNotEmpty
         ? def.localizedName(context)
         : (ex.name.isNotEmpty ? FitnessTranslator.translateExerciseName(ex.name) : def.name);
@@ -326,328 +373,384 @@ class _SessionScreenState extends State<SessionScreen> {
         ),
         const SizedBox(height: 12),
 
-        // Set Navigator: < SÉRIE X DE Y > with + Série button and previous performance
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Semantics(
-                  button: true,
-                  label: 'Série anterior',
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: activeSetIdx > 0
-                        ? () => setState(() => _activeSetIndices[exIdx] = activeSetIdx - 1)
-                        : null,
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(0, 4, 8, 4),
-                      child: Icon(
-                        Icons.chevron_left_rounded,
-                        size: 28,
-                        color: activeSetIdx > 0 ? gc.text : gc.textTertiary.withValues(alpha: 0.3),
-                      ),
+        if (isCardio) ...[
+          // Header de Cardio: sem séries, exibindo modalidade e status
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(PhosphorIconsRegular.heartbeat, size: 20, color: gc.ember),
+                  const SizedBox(width: 8),
+                  Text(
+                    'CARDIO · ${def.cardioType.displayNamePt.toUpperCase()}',
+                    style: AppTheme.d(
+                      14,
+                      weight: FontWeight.w800,
+                      color: gc.text,
+                      letterSpacing: 1.2,
                     ),
                   ),
-                ),
-                Text(
-                  'SÉRIE ${activeSetIdx + 1} DE ${ex.sets.length}',
-                  style: AppTheme.d(
-                    14,
-                    weight: FontWeight.w800,
-                    color: gc.text,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-                if (st.done) ...[
-                  const SizedBox(width: 6),
-                  Icon(Icons.check_circle_rounded, size: 16, color: gc.sage),
-                ],
-                Semantics(
-                  button: true,
-                  label: 'Próxima série',
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: activeSetIdx < ex.sets.length - 1
-                        ? () => setState(() => _activeSetIndices[exIdx] = activeSetIdx + 1)
-                        : null,
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
-                      child: Icon(
-                        Icons.chevron_right_rounded,
-                        size: 28,
-                        color: activeSetIdx < ex.sets.length - 1
-                            ? gc.text
-                            : gc.textTertiary.withValues(alpha: 0.3),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            // Right side: + Série button
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () {
-                fit.addSet(exIdx);
-                setState(() => _activeSetIndices[exIdx] = ex.sets.length - 1);
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: gc.bgRaised2,
-                  borderRadius: BorderRadius.circular(100),
-                  border: Border.all(color: gc.border),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.add_rounded, size: 14, color: gc.textSecondary),
-                    const SizedBox(width: 4),
-                    Text(
-                      t.addSet,
-                      style: AppTheme.s(11, weight: FontWeight.w600, color: gc.textSecondary),
-                    ),
+                  if (st.done) ...[
+                    const SizedBox(width: 6),
+                    Icon(Icons.check_circle_rounded, size: 16, color: gc.sage),
                   ],
+                ],
+              ),
+              if (st.done)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: gc.sage.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(100),
+                    border: Border.all(color: gc.sage.withValues(alpha: 0.3)),
+                  ),
+                  child: Text(
+                    t.done,
+                    style: AppTheme.s(11, weight: FontWeight.w700, color: gc.sage),
+                  ),
                 ),
+            ],
+          ),
+          if (prevPerf != null) ...[
+            const SizedBox(height: 4),
+            Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(
+                prevPerf,
+                style: AppTheme.s(12, weight: FontWeight.w500, color: gc.textTertiary),
               ),
             ),
           ],
-        ),
-        if (prevPerf != null) ...[
-          const SizedBox(height: 4),
-          Padding(
-            padding: const EdgeInsets.only(left: 4),
-            child: Text(
-              prevPerf,
-              style: AppTheme.s(12, weight: FontWeight.w500, color: gc.textTertiary),
-            ),
-          ),
-        ],
-
-        // Rest timer banner (positioned above weight and reps cards)
-        if (s.restRemaining != null) ...[
+          const SizedBox(height: 10),
+          _cardioStopwatchWidget(gc, exIdx),
           const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: gc.bgRaised,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: gc.ember),
-            ),
-            child: Row(
-              children: [
-                Icon(PhosphorIconsRegular.timer, color: gc.ember, size: 20),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${t.rest}: ${s.restRemaining}s',
-                        style: AppTheme.d(15, weight: FontWeight.w700, color: gc.text),
+          _cardioControlBoxes(context, gc, exIdx, activeSetIdx, def, st),
+        ] else ...[
+          // Set Navigator: < SÉRIE X DE Y > with + Série button and previous performance
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Semantics(
+                    button: true,
+                    label: 'Série anterior',
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: activeSetIdx > 0
+                          ? () => setState(() => _activeSetIndices[exIdx] = activeSetIdx - 1)
+                          : null,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(0, 4, 8, 4),
+                        child: Icon(
+                          Icons.chevron_left_rounded,
+                          size: 28,
+                          color: activeSetIdx > 0 ? gc.text : gc.textTertiary.withValues(alpha: 0.3),
+                        ),
                       ),
+                    ),
+                  ),
+                  Text(
+                    'SÉRIE ${activeSetIdx + 1} DE ${ex.sets.length}',
+                    style: AppTheme.d(
+                      14,
+                      weight: FontWeight.w800,
+                      color: gc.text,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  if (st.done) ...[
+                    const SizedBox(width: 6),
+                    Icon(Icons.check_circle_rounded, size: 16, color: gc.sage),
+                  ],
+                  Semantics(
+                    button: true,
+                    label: 'Próxima série',
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: activeSetIdx < ex.sets.length - 1
+                          ? () => setState(() => _activeSetIndices[exIdx] = activeSetIdx + 1)
+                          : null,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
+                        child: Icon(
+                          Icons.chevron_right_rounded,
+                          size: 28,
+                          color: activeSetIdx < ex.sets.length - 1
+                              ? gc.text
+                              : gc.textTertiary.withValues(alpha: 0.3),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              // Right side: + Série button
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  fit.addSet(exIdx);
+                  setState(() => _activeSetIndices[exIdx] = ex.sets.length - 1);
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: gc.bgRaised2,
+                    borderRadius: BorderRadius.circular(100),
+                    border: Border.all(color: gc.border),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.add_rounded, size: 14, color: gc.textSecondary),
+                      const SizedBox(width: 4),
                       Text(
-                        t.restDefault(fit.restSeconds),
-                        style: AppTheme.s(11, color: gc.textTertiary),
+                        t.addSet,
+                        style: AppTheme.s(11, weight: FontWeight.w600, color: gc.textSecondary),
                       ),
                     ],
                   ),
                 ),
-                _restNudge(gc, '−15', t.decrease, () => fit.nudgeRest(-15)),
-                const SizedBox(width: 6),
-                _restNudge(gc, '+15', t.increase, () => fit.nudgeRest(15)),
-                const SizedBox(width: 6),
-                GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: fit.skipRest,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                    decoration: BoxDecoration(
-                      color: gc.bgRaised2,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      t.skip,
-                      style: AppTheme.s(12, weight: FontWeight.w700, color: gc.text),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-        const SizedBox(height: 14),
-
-        // Two large numeric control boxes side-by-side: CARGA & REPETIÇÕES
-        Row(
-          children: [
-            // Left Box: CARGA
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.fromLTRB(14, 16, 14, 14),
-                decoration: BoxDecoration(
-                  color: gc.bgRaised,
-                  border: Border.all(color: gc.border),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    SizedBox(
-                      height: 18,
-                      child: Center(
-                        child: Text(
-                          t.weightTitle(fit.units.toUpperCase()).toUpperCase(),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppTheme.s(
-                            11,
-                            weight: FontWeight.w700,
-                            color: gc.textTertiary,
-                            letterSpacing: 1.5,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () => _editValue(
-                        context,
-                        title: t.weightTitle(fit.units.toUpperCase()),
-                        initial: fit.weightValue(st.weight),
-                        decimal: true,
-                        onSave: (v) => fit.setSessionWeightShown(exIdx, activeSetIdx, v),
-                      ),
-                      child: SizedBox(
-                        height: 48,
-                        child: Center(
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.baseline,
-                            textBaseline: TextBaseline.alphabetic,
-                            children: [
-                              FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: Text(
-                                  fit.weightValue(st.weight),
-                                  style: AppTheme.d(38, weight: FontWeight.w800, color: gc.text, height: 1.0),
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                fit.units.toUpperCase(),
-                                style: AppTheme.s(12, weight: FontWeight.w700, color: gc.textTertiary),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          _stepperBtn(
-                            gc,
-                            Icons.remove_rounded,
-                            () => fit.bumpSessionWeight(exIdx, activeSetIdx, -1),
-                          ),
-                          _stepperBtn(
-                            gc,
-                            Icons.add_rounded,
-                            () => fit.bumpSessionWeight(exIdx, activeSetIdx, 1),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+          if (prevPerf != null) ...[
+            const SizedBox(height: 4),
+            Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(
+                prevPerf,
+                style: AppTheme.s(12, weight: FontWeight.w500, color: gc.textTertiary),
               ),
             ),
-            const SizedBox(width: 12),
+          ],
 
-            // Right Box: REPETIÇÕES
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.fromLTRB(14, 16, 14, 14),
-                decoration: BoxDecoration(
-                  color: gc.bgRaised,
-                  border: Border.all(color: gc.border),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    SizedBox(
-                      height: 18,
-                      child: Center(
-                        child: Text(
-                          t.repsTitle.toUpperCase(),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppTheme.s(
-                            11,
-                            weight: FontWeight.w700,
-                            color: gc.textTertiary,
-                            letterSpacing: 1.5,
-                          ),
+          // Rest timer banner (positioned above weight and reps cards)
+          if (s.restRemaining != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: gc.bgRaised,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: gc.ember),
+              ),
+              child: Row(
+                children: [
+                  Icon(PhosphorIconsRegular.timer, color: gc.ember, size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${t.rest}: ${s.restRemaining}s',
+                          style: AppTheme.d(15, weight: FontWeight.w700, color: gc.text),
                         ),
+                        Text(
+                          t.restDefault(fit.restSeconds),
+                          style: AppTheme.s(11, color: gc.textTertiary),
+                        ),
+                      ],
+                    ),
+                  ),
+                  _restNudge(gc, '−15', t.decrease, () => fit.nudgeRest(-15)),
+                  const SizedBox(width: 6),
+                  _restNudge(gc, '+15', t.increase, () => fit.nudgeRest(15)),
+                  const SizedBox(width: 6),
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: fit.skipRest,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                      decoration: BoxDecoration(
+                        color: gc.bgRaised2,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        t.skip,
+                        style: AppTheme.s(12, weight: FontWeight.w700, color: gc.text),
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () => _editValue(
-                        context,
-                        title: t.repsTitle,
-                        initial: '${st.reps}',
-                        decimal: false,
-                        onSave: (v) => fit.setSessionReps(exIdx, activeSetIdx, v.round()),
-                      ),
-                      child: SizedBox(
-                        height: 48,
+                  ),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 14),
+
+          // Two large numeric control boxes side-by-side: CARGA & REPETIÇÕES
+          Row(
+            children: [
+              // Left Box: CARGA
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(14, 16, 14, 14),
+                  decoration: BoxDecoration(
+                    color: gc.bgRaised,
+                    border: Border.all(color: gc.border),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SizedBox(
+                        height: 18,
                         child: Center(
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              '${st.reps}',
-                              style: AppTheme.d(38, weight: FontWeight.w800, color: gc.text, height: 1.0),
+                          child: Text(
+                            t.weightTitle(fit.units.toUpperCase()).toUpperCase(),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTheme.s(
+                              11,
+                              weight: FontWeight.w700,
+                              color: gc.textTertiary,
+                              letterSpacing: 1.5,
                             ),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 14),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          _stepperBtn(
-                            gc,
-                            Icons.remove_rounded,
-                            () => fit.bumpSessionReps(exIdx, activeSetIdx, -1),
+                      const SizedBox(height: 8),
+                      GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => _editValue(
+                          context,
+                          title: t.weightTitle(fit.units.toUpperCase()),
+                          initial: fit.weightValue(st.weight),
+                          decimal: true,
+                          onSave: (v) => fit.setSessionWeightShown(exIdx, activeSetIdx, v),
+                        ),
+                        child: SizedBox(
+                          height: 48,
+                          child: Center(
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.baseline,
+                              textBaseline: TextBaseline.alphabetic,
+                              children: [
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    fit.weightValue(st.weight),
+                                    style: AppTheme.d(38, weight: FontWeight.w800, color: gc.text, height: 1.0),
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  fit.units.toUpperCase(),
+                                  style: AppTheme.s(12, weight: FontWeight.w700, color: gc.textTertiary),
+                                ),
+                              ],
+                            ),
                           ),
-                          _stepperBtn(
-                            gc,
-                            Icons.add_rounded,
-                            () => fit.bumpSessionReps(exIdx, activeSetIdx, 1),
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 14),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _stepperBtn(
+                              gc,
+                              Icons.remove_rounded,
+                              () => fit.bumpSessionWeight(exIdx, activeSetIdx, -1),
+                            ),
+                            _stepperBtn(
+                              gc,
+                              Icons.add_rounded,
+                              () => fit.bumpSessionWeight(exIdx, activeSetIdx, 1),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
+              const SizedBox(width: 12),
+
+              // Right Box: REPETIÇÕES
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(14, 16, 14, 14),
+                  decoration: BoxDecoration(
+                    color: gc.bgRaised,
+                    border: Border.all(color: gc.border),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SizedBox(
+                        height: 18,
+                        child: Center(
+                          child: Text(
+                            t.repsTitle.toUpperCase(),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTheme.s(
+                              11,
+                              weight: FontWeight.w700,
+                              color: gc.textTertiary,
+                              letterSpacing: 1.5,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => _editValue(
+                          context,
+                          title: t.repsTitle,
+                          initial: '${st.reps}',
+                          decimal: false,
+                          onSave: (v) => fit.setSessionReps(exIdx, activeSetIdx, v.round()),
+                        ),
+                        child: SizedBox(
+                          height: 48,
+                          child: Center(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                '${st.reps}',
+                                style: AppTheme.d(38, weight: FontWeight.w800, color: gc.text, height: 1.0),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _stepperBtn(
+                              gc,
+                              Icons.remove_rounded,
+                              () => fit.bumpSessionReps(exIdx, activeSetIdx, -1),
+                            ),
+                            _stepperBtn(
+                              gc,
+                              Icons.add_rounded,
+                              () => fit.bumpSessionReps(exIdx, activeSetIdx, 1),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
 
         // Drop exercise text link below cards
         if (s.exercises.length > 1) ...[
@@ -676,10 +779,18 @@ class _SessionScreenState extends State<SessionScreen> {
   Widget _sessionFooter(GymColors gc, int exIdx) {
     final s = fit.session!;
     final ex = s.exercises.isNotEmpty ? s.exercises[exIdx] : null;
+    final def = ex != null ? fit.exerciseById(ex.id) : null;
+    final isCardio = (def != null && def.isCardio) || (ex?.primary == 'cardio');
     final activeSetIdx = ex != null ? _getActiveSet(exIdx, ex) : 0;
     final st = (ex != null && activeSetIdx < ex.sets.length) ? ex.sets[activeSetIdx] : null;
     final isDone = st?.done ?? false;
     final allExerciseDone = ex != null && ex.sets.every((set) => set.done);
+
+    final buttonText = isCardio
+        ? (isDone ? 'CARDIO CONCLUÍDO' : 'CONCLUIR CARDIO')
+        : (isDone
+            ? 'SÉRIE ${activeSetIdx + 1} CONCLUÍDA'
+            : 'CONCLUIR SÉRIE ${activeSetIdx + 1}');
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -739,12 +850,27 @@ class _SessionScreenState extends State<SessionScreen> {
         ),
         const SizedBox(height: 10),
 
-        // Big Primary Action Button: "✓ CONCLUIR SÉRIE X"
+        // Big Primary Action Button: "✓ CONCLUIR SÉRIE X" / "✓ CONCLUIR CARDIO"
         GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: () {
             if (ex == null) return;
             HapticFeedback.mediumImpact();
+            if (isCardio) {
+              if (!isDone) {
+                fit.toggleSet(exIdx, activeSetIdx);
+              } else if (allExerciseDone) {
+                if (exIdx < s.exercises.length - 1) {
+                  fit.nextExercise();
+                } else {
+                  fit.finishSession();
+                }
+              } else {
+                fit.toggleSet(exIdx, activeSetIdx);
+              }
+              return;
+            }
+
             if (!isDone) {
               fit.toggleSet(exIdx, activeSetIdx);
               if (activeSetIdx + 1 < ex.sets.length) {
@@ -782,9 +908,7 @@ class _SessionScreenState extends State<SessionScreen> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  isDone
-                      ? 'SÉRIE ${activeSetIdx + 1} CONCLUÍDA'
-                      : 'CONCLUIR SÉRIE ${activeSetIdx + 1}',
+                  buttonText,
                   style: AppTheme.d(
                     15,
                     weight: FontWeight.w800,
@@ -799,6 +923,590 @@ class _SessionScreenState extends State<SessionScreen> {
       ],
     );
   }
+
+  Widget _cardioStopwatchWidget(GymColors gc, int exIdx) {
+    final sw = _cardioStopwatches[exIdx];
+    final isRunning = sw?.isRunning ?? false;
+    final elapsedSec = sw?.elapsed.inSeconds ?? 0;
+    final timeStr = formatCardioDuration(elapsedSec);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+      decoration: BoxDecoration(
+        color: gc.bgRaised,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: isRunning ? gc.ember : gc.border),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            PhosphorIconsRegular.timer,
+            size: 18,
+            color: isRunning ? gc.ember : gc.textSecondary,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            'CRONÔMETRO: ',
+            style: AppTheme.s(11, weight: FontWeight.w700, color: gc.textSecondary, letterSpacing: 1),
+          ),
+          Text(
+            timeStr,
+            style: AppTheme.d(15, weight: FontWeight.w800, color: isRunning ? gc.ember : gc.text),
+          ),
+          const Spacer(),
+          if (elapsedSec > 0) ...[
+            GestureDetector(
+              onTap: () => _resetCardioStopwatch(exIdx),
+              child: Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: Text(
+                  t.reset,
+                  style: AppTheme.s(12, weight: FontWeight.w600, color: gc.textSecondary),
+                ),
+              ),
+            ),
+          ],
+          GestureDetector(
+            onTap: () => _toggleCardioStopwatch(exIdx),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: isRunning ? gc.bgRaised2 : gc.ember,
+                borderRadius: BorderRadius.circular(100),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    isRunning ? PhosphorIconsFill.pause : PhosphorIconsFill.play,
+                    size: 12,
+                    color: isRunning ? gc.text : gc.onEmber,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    isRunning ? 'Pausar' : (elapsedSec > 0 ? 'Continuar' : 'Iniciar'),
+                    style: AppTheme.s(
+                      11,
+                      weight: FontWeight.w700,
+                      color: isRunning ? gc.text : gc.onEmber,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _cardioControlBoxes(
+    BuildContext context,
+    GymColors gc,
+    int exIdx,
+    int activeSetIdx,
+    Exercise def,
+    SessionSet st,
+  ) {
+    final cardioType = def.cardioType;
+    final cardioSeconds = st.effectiveTimeSeconds;
+    final cardioParam = st.effectiveCardioParam > 0 ? st.effectiveCardioParam : cardioType.defaultParam;
+    final cardioSpeed = st.effectiveCardioSpeed > 0 ? st.effectiveCardioSpeed : cardioType.defaultSpeed;
+
+    return Column(
+      children: [
+        Row(
+          children: [
+            // Left Box: TEMPO
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(14, 16, 14, 14),
+                decoration: BoxDecoration(
+                  color: gc.bgRaised,
+                  border: Border.all(color: gc.border),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SizedBox(
+                      height: 18,
+                      child: Center(
+                        child: Text(
+                          'TEMPO',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTheme.s(
+                            11,
+                            weight: FontWeight.w700,
+                            color: gc.textTertiary,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => _editCardioTime(
+                        context,
+                        title: t.duration,
+                        initialSeconds: cardioSeconds,
+                        onSave: (sec) => fit.setSessionCardioTime(exIdx, activeSetIdx, sec),
+                      ),
+                      child: SizedBox(
+                        height: 48,
+                        child: Center(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.baseline,
+                            textBaseline: TextBaseline.alphabetic,
+                            children: [
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  formatCardioDuration(cardioSeconds),
+                                  style: AppTheme.d(34, weight: FontWeight.w800, color: gc.text, height: 1.0),
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'min',
+                                style: AppTheme.s(11, weight: FontWeight.w700, color: gc.textTertiary),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _stepperBtn(
+                            gc,
+                            Icons.remove_rounded,
+                            () => fit.bumpSessionCardioTime(exIdx, activeSetIdx, -60),
+                          ),
+                          _stepperBtn(
+                            gc,
+                            Icons.add_rounded,
+                            () => fit.bumpSessionCardioTime(exIdx, activeSetIdx, 60),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+
+            // Right Box: VELOCIDADE (se esteira) ou PARÂMETRO DA MÁQUINA (se outra)
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(14, 16, 14, 14),
+                decoration: BoxDecoration(
+                  color: gc.bgRaised,
+                  border: Border.all(color: gc.border),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SizedBox(
+                      height: 18,
+                      child: Center(
+                        child: Text(
+                          cardioType.hasSpeed ? cardioType.speedLabel : cardioType.paramLabel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTheme.s(
+                            11,
+                            weight: FontWeight.w700,
+                            color: gc.textTertiary,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () {
+                        if (cardioType.hasSpeed) {
+                          _editCardioSpeed(
+                            context,
+                            initial: cardioSpeed,
+                            onSave: (v) => fit.setSessionCardioSpeed(exIdx, activeSetIdx, v),
+                          );
+                        } else {
+                          _editCardioParam(
+                            context,
+                            title: cardioType.paramLabel,
+                            initial: cardioParam,
+                            type: cardioType,
+                            onSave: (v) => fit.setSessionCardioParam(exIdx, activeSetIdx, v),
+                          );
+                        }
+                      },
+                      child: SizedBox(
+                        height: 48,
+                        child: Center(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.baseline,
+                            textBaseline: TextBaseline.alphabetic,
+                            children: [
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  cardioType.hasSpeed
+                                      ? cardioType.formatSpeed(cardioSpeed)
+                                      : cardioType.formatParam(cardioParam),
+                                  style: AppTheme.d(38, weight: FontWeight.w800, color: gc.text, height: 1.0),
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                cardioType.hasSpeed ? cardioType.speedUnit : cardioType.paramUnit,
+                                style: AppTheme.s(12, weight: FontWeight.w700, color: gc.textTertiary),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _stepperBtn(
+                            gc,
+                            Icons.remove_rounded,
+                            () {
+                              if (cardioType.hasSpeed) {
+                                fit.bumpSessionCardioSpeed(
+                                  exIdx,
+                                  activeSetIdx,
+                                  -cardioType.speedStep,
+                                  min: cardioType.minSpeed,
+                                  max: cardioType.maxSpeed,
+                                );
+                              } else {
+                                fit.bumpSessionCardioParam(
+                                  exIdx,
+                                  activeSetIdx,
+                                  -cardioType.paramStep,
+                                  min: cardioType.minParam,
+                                  max: cardioType.maxParam,
+                                );
+                              }
+                            },
+                          ),
+                          _stepperBtn(
+                            gc,
+                            Icons.add_rounded,
+                            () {
+                              if (cardioType.hasSpeed) {
+                                fit.bumpSessionCardioSpeed(
+                                  exIdx,
+                                  activeSetIdx,
+                                  cardioType.speedStep,
+                                  min: cardioType.minSpeed,
+                                  max: cardioType.maxSpeed,
+                                );
+                              } else {
+                                fit.bumpSessionCardioParam(
+                                  exIdx,
+                                  activeSetIdx,
+                                  cardioType.paramStep,
+                                  min: cardioType.minParam,
+                                  max: cardioType.maxParam,
+                                );
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+
+        // Faixa de INCLINAÇÃO dedicada caso seja Esteira
+        if (cardioType.hasSpeed) ...[
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: gc.bgRaised,
+              border: Border.all(color: gc.border),
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Row(
+              children: [
+                Icon(PhosphorIconsRegular.trendUp, size: 20, color: gc.accent),
+                const SizedBox(width: 10),
+                Text(
+                  cardioType.paramLabel,
+                  style: AppTheme.s(
+                    11,
+                    weight: FontWeight.w700,
+                    color: gc.textTertiary,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+                const Spacer(),
+                _stepperBtn(
+                  gc,
+                  Icons.remove_rounded,
+                  () => fit.bumpSessionCardioParam(
+                    exIdx,
+                    activeSetIdx,
+                    -cardioType.paramStep,
+                    min: cardioType.minParam,
+                    max: cardioType.maxParam,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => _editCardioParam(
+                    context,
+                    title: cardioType.paramLabel,
+                    initial: cardioParam,
+                    type: cardioType,
+                    onSave: (v) => fit.setSessionCardioParam(exIdx, activeSetIdx, v),
+                  ),
+                  child: Container(
+                    constraints: const BoxConstraints(minWidth: 64),
+                    alignment: Alignment.center,
+                    child: Text(
+                      '${cardioType.formatParam(cardioParam)}%',
+                      style: AppTheme.d(22, weight: FontWeight.w800, color: gc.text),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                _stepperBtn(
+                  gc,
+                  Icons.add_rounded,
+                  () => fit.bumpSessionCardioParam(
+                    exIdx,
+                    activeSetIdx,
+                    cardioType.paramStep,
+                    min: cardioType.minParam,
+                    max: cardioType.maxParam,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Future<void> _editCardioSpeed(
+    BuildContext context, {
+    required double initial,
+    required ValueChanged<double> onSave,
+  }) async {
+    final gc = context.gc;
+    final initialStr = (initial % 1 == 0) ? '${initial.toInt()}' : initial.toStringAsFixed(1);
+    final controller = TextEditingController(text: initialStr)
+      ..selection = TextSelection(baseOffset: 0, extentOffset: initialStr.length);
+
+    final raw = await showAppDialog<String>(
+      context: context,
+      builder: (dctx) => AlertDialog(
+        backgroundColor: gc.bgRaised,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: gc.border),
+        ),
+        title: Text(
+          'VELOCIDADE',
+          style: AppTheme.d(14, weight: FontWeight.w700, color: gc.text, letterSpacing: 2),
+        ),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          textAlign: TextAlign.center,
+          style: AppTheme.d(32, weight: FontWeight.w700, color: gc.text),
+          cursorColor: gc.accent,
+          onSubmitted: (v) => Navigator.of(dctx).pop(v),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: gc.bgRaised2,
+            suffixText: 'km/h',
+            suffixStyle: AppTheme.s(14, color: gc.textSecondary),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide.none,
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dctx).pop(),
+            child: Text(t.cancel, style: AppTheme.s(14, color: gc.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dctx).pop(controller.text),
+            child: Text(t.set, style: AppTheme.s(14, weight: FontWeight.w700, color: gc.accent)),
+          ),
+        ],
+      ),
+    );
+
+    if (raw != null) {
+      final parsed = double.tryParse(raw.trim().replaceAll(',', '.'));
+      if (parsed != null && parsed >= 0.1 && parsed <= 50.0) {
+        onSave((parsed * 10).round() / 10);
+      }
+    }
+  }
+
+  Future<void> _editCardioTime(
+    BuildContext context, {
+    required String title,
+    required int initialSeconds,
+    required ValueChanged<int> onSave,
+  }) async {
+    final gc = context.gc;
+    final initialMinutes = (initialSeconds / 60).round();
+    final controller = TextEditingController(text: '$initialMinutes')
+      ..selection = TextSelection(baseOffset: 0, extentOffset: '$initialMinutes'.length);
+
+    final raw = await showAppDialog<String>(
+      context: context,
+      builder: (dctx) => AlertDialog(
+        backgroundColor: gc.bgRaised,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: gc.border),
+        ),
+        title: Text(
+          title,
+          style: AppTheme.d(14, weight: FontWeight.w700, color: gc.text, letterSpacing: 2),
+        ),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          keyboardType: TextInputType.number,
+          textAlign: TextAlign.center,
+          style: AppTheme.d(32, weight: FontWeight.w700, color: gc.text),
+          cursorColor: gc.accent,
+          onSubmitted: (v) => Navigator.of(dctx).pop(v),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: gc.bgRaised2,
+            suffixText: 'MIN',
+            suffixStyle: AppTheme.s(14, color: gc.textSecondary),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide.none,
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dctx).pop(),
+            child: Text(t.cancel, style: AppTheme.s(14, color: gc.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dctx).pop(controller.text),
+            child: Text(t.set, style: AppTheme.s(14, weight: FontWeight.w700, color: gc.accent)),
+          ),
+        ],
+      ),
+    );
+
+    if (raw != null) {
+      final parsed = int.tryParse(raw.trim());
+      if (parsed != null && parsed > 0) {
+        onSave(parsed * 60);
+      }
+    }
+  }
+
+  Future<void> _editCardioParam(
+    BuildContext context, {
+    required String title,
+    required double initial,
+    required CardioCategoryType type,
+    required ValueChanged<double> onSave,
+  }) async {
+    final gc = context.gc;
+    final isDecimal = type == CardioCategoryType.treadmill;
+    final controller = TextEditingController(text: type.formatParam(initial))
+      ..selection = TextSelection(baseOffset: 0, extentOffset: type.formatParam(initial).length);
+
+    final raw = await showAppDialog<String>(
+      context: context,
+      builder: (dctx) => AlertDialog(
+        backgroundColor: gc.bgRaised,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: gc.border),
+        ),
+        title: Text(
+          title,
+          style: AppTheme.d(14, weight: FontWeight.w700, color: gc.text, letterSpacing: 2),
+        ),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          keyboardType: TextInputType.numberWithOptions(decimal: isDecimal),
+          textAlign: TextAlign.center,
+          style: AppTheme.d(32, weight: FontWeight.w700, color: gc.text),
+          cursorColor: gc.accent,
+          onSubmitted: (v) => Navigator.of(dctx).pop(v),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: gc.bgRaised2,
+            suffixText: type.paramUnit,
+            suffixStyle: AppTheme.s(14, color: gc.textSecondary),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide.none,
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dctx).pop(),
+            child: Text(t.cancel, style: AppTheme.s(14, color: gc.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dctx).pop(controller.text),
+            child: Text(t.set, style: AppTheme.s(14, weight: FontWeight.w700, color: gc.accent)),
+          ),
+        ],
+      ),
+    );
+
+    if (raw != null) {
+      final parsed = double.tryParse(raw.trim().replaceAll(',', '.'));
+      if (parsed != null) {
+        onSave(_round1(parsed.clamp(type.minParam, type.maxParam)));
+      }
+    }
+  }
+
+  static double _round1(double v) => (v * 10).round() / 10;
 
   Widget _stepperBtn(GymColors gc, IconData icon, VoidCallback onTap) {
     return Semantics(

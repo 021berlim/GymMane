@@ -213,6 +213,15 @@ mixin StatsState on FitCore, ToolsState, LibraryState {
       ..sort((a, b) => b.date.compareTo(a.date));
   }
 
+  void addLoggedSession(LoggedSession s) {
+    sessions.add(s);
+    sessions.sort((a, b) => a.date.compareTo(b.date));
+    refreshAwards();
+    persistNow();
+    _refreshWidgets();
+    notifyListeners();
+  }
+
   void deleteSession(LoggedSession s) {
     sessions.remove(s);
     persistNow();
@@ -895,10 +904,24 @@ mixin StatsState on FitCore, ToolsState, LibraryState {
   String? lastSummaryFor(String id) {
     final sets = lastSetsFor(id);
     if (sets.isEmpty) return null;
+    final ex = exerciseById(id);
+    if (ex != null && ex.isCardio) {
+      final s = sets.first;
+      final durSec = s.sec ?? (s.reps > 30 ? s.reps : s.reps * 60);
+      final param = s.cardioParam ?? s.weight;
+      final mins = (durSec / 60).round();
+      final speed = s.speed;
+      if (ex.cardioType.hasSpeed && speed != null && speed > 0) {
+        return '$mins min · ${ex.cardioType.formatSpeedWithUnit(speed)} · ${ex.cardioType.formatParamWithUnit(param)}';
+      }
+      return '$mins min · ${ex.cardioType.formatParamWithUnit(param)}';
+    }
     return sets.map((s) => '${weightValue(s.weight)}×${s.reps}').join(' · ');
   }
 
   ({double topWeight, double oneRm})? exercisePr(String id) {
+    final ex = exerciseById(id);
+    if (ex != null && ex.isCardio) return null;
     final h = exerciseHistory(id);
     if (h.isEmpty) return null;
     double tw = 0, orm = 0;

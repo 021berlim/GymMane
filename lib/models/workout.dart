@@ -19,13 +19,15 @@ double? rpePercent(int reps, double? rpe) {
 }
 
 class LoggedSet {
-  LoggedSet(this.reps, this.weight, {this.kind = SetKind.normal, this.rpe, this.sec, this.km});
+  LoggedSet(this.reps, this.weight, {this.kind = SetKind.normal, this.rpe, this.sec, this.km, this.cardioParam, this.speed});
   final int reps;
   final double weight;
   final SetKind kind;
   final double? rpe;
   final int? sec;
   final double? km;
+  final double? cardioParam;
+  final double? speed;
 
   bool get counts => kind != SetKind.warmup;
   double get volume => reps * weight;
@@ -43,6 +45,8 @@ class LoggedSet {
         if (rpe != null) 'e': rpe,
         if (sec != null) 't': sec,
         if (km != null) 'km': km,
+        if (cardioParam != null) 'cp': cardioParam,
+        if (speed != null) 'sp': speed,
       };
   factory LoggedSet.fromJson(Map<String, dynamic> j) => LoggedSet(
         (j['r'] as num).toInt(),
@@ -51,6 +55,8 @@ class LoggedSet {
         rpe: (j['e'] as num?)?.toDouble(),
         sec: (j['t'] as num?)?.toInt(),
         km: (j['km'] as num?)?.toDouble(),
+        cardioParam: (j['cp'] as num?)?.toDouble(),
+        speed: (j['sp'] as num?)?.toDouble(),
       );
 }
 
@@ -61,10 +67,11 @@ class LoggedExercise {
   final String primary;
   final List<LoggedSet> sets;
 
+  bool get isCardio => primary == 'cardio';
   Iterable<LoggedSet> get workingSets => sets.where((s) => s.counts);
-  double get volume => sets.fold(0.0, (s, x) => s + x.volume);
-  double get topWeight => sets.isEmpty ? 0 : sets.map((s) => s.weight).reduce((a, b) => a > b ? a : b);
-  double get bestOneRm => sets.isEmpty ? 0 : sets.map((s) => s.oneRm).reduce((a, b) => a > b ? a : b);
+  double get volume => isCardio ? 0.0 : sets.fold(0.0, (s, x) => s + x.volume);
+  double get topWeight => (sets.isEmpty || isCardio) ? 0 : sets.map((s) => s.weight).reduce((a, b) => a > b ? a : b);
+  double get bestOneRm => (sets.isEmpty || isCardio) ? 0 : sets.map((s) => s.oneRm).reduce((a, b) => a > b ? a : b);
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -192,18 +199,48 @@ class RoutineExerciseConfig {
     this.targetSets = 3,
     this.targetWeight = 0.0,
     this.targetReps = 10,
-  });
+    this.targetTimeSeconds,
+    this.targetCardioParam,
+    this.targetSpeed,
+  }) {
+    if (targetTimeSeconds != null) targetReps = targetTimeSeconds!;
+    if (targetCardioParam != null) targetWeight = targetCardioParam!;
+  }
 
   final String exerciseId;
   int targetSets;
   double targetWeight;
   int targetReps;
+  int? targetTimeSeconds;
+  double? targetCardioParam;
+  double? targetSpeed;
+
+  int get effectiveTimeSeconds =>
+      targetTimeSeconds ?? (targetReps > 30 ? targetReps : targetReps * 60);
+  set effectiveTimeSeconds(int sec) {
+    targetTimeSeconds = sec;
+    targetReps = sec;
+  }
+
+  double get effectiveCardioParam => targetCardioParam ?? targetWeight;
+  set effectiveCardioParam(double val) {
+    targetCardioParam = val;
+    targetWeight = val;
+  }
+
+  double get effectiveCardioSpeed => targetSpeed ?? 6.0;
+  set effectiveCardioSpeed(double s) {
+    targetSpeed = s;
+  }
 
   Map<String, dynamic> toJson() => {
         'id': exerciseId,
         's': targetSets,
         'w': targetWeight,
         'r': targetReps,
+        if (targetTimeSeconds != null) 't': targetTimeSeconds,
+        if (targetCardioParam != null) 'cp': targetCardioParam,
+        if (targetSpeed != null) 'sp': targetSpeed,
       };
 
   factory RoutineExerciseConfig.fromJson(Map<String, dynamic> j) => RoutineExerciseConfig(
@@ -211,6 +248,9 @@ class RoutineExerciseConfig {
         targetSets: (j['s'] as num?)?.toInt() ?? 3,
         targetWeight: (j['w'] as num?)?.toDouble() ?? 0.0,
         targetReps: (j['r'] as num?)?.toInt() ?? 10,
+        targetTimeSeconds: (j['t'] as num?)?.toInt(),
+        targetCardioParam: (j['cp'] as num?)?.toDouble(),
+        targetSpeed: (j['sp'] as num?)?.toDouble(),
       );
 }
 

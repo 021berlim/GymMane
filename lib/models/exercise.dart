@@ -1,6 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/widgets.dart';
 import '../l10n/l10n.dart';
+import 'cardio_config.dart';
+
+export 'cardio_config.dart';
 
 class Muscle {
   const Muscle(this.id, this.label, this.view);
@@ -129,6 +132,30 @@ class Exercise {
   List<String> get secondary => _secondary ?? (secondaryMusclesPt.isNotEmpty && appLanguage == 'pt' ? secondaryMusclesPt : secondaryMuscles);
   List<String> get steps => _steps ?? (instructionsPt.isNotEmpty && appLanguage == 'pt' ? instructionsPt : instructions);
   String get art => _art ?? id;
+
+  bool get isCardio => isExerciseCardio(
+        id: id,
+        name: name,
+        namePt: namePt,
+        primary: primary,
+        bodyPart: bodyPart,
+        bodyPartPt: bodyPartPt,
+        target: target,
+        targetPt: targetPt,
+        category: category,
+        equipment: equipment,
+        equipmentPt: equipmentPt,
+      );
+
+  CardioCategoryType get cardioType => detectCardioType(
+        id: id,
+        name: name,
+        namePt: namePt,
+        equipment: equipment,
+        equipmentPt: equipmentPt,
+        bodyPart: bodyPart,
+        target: target,
+      );
 
   Exercise copyWith({
     String? name,

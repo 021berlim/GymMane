@@ -590,7 +590,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get equipmentLabel => 'EQUIPMENT';
 
   @override
-  String get addExercise => 'ADD EXERCISE';
+  String get addExercise => 'Add Exercise';
 
   @override
   String get advanced => 'ADVANCED';
@@ -1787,4 +1787,55 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get awardHours100Line => 'A hundred hours under the bar, stopwatch in hand.';
+
+  @override
+  String get registerWorkout => 'Register Workout';
+
+  @override
+  String get workoutDate => 'Workout Date';
+
+  @override
+  String get workoutSource => 'Workout Source';
+
+  @override
+  String get existingRoutine => 'Saved Routine';
+
+  @override
+  String get manualExercises => 'Select Exercises';
+
+  @override
+  String get selectRoutineHint => 'Choose a routine from your list';
+
+  @override
+  String get noRoutinesAvailable => 'No saved routines yet. Select exercises manually.';
+
+  @override
+  String get sessionDuration => 'Total Duration (min)';
+
+  @override
+  String get saveWorkout => 'Save Workout';
+
+  @override
+  String get workoutSaved => 'Workout logged successfully!';
+
+  @override
+  String get fillAllMetricsWarning => 'Please fill in all required metrics before saving.';
+
+  @override
+  String get selectAtLeastOneExercise => 'Add at least one exercise to the workout.';
+
+  @override
+  String get speed => 'Speed';
+
+  @override
+  String get incline => 'Incline';
+
+  @override
+  String get stage => 'Stage';
+
+  @override
+  String get allCategories => 'All';
+
+  @override
+  String get rpeTitle => 'RPE';
 }
