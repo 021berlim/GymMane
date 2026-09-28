@@ -794,9 +794,15 @@ class _SessionScreenState extends State<SessionScreen> {
     final allExerciseDone = ex != null && ex.sets.every((set) => set.done);
 
     final buttonText = isCardio
-        ? (isDone ? 'CARDIO CONCLUÍDO' : 'CONCLUIR CARDIO')
+        ? (isDone
+            ? (allExerciseDone
+                ? (exIdx < s.exercises.length - 1 ? 'PRÓXIMO EXERCÍCIO' : 'FINALIZAR TREINO')
+                : 'CARDIO CONCLUÍDO')
+            : 'CONCLUIR CARDIO')
         : (isDone
-            ? 'SÉRIE ${activeSetIdx + 1} CONCLUÍDA'
+            ? (allExerciseDone
+                ? (exIdx < s.exercises.length - 1 ? 'PRÓXIMO EXERCÍCIO' : 'FINALIZAR TREINO')
+                : 'SÉRIE ${activeSetIdx + 1} CONCLUÍDA')
             : 'CONCLUIR SÉRIE ${activeSetIdx + 1}');
 
     return Column(
@@ -857,33 +863,26 @@ class _SessionScreenState extends State<SessionScreen> {
         ),
         const SizedBox(height: 10),
 
-        // Big Primary Action Button: "✓ CONCLUIR SÉRIE X" / "✓ CONCLUIR CARDIO"
-        GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () {
+        // Big Primary Action Button: Progress Complete Button with Inner Fill Animation
+        _ProgressCompleteButton(
+          key: ValueKey('complete-btn-$exIdx-$activeSetIdx-$isDone'),
+          isDone: isDone,
+          text: buttonText.toUpperCase(),
+          onComplete: () {
             if (ex == null) return;
-            HapticFeedback.mediumImpact();
             if (isCardio) {
-              if (!isDone) {
-                fit.toggleSet(exIdx, activeSetIdx);
-              } else if (allExerciseDone) {
-                if (exIdx < s.exercises.length - 1) {
-                  fit.nextExercise();
-                } else {
-                  fit.finishSession();
-                }
-              } else {
-                fit.toggleSet(exIdx, activeSetIdx);
-              }
+              fit.toggleSet(exIdx, activeSetIdx);
               return;
             }
-
-            if (!isDone) {
-              fit.toggleSet(exIdx, activeSetIdx);
-              if (activeSetIdx + 1 < ex.sets.length) {
-                setState(() => _activeSetIndices[exIdx] = activeSetIdx + 1);
-              }
-            } else if (allExerciseDone) {
+            fit.toggleSet(exIdx, activeSetIdx);
+            if (activeSetIdx + 1 < ex.sets.length) {
+              setState(() => _activeSetIndices[exIdx] = activeSetIdx + 1);
+            }
+          },
+          onTapWhenDone: () {
+            if (ex == null) return;
+            HapticFeedback.lightImpact();
+            if (allExerciseDone) {
               if (exIdx < s.exercises.length - 1) {
                 fit.nextExercise();
               } else {
@@ -893,38 +892,6 @@ class _SessionScreenState extends State<SessionScreen> {
               fit.toggleSet(exIdx, activeSetIdx);
             }
           },
-          child: Container(
-            width: double.infinity,
-            height: 56,
-            decoration: BoxDecoration(
-              color: isDone ? gc.bgRaised2 : gc.ember,
-              borderRadius: BorderRadius.circular(AppRadius.pill),
-              border: Border.all(
-                color: isDone ? gc.border : gc.ember,
-              ),
-            ),
-            alignment: Alignment.center,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  isDone ? Icons.check_circle_rounded : Icons.check_rounded,
-                  color: isDone ? gc.accent : gc.onEmber,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  buttonText.toUpperCase(),
-                  style: AppTheme.d(
-                    16,
-                    weight: FontWeight.w700,
-                    color: isDone ? gc.text : gc.onEmber,
-                    letterSpacing: 1.5,
-                  ),
-                ),
-              ],
-            ),
-          ),
         ),
       ],
     );
@@ -2140,6 +2107,289 @@ class _SessionScreenState extends State<SessionScreen> {
           const SizedBox(height: 4),
           Text(value, style: AppTheme.d(18, weight: FontWeight.w700, color: gc.text)),
         ],
+      ),
+    );
+  }
+}
+
+class _ProgressCompleteButton extends StatefulWidget {
+  const _ProgressCompleteButton({
+    super.key,
+    required this.isDone,
+    required this.text,
+    required this.onComplete,
+    this.onTapWhenDone,
+  });
+
+  final bool isDone;
+  final String text;
+  final VoidCallback onComplete;
+  final VoidCallback? onTapWhenDone;
+
+  @override
+  State<_ProgressCompleteButton> createState() => _ProgressCompleteButtonState();
+}
+
+class _ProgressCompleteButtonState extends State<_ProgressCompleteButton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _animation;
+  bool _completedTriggered = false;
+  bool _isPressed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 380),
+    );
+    _animation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOutCubic,
+    );
+    _controller.addStatusListener((status) {
+      if (status == AnimationStatus.completed && !_completedTriggered) {
+        _completedTriggered = true;
+        HapticFeedback.mediumImpact();
+        widget.onComplete();
+      }
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant _ProgressCompleteButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isDone != oldWidget.isDone) {
+      _completedTriggered = false;
+      _controller.reset();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _startFill() {
+    if (widget.isDone || _completedTriggered || _controller.isAnimating) return;
+    setState(() => _isPressed = true);
+    HapticFeedback.lightImpact();
+    _controller.forward(from: 0.0);
+  }
+
+  void _onTapDown(TapDownDetails details) {
+    _startFill();
+  }
+
+  void _onTapUp(TapUpDetails details) {
+    setState(() => _isPressed = false);
+    if (widget.isDone) {
+      widget.onTapWhenDone?.call();
+    }
+  }
+
+  void _onTapCancel() {
+    setState(() => _isPressed = false);
+    if (widget.isDone || _completedTriggered) return;
+    _controller.reverse();
+  }
+
+  void _onTap() {
+    setState(() => _isPressed = false);
+    if (widget.isDone) {
+      widget.onTapWhenDone?.call();
+      return;
+    }
+    if (!_completedTriggered && !_controller.isAnimating) {
+      _startFill();
+    }
+  }
+
+  Widget _buildContent({
+    required IconData icon,
+    required Color iconColor,
+    required Color textColor,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(icon, color: iconColor, size: 20),
+        const SizedBox(width: 8),
+        Text(
+          widget.text,
+          style: AppTheme.d(
+            16,
+            weight: FontWeight.w700,
+            color: textColor,
+            letterSpacing: 1.5,
+          ),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final gc = context.gc;
+
+    if (widget.isDone) {
+      return Semantics(
+        button: true,
+        label: widget.text,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: widget.onTapWhenDone,
+          child: Container(
+            width: double.infinity,
+            height: 56,
+            decoration: BoxDecoration(
+              color: gc.bgRaised2,
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+              border: Border.all(color: gc.border),
+            ),
+            alignment: Alignment.center,
+            child: _buildContent(
+              icon: Icons.check_circle_rounded,
+              iconColor: gc.accent,
+              textColor: gc.text,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Semantics(
+      button: true,
+      label: widget.text,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapDown: _onTapDown,
+        onTapUp: _onTapUp,
+        onTapCancel: _onTapCancel,
+        onTap: _onTap,
+        child: AnimatedScale(
+          scale: _isPressed ? 0.985 : 1.0,
+          duration: const Duration(milliseconds: 100),
+          child: AnimatedBuilder(
+            animation: _animation,
+            builder: (context, _) {
+              final progress = _animation.value;
+              final isAnimating = progress > 0.0;
+
+              return LayoutBuilder(
+                builder: (context, constraints) {
+                  final totalWidth = constraints.maxWidth;
+                  final progressWidth = totalWidth * progress;
+
+                  if (!isAnimating) {
+                    return Container(
+                      width: double.infinity,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: gc.ember,
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                        border: Border.all(color: gc.ember),
+                      ),
+                      alignment: Alignment.center,
+                      child: _buildContent(
+                        icon: Icons.check_rounded,
+                        iconColor: gc.onEmber,
+                        textColor: gc.onEmber,
+                      ),
+                    );
+                  }
+
+                  return ClipRRect(
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    child: Container(
+                      width: double.infinity,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: gc.bgRaised2,
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                        border: Border.all(
+                          color: gc.accent.withValues(alpha: 0.7),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Stack(
+                        children: [
+                          // Base layer: dark track with light text
+                          Positioned.fill(
+                            child: Center(
+                              child: _buildContent(
+                                icon: Icons.check_rounded,
+                                iconColor: gc.accent,
+                                textColor: gc.text,
+                              ),
+                            ),
+                          ),
+
+                          // Fill layer: lime green progress bar filling from left to right
+                          Positioned(
+                            left: 0,
+                            top: 0,
+                            bottom: 0,
+                            width: progressWidth,
+                            child: ClipRect(
+                              child: Container(
+                                width: totalWidth,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [gc.accent, gc.ember],
+                                    begin: Alignment.centerLeft,
+                                    end: Alignment.centerRight,
+                                  ),
+                                ),
+                                child: OverflowBox(
+                                  alignment: Alignment.centerLeft,
+                                  minWidth: totalWidth,
+                                  maxWidth: totalWidth,
+                                  minHeight: 56,
+                                  maxHeight: 56,
+                                  child: Center(
+                                    child: _buildContent(
+                                      icon: Icons.check_rounded,
+                                      iconColor: Colors.black,
+                                      textColor: Colors.black,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          // Glowing leading edge line
+                          if (progressWidth > 4 && progressWidth < totalWidth - 4)
+                            Positioned(
+                              left: progressWidth - 2,
+                              top: 0,
+                              bottom: 0,
+                              width: 3,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.95),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: gc.accent.withValues(alpha: 0.8),
+                                      blurRadius: 6,
+                                      spreadRadius: 2,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ),
       ),
     );
   }
