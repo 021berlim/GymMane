@@ -13,13 +13,30 @@ mixin WorkoutState on FitCore, SettingsState, LibraryState, StatsState, Routines
   int _elapsedBefore = 0;
   bool sessionPaused = false;
 
+  bool get hasActiveSession => session != null && !session!.complete;
+
+  void resumeActiveSession() {
+    if (session == null) return;
+    if (route != 'session') prevRoute = route;
+    route = 'session';
+    notifyListeners();
+  }
+
   void startWorkout() {
+    if (hasActiveSession) {
+      resumeActiveSession();
+      return;
+    }
     if (route != 'train' && route != 'routine-choice') prevRoute = route;
     route = 'routine-choice';
     notifyListeners();
   }
 
   void startCustomWorkout() {
+    if (hasActiveSession) {
+      resumeActiveSession();
+      return;
+    }
     _startCustomWorkout();
   }
 
@@ -135,6 +152,10 @@ mixin WorkoutState on FitCore, SettingsState, LibraryState, StatsState, Routines
   }
 
   void startRoutine(Routine r) {
+    if (hasActiveSession) {
+      resumeActiveSession();
+      return;
+    }
     final exs = routineExercises(r);
     if (exs.isEmpty) {
       _startCustomWorkout();
@@ -144,6 +165,10 @@ mixin WorkoutState on FitCore, SettingsState, LibraryState, StatsState, Routines
   }
 
   void startSession() {
+    if (hasActiveSession) {
+      resumeActiveSession();
+      return;
+    }
     final exs = allExercises.where((e) => sessionPicks.contains(e.id)).toList();
     if (exs.isNotEmpty) _beginSession(exs);
   }

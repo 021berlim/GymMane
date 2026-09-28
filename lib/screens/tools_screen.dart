@@ -7,7 +7,6 @@ import '../models/exercise.dart';
 import '../state/fit_state.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
-import '../widgets/svg_icon.dart';
 import '../widgets/ui_kit.dart';
 
 IconData _toolIcon(String id) => switch (id) {
@@ -28,22 +27,14 @@ class ToolsScreen extends StatelessWidget {
     return SafeArea(
       bottom: false,
       child: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(20, 12, 20, 110 + MediaQuery.of(context).padding.bottom),
+        padding: EdgeInsets.fromLTRB(20, 12, 20, 32 + MediaQuery.of(context).padding.bottom),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              children: [
-                RoundBtn(icon: Ic.chevronLeft, onTap: fit.backFromTools),
-                const SizedBox(width: 12),
-                ScreenTitle(t.tools.toUpperCase()),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Padding(
-              padding: const EdgeInsets.only(left: 48),
-              child: Text(t.calculatorsCount(kToolMeta.length),
-                  style: AppTheme.s(13, color: gc.textSecondary)),
+            ScreenHeader(
+              title: t.tools.toUpperCase(),
+              subtitle: t.calculatorsCount(kToolMeta.length),
+              onBack: fit.backFromTools,
             ),
             const SizedBox(height: 20),
             GridView.count(

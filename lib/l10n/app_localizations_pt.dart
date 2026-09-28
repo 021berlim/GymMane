@@ -198,7 +198,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get skip => 'PULAR';
 
   @override
-  String get addSet => '+ ADICIONAR SÉRIE';
+  String get addSet => 'ADICIONAR SÉRIE';
 
   @override
   String get finishSession => 'FINALIZAR TREINO';
@@ -395,7 +395,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get notLoggedYet => 'Ainda não registrado';
 
   @override
-  String get logShort => '+ REGISTRAR';
+  String get logShort => 'REGISTRAR';
 
   @override
   String get logBodyweight => 'REGISTRAR PESO';

@@ -450,7 +450,7 @@ abstract class AppLocalizations {
   /// No description provided for @addSet.
   ///
   /// In en, this message translates to:
-  /// **'+ ADD SET'**
+  /// **'ADD SET'**
   String get addSet;
 
   /// No description provided for @finishSession.
@@ -762,7 +762,7 @@ abstract class AppLocalizations {
   /// No description provided for @logShort.
   ///
   /// In en, this message translates to:
-  /// **'+ LOG'**
+  /// **'LOG'**
   String get logShort;
 
   /// No description provided for @logBodyweight.

@@ -432,62 +432,69 @@ class _SessionScreenState extends State<SessionScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Semantics(
-                    button: true,
-                    label: 'Série anterior',
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: activeSetIdx > 0
-                          ? () => setState(() => _activeSetIndices[exIdx] = activeSetIdx - 1)
-                          : null,
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(0, 4, 8, 4),
-                        child: Icon(
-                          Icons.chevron_left_rounded,
-                          size: 28,
-                          color: activeSetIdx > 0 ? gc.text : gc.textTertiary.withValues(alpha: 0.3),
+              Flexible(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Semantics(
+                      button: true,
+                      label: 'Série anterior',
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: activeSetIdx > 0
+                            ? () => setState(() => _activeSetIndices[exIdx] = activeSetIdx - 1)
+                            : null,
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(0, 4, 4, 4),
+                          child: Icon(
+                            Icons.chevron_left_rounded,
+                            size: 24,
+                            color: activeSetIdx > 0 ? gc.text : gc.textTertiary.withValues(alpha: 0.3),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  Text(
-                    'SÉRIE ${activeSetIdx + 1} DE ${ex.sets.length}',
-                    style: AppTheme.d(
-                      14,
-                      weight: FontWeight.w800,
-                      color: gc.text,
-                      letterSpacing: 1.2,
+                    Flexible(
+                      child: Text(
+                        'SÉRIE ${activeSetIdx + 1} DE ${ex.sets.length}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTheme.d(
+                          13,
+                          weight: FontWeight.w800,
+                          color: gc.text,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
                     ),
-                  ),
-                  if (st.done) ...[
-                    const SizedBox(width: 6),
-                    Icon(Icons.check_circle_rounded, size: 16, color: gc.sage),
+                    if (st.done) ...[
+                      const SizedBox(width: 4),
+                      Icon(Icons.check_circle_rounded, size: 15, color: gc.sage),
+                    ],
+                    Semantics(
+                      button: true,
+                      label: 'Próxima série',
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: activeSetIdx < ex.sets.length - 1
+                            ? () => setState(() => _activeSetIndices[exIdx] = activeSetIdx + 1)
+                            : null,
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(4, 4, 4, 4),
+                          child: Icon(
+                            Icons.chevron_right_rounded,
+                            size: 24,
+                            color: activeSetIdx < ex.sets.length - 1
+                                ? gc.text
+                                : gc.textTertiary.withValues(alpha: 0.3),
+                          ),
+                        ),
+                      ),
+                    ),
                   ],
-                  Semantics(
-                    button: true,
-                    label: 'Próxima série',
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: activeSetIdx < ex.sets.length - 1
-                          ? () => setState(() => _activeSetIndices[exIdx] = activeSetIdx + 1)
-                          : null,
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
-                        child: Icon(
-                          Icons.chevron_right_rounded,
-                          size: 28,
-                          color: activeSetIdx < ex.sets.length - 1
-                              ? gc.text
-                              : gc.textTertiary.withValues(alpha: 0.3),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
+              const SizedBox(width: 8),
               // Right side: + Série button
               GestureDetector(
                 behavior: HitTestBehavior.opaque,

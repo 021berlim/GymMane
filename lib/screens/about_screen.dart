@@ -6,7 +6,6 @@ import '../l10n/l10n.dart';
 import '../state/fit_state.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
-import '../widgets/svg_icon.dart';
 import '../widgets/ui_kit.dart';
 
 const _kArtSourceUrl = 'https://github.com/bryllim/workout-guide';
@@ -45,15 +44,14 @@ class _AboutScreenState extends State<AboutScreen> {
     return SafeArea(
       bottom: false,
       child: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(20, 12, 20, 110 + MediaQuery.of(context).padding.bottom),
+        padding: EdgeInsets.fromLTRB(20, 12, 20, 32 + MediaQuery.of(context).padding.bottom),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(children: [
-              RoundBtn(icon: Ic.chevronLeft, onTap: fit.backFromAbout),
-              const SizedBox(width: 12),
-              Text(t.about.toUpperCase(), style: AppTheme.d(18, weight: FontWeight.w700, color: gc.text, letterSpacing: 1.5)),
-            ]),
+            ScreenHeader(
+              title: t.about.toUpperCase(),
+              onBack: fit.backFromAbout,
+            ),
             const SizedBox(height: 20),
             _hero(gc),
             const SizedBox(height: 24),
@@ -121,10 +119,13 @@ class _AboutScreenState extends State<AboutScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Versão do aplicativo:',
-                style: AppTheme.s(13, color: gc.textSecondary),
+              Expanded(
+                child: Text(
+                  'Versão do aplicativo:',
+                  style: AppTheme.s(13, color: gc.textSecondary),
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(

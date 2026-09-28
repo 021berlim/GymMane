@@ -19,15 +19,14 @@ class RoutinesScreen extends StatelessWidget {
     return SafeArea(
       bottom: false,
       child: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(20, 12, 20, 110 + MediaQuery.of(context).padding.bottom),
+        padding: EdgeInsets.fromLTRB(20, 12, 20, 32 + MediaQuery.of(context).padding.bottom),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(children: [
-              RoundBtn(icon: Ic.chevronLeft, onTap: fit.backFromRoutines),
-              const SizedBox(width: 12),
-              ScreenTitle(t.routines),
-            ]),
+            ScreenHeader(
+              title: t.routines.toUpperCase(),
+              onBack: fit.backFromRoutines,
+            ),
             const SizedBox(height: 22),
             Text(t.weeklyPlan, style: AppTheme.d(12, weight: FontWeight.w600, color: gc.textSecondary, letterSpacing: 3)),
             const SizedBox(height: 10),

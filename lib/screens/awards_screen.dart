@@ -22,7 +22,7 @@ class AwardsScreen extends StatelessWidget {
       bottom: false,
       child: SingleChildScrollView(
         clipBehavior: Clip.none,
-        padding: EdgeInsets.fromLTRB(20, 12, 20, 110 + MediaQuery.of(context).padding.bottom),
+        padding: EdgeInsets.fromLTRB(20, 12, 20, 32 + MediaQuery.of(context).padding.bottom),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [

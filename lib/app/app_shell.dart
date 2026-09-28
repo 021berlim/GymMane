@@ -396,6 +396,7 @@ class _NavBar extends StatelessWidget {
 
   Widget _fab(BuildContext context) {
     final gc = context.gc;
+    final inProgress = fit.hasActiveSession;
     return GestureDetector(
       onTap: fit.startWorkout,
       child: Container(
@@ -405,11 +406,15 @@ class _NavBar extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [gc.accent, gc.brass],
+            colors: inProgress ? [gc.ember, gc.accent] : [gc.accent, gc.brass],
           ),
           shape: BoxShape.circle,
         ),
-        child: Icon(PhosphorIconsFill.play, size: 24, color: gc.bg),
+        child: Icon(
+          PhosphorIconsFill.play,
+          size: 24,
+          color: inProgress ? Colors.black : gc.bg,
+        ),
       ),
     );
   }

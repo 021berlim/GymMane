@@ -198,7 +198,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get skip => 'SKIP';
 
   @override
-  String get addSet => '+ ADD SET';
+  String get addSet => 'ADD SET';
 
   @override
   String get finishSession => 'FINISH SESSION';
@@ -395,7 +395,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notLoggedYet => 'Not logged yet';
 
   @override
-  String get logShort => '+ LOG';
+  String get logShort => 'LOG';
 
   @override
   String get logBodyweight => 'LOG BODYWEIGHT';

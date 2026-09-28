@@ -387,62 +387,67 @@ class _FocusHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final gc = context.gc;
+    final hasActive = fit.hasActiveSession;
     final focus = fit.suggestedFocus;
     final routine = fit.todayRoutine;
     final count = routine == null ? fit.getFilteredExercises(focus.muscles).length : routine.exerciseIds.length;
     final title = routine == null ? focus.title : fit.routineTitle(routine);
-    final subtitle = fit.hasData
-        ? t.exerciseCount(count)
-        : t.firstSessionHint;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: Container(
-        decoration: BoxDecoration(
-          color: gc.bgRaised,
-          border: Border.all(color: gc.border),
-          borderRadius: BorderRadius.circular(24),
-        ),
-        child: Stack(
-          children: [
-            Positioned(
-              left: -45,
-              bottom: -45,
-              child: Container(
-                width: 150,
-                height: 150,
-                decoration: BoxDecoration(color: gc.accentSoft, shape: BoxShape.circle),
+    final subtitle = hasActive
+        ? '${t.resumeWorkout} · ${fit.elapsedLabel}'
+        : (fit.hasData ? t.exerciseCount(count) : t.firstSessionHint);
+    return GestureDetector(
+      onTap: hasActive ? fit.startWorkout : null,
+      behavior: HitTestBehavior.opaque,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Container(
+          decoration: BoxDecoration(
+            color: gc.bgRaised,
+            border: Border.all(color: hasActive ? gc.accent : gc.border),
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Stack(
+            children: [
+              Positioned(
+                left: -45,
+                bottom: -45,
+                child: Container(
+                  width: 150,
+                  height: 150,
+                  decoration: BoxDecoration(color: gc.accentSoft, shape: BoxShape.circle),
+                ),
               ),
-            ),
-            Positioned(
-              right: -14,
-              top: -6,
-              bottom: -6,
-              child: Opacity(
-                opacity: 0.55,
-                child: Image.asset('assets/img/runner.png', fit: BoxFit.fitHeight),
+              Positioned(
+                right: -14,
+                top: -6,
+                bottom: -6,
+                child: Opacity(
+                  opacity: 0.55,
+                  child: Image.asset('assets/img/runner.png', fit: BoxFit.fitHeight),
+                ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(t.todaysFocus,
-                      style: AppTheme.d(12, weight: FontWeight.w600, color: gc.brass, letterSpacing: 3)),
-                  const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(hasActive ? t.inProgress.toUpperCase() : t.todaysFocus,
+                        style: AppTheme.d(12, weight: FontWeight.w600, color: gc.brass, letterSpacing: 3)),
+                    const SizedBox(height: 8),
                     Text(title, style: AppTheme.d(48, weight: FontWeight.w700, color: gc.text, letterSpacing: 1)),
-                  const SizedBox(height: 8),
-                  Text(subtitle, style: AppTheme.s(14, color: gc.textSecondary)),
-                  const SizedBox(height: 20),
-                  PrimaryButton(
-                    label: t.startWorkout,
-                    icon: Ic.play,
-                    onTap: fit.startWorkout,
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    Text(subtitle, style: AppTheme.s(14, color: gc.textSecondary)),
+                    const SizedBox(height: 20),
+                    PrimaryButton(
+                      label: (hasActive ? t.resumeWorkout : t.startWorkout).toUpperCase(),
+                      icon: Ic.play,
+                      onTap: fit.startWorkout,
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

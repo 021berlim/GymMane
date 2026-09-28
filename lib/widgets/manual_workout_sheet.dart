@@ -1040,7 +1040,7 @@ class _ManualWorkoutSheetState extends State<ManualWorkoutSheet> {
                 Icon(PhosphorIconsRegular.plus, size: 14, color: gc.accent),
                 const SizedBox(width: 4),
                 Text(
-                  '+ ${t.stage}',
+                  t.stage,
                   style: AppTheme.s(12, weight: FontWeight.w600, color: gc.accent),
                 ),
               ],
