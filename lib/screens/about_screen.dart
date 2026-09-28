@@ -19,7 +19,7 @@ class AboutScreen extends StatefulWidget {
 }
 
 class _AboutScreenState extends State<AboutScreen> {
-  String _version = '1.0.6';
+  String _version = '1.0.30';
 
   @override
   void initState() {
