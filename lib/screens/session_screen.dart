@@ -2142,7 +2142,7 @@ class _ProgressCompleteButtonState extends State<_ProgressCompleteButton>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 380),
+      duration: const Duration(milliseconds: 700),
     );
     _animation = CurvedAnimation(
       parent: _controller,
@@ -2337,11 +2337,7 @@ class _ProgressCompleteButtonState extends State<_ProgressCompleteButton>
                               child: Container(
                                 width: totalWidth,
                                 decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [gc.accent, gc.ember],
-                                    begin: Alignment.centerLeft,
-                                    end: Alignment.centerRight,
-                                  ),
+                                  color: gc.accent,
                                 ),
                                 child: OverflowBox(
                                   alignment: Alignment.centerLeft,
@@ -2360,27 +2356,6 @@ class _ProgressCompleteButtonState extends State<_ProgressCompleteButton>
                               ),
                             ),
                           ),
-
-                          // Glowing leading edge line
-                          if (progressWidth > 4 && progressWidth < totalWidth - 4)
-                            Positioned(
-                              left: progressWidth - 2,
-                              top: 0,
-                              bottom: 0,
-                              width: 3,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.95),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: gc.accent.withValues(alpha: 0.8),
-                                      blurRadius: 6,
-                                      spreadRadius: 2,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
                         ],
                       ),
                     ),
