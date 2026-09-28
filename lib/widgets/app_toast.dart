@@ -29,7 +29,7 @@ class AppToast {
         iconData = customIcon ?? PhosphorIcons.checkCircle(PhosphorIconsStyle.fill);
         break;
       case AppToastType.error:
-        accentColor = const Color(0xFFFF5555);
+        accentColor = gc.danger;
         iconData = customIcon ?? PhosphorIcons.xCircle(PhosphorIconsStyle.fill);
         break;
       case AppToastType.download:

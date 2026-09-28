@@ -891,7 +891,7 @@ const List<String> kProfileBadges = ['gold', 'blue', 'green'];
 
 Color badgeColor(String id) => switch (id) {
   'blue' => const Color(0xFF4A9EEB),
-  'green' => const Color(0xFF54B979),
+  'green' => const Color(0xFFA3E635),
   _ => const Color(0xFFE8B84B),
 };
 

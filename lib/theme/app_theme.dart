@@ -20,7 +20,7 @@ class AppTheme {
         primary: gc.accent,
         onPrimary: gc.onEmber,
         onSurface: gc.text,
-        error: const Color(0xFFE5563B),
+        error: gc.danger,
       ),
       textTheme: base.textTheme.apply(
         fontFamily: sans,
@@ -82,3 +82,13 @@ class AppTheme {
         height: height,
       );
 }
+
+class AppRadius {
+  AppRadius._();
+  static const double sm = 8.0;
+  static const double md = 14.0;
+  static const double card = 16.0;
+  static const double sheet = 28.0;
+  static const double pill = 100.0;
+}
+

@@ -19,7 +19,7 @@ class MuscleIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final gc = context.gc;
-    final activeGreen = highlightColor ?? const Color(0xFF76E026);
+    final activeGreen = highlightColor ?? gc.accent;
     final idleColor = Color.lerp(gc.bgRaised2, gc.textSecondary, 0.20)!;
 
     return Container(
