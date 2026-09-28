@@ -124,7 +124,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get chooseRoutineTitle => 'ESCOLHA SEU TREINO';
 
   @override
-  String get chooseRoutineBody => 'Escolha uma rotina salva ou monte um treino personalizado.';
+  String get chooseRoutineBody => 'Escolha um treino salvo ou monte um treino personalizado.';
 
   @override
   String get customWorkout => 'TREINO PERSONALIZADO';
@@ -713,7 +713,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get addExercises => 'Adicionar exercícios';
 
   @override
-  String get deleteRoutine => 'Excluir esta rotina?';
+  String get deleteRoutine => 'Excluir este treino?';
 
   @override
   String exercisesWithCount(int n) {
@@ -737,7 +737,7 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String get removeFromRoutine => 'Remover da rotina';
+  String get removeFromRoutine => 'Remover do treino';
 
   @override
   String get dropExercise => 'Remover este exercício?';
@@ -761,7 +761,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get resetBody =>
-      'Sessões, recordes, rotinas, notas e perfil. Não é possível desfazer. Exporte um backup antes, se precisar.';
+      'Sessões, recordes, treinos, notas e perfil. Não é possível desfazer. Exporte um backup antes, se precisar.';
 
   @override
   String get resetConfirm => 'Excluir tudo';
@@ -1686,7 +1686,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get awardFirstWorkoutLine => 'O primeiro já está registrado. Esse é o difícil.';
 
   @override
-  String get awardFirstRoutineName => 'Primeira rotina';
+  String get awardFirstRoutineName => 'Primeiro treino criado';
 
   @override
   String get awardFirstRoutineLine => 'Você tem um plano ao qual voltar.';
@@ -1803,16 +1803,16 @@ class AppLocalizationsPt extends AppLocalizations {
   String get workoutSource => 'Origem do Treino';
 
   @override
-  String get existingRoutine => 'Rotina Salva';
+  String get existingRoutine => 'Treino Salvo';
 
   @override
   String get manualExercises => 'Selecionar Exercícios';
 
   @override
-  String get selectRoutineHint => 'Escolha uma rotina da sua lista';
+  String get selectRoutineHint => 'Escolha um treino da sua lista';
 
   @override
-  String get noRoutinesAvailable => 'Nenhuma rotina salva ainda. Selecione exercícios manualmente.';
+  String get noRoutinesAvailable => 'Nenhum treino salvo ainda. Selecione exercícios manualmente.';
 
   @override
   String get sessionDuration => 'Duração Total (min)';

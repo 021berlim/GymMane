@@ -268,7 +268,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       onTap: onMore,
       child: Row(
         children: [
-          Text(title.toUpperCase(), style: AppTheme.d(16, weight: FontWeight.w700, color: gc.text, letterSpacing: 1)),
+          Text(title, style: AppTheme.d(16, weight: FontWeight.w700, color: gc.text, letterSpacing: 1)),
           if (count != null) ...[
             const SizedBox(width: 8),
             Text(count, style: AppTheme.s(13, weight: FontWeight.w600, color: gc.textTertiary)),

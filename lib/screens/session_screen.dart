@@ -1662,7 +1662,7 @@ class _SessionScreenState extends State<SessionScreen> {
                 ],
                 const SizedBox(height: 20),
                 PrimaryButton(
-                  label: 'VOLTAR AO TREINO',
+                  label: 'Voltar ao Treino',
                   onTap: () => Navigator.of(bctx).pop(),
                 ),
               ],

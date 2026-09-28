@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fitiron/l10n/l10n.dart';
+import 'package:fitiron/models/exercise.dart';
 import 'package:fitiron/models/workout.dart';
 import 'package:fitiron/screens/home_screen.dart';
 import 'package:fitiron/state/fit_state.dart';
 import 'package:fitiron/theme/app_theme.dart';
 import 'package:fitiron/widgets/charts.dart';
 import 'package:fitiron/widgets/day_summary_sheet.dart';
+import 'package:fitiron/widgets/exercise_category_widgets.dart';
+import 'package:fitiron/widgets/exercise_picker_sheet.dart';
 import 'package:fitiron/widgets/manual_workout_sheet.dart';
 
 void main() {
@@ -147,7 +150,7 @@ void main() {
 
       // Should show rest day text and register workout button
       expect(find.text(t.restDay), findsOneWidget);
-      expect(find.text(t.registerWorkout), findsWidgets);
+      expect(find.text(t.registerWorkout.toUpperCase()), findsOneWidget);
     });
 
     testWidgets('DaySummarySheet with workouts shows stats and exercises', (tester) async {
@@ -179,7 +182,7 @@ void main() {
       // Should show exercises count, sets count, volume
       expect(find.text(t.restDay), findsNothing);
       expect(find.text('Supino Reto'), findsOneWidget);
-      expect(find.text(t.registerWorkout), findsWidgets);
+      expect(find.text(t.registerWorkout.toUpperCase()), findsOneWidget);
     });
 
     testWidgets('ManualWorkoutSheet renders date, source selector, and can save workout', (tester) async {
@@ -200,6 +203,103 @@ void main() {
       expect(find.text(t.saveWorkout.toUpperCase()), findsOneWidget);
       expect(find.text(t.existingRoutine), findsOneWidget);
       expect(find.text(t.manualExercises), findsOneWidget);
+    });
+
+    testWidgets('ManualWorkoutSheet renders routine card for 1 routine and dropdown for multiple routines', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(430, 932));
+
+      final benchEx = fit.allExercises.firstWhere((e) => e.primary == 'chest');
+      fit.routines.clear();
+      fit.routines.add(Routine(
+        'routine-test-1',
+        'Treino A',
+        [benchEx.id],
+      ));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(body: ManualWorkoutSheet(initialDate: DateTime(2026, 9, 28))),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // With only 1 routine, it should NOT be a DropdownButton
+      expect(find.byType(DropdownButton<String>), findsNothing);
+      expect(find.text('Treino A'), findsWidgets);
+
+      // Exercise should be present but minimized (sets editor column header # should not be visible)
+      expect(find.text('#'), findsNothing);
+
+      // Tap exercise header to expand
+      final exerciseCard = find.text(exerciseName(benchEx));
+      expect(exerciseCard, findsOneWidget);
+      await tester.tap(exerciseCard);
+      await tester.pumpAndSettle();
+
+      // Now sets editor should be visible
+      expect(find.text('#'), findsOneWidget);
+
+      // Tap again to collapse
+      await tester.tap(exerciseCard);
+      await tester.pumpAndSettle();
+      expect(find.text('#'), findsNothing);
+
+      // Now add a second routine and verify it becomes a DropdownButton
+      fit.routines.add(Routine(
+        'routine-test-2',
+        'Treino B',
+        [benchEx.id],
+      ));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(body: ManualWorkoutSheet(initialDate: DateTime(2026, 9, 28))),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // With > 1 routine, it MUST be a DropdownButton
+      expect(find.byType(DropdownButton<String>), findsOneWidget);
+    });
+
+    testWidgets('ExercisePickerSheet renders category tabs and search', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(430, 932));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const Scaffold(body: ExercisePickerSheet()),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ExercisePickerSheet), findsOneWidget);
+      expect(find.byType(CategoryTabSelector), findsOneWidget);
+      expect(find.text('POR MÚSCULO'), findsOneWidget);
+      expect(find.text('EQUIPAMENTOS'), findsOneWidget);
+      expect(find.text('FAVORITOS'), findsOneWidget);
+
+      // Tap on EQUIPAMENTOS tab
+      await tester.tap(find.text('EQUIPAMENTOS'));
+      await tester.pumpAndSettle();
+      expect(find.text('BARRAS E PESOS'), findsOneWidget);
+
+      // Tap on FAVORITOS tab
+      await tester.tap(find.text('FAVORITOS'));
+      await tester.pumpAndSettle();
+
+      // Test searching
+      await tester.enterText(find.byType(TextField), 'Supino');
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Supino'), findsWidgets);
     });
   });
 }
