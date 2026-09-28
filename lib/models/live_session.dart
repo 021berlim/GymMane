@@ -41,8 +41,8 @@ class SessionSet {
       };
 
   factory SessionSet.fromJson(Map<String, dynamic> j) => SessionSet(
-        (j['r'] as num).toInt(),
-        (j['w'] as num).toDouble(),
+        (j['r'] as num?)?.toInt() ?? 0,
+        (j['w'] as num?)?.toDouble() ?? 0.0,
         j['d'] as bool? ?? false,
         timeSeconds: (j['t'] as num?)?.toInt(),
         cardioParam: (j['cp'] as num?)?.toDouble(),
@@ -66,10 +66,13 @@ class SessionExercise {
         's': sets.map((s) => s.toJson()).toList(),
       };
   factory SessionExercise.fromJson(Map<String, dynamic> j) => SessionExercise(
-        j['id'] as String,
-        j['n'] as String,
-        j['p'] as String,
-        (j['s'] as List).map((e) => SessionSet.fromJson((e as Map).cast<String, dynamic>())).toList(),
+        (j['id']?.toString()) ?? '',
+        (j['n']?.toString()) ?? '',
+        (j['p']?.toString()) ?? 'other',
+        ((j['s'] as List?) ?? [])
+            .whereType<Map>()
+            .map((e) => SessionSet.fromJson(e.cast<String, dynamic>()))
+            .toList(),
       );
 }
 

@@ -70,6 +70,27 @@ class SqliteStore {
       try {
         await _db!.execute('ALTER TABLE profiles ADD COLUMN recommendation_seed INTEGER');
       } catch (_) {}
+      for (final col in [
+        'kind INTEGER DEFAULT 0',
+        'rpe REAL',
+        'sec INTEGER',
+        'km REAL',
+        'cardio_param REAL',
+        'speed REAL',
+      ]) {
+        try {
+          await _db!.execute('ALTER TABLE session_sets ADD COLUMN $col');
+        } catch (_) {}
+      }
+      for (final col in [
+        'target_time_seconds INTEGER',
+        'target_cardio_param REAL',
+        'target_speed REAL',
+      ]) {
+        try {
+          await _db!.execute('ALTER TABLE routine_exercises ADD COLUMN $col');
+        } catch (_) {}
+      }
       await _migrateLegacyDataIfNeeded();
       await _syncCatalogExercisesIfNeeded();
     } catch (e, stack) {
@@ -264,9 +285,15 @@ class SqliteStore {
       CREATE TABLE session_sets (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         session_exercise_id INTEGER NOT NULL,
-        reps INTEGER NOT NULL,
-        weight REAL NOT NULL,
+        reps INTEGER NOT NULL DEFAULT 0,
+        weight REAL NOT NULL DEFAULT 0.0,
         sort_order INTEGER NOT NULL DEFAULT 0,
+        kind INTEGER DEFAULT 0,
+        rpe REAL,
+        sec INTEGER,
+        km REAL,
+        cardio_param REAL,
+        speed REAL,
         FOREIGN KEY (session_exercise_id) REFERENCES session_exercises (id) ON DELETE CASCADE
       )
     ''');
@@ -303,6 +330,9 @@ class SqliteStore {
         target_sets INTEGER NOT NULL DEFAULT 3,
         target_weight REAL NOT NULL DEFAULT 0.0,
         target_reps INTEGER NOT NULL DEFAULT 10,
+        target_time_seconds INTEGER,
+        target_cardio_param REAL,
+        target_speed REAL,
         sort_order INTEGER NOT NULL DEFAULT 0,
         FOREIGN KEY (routine_id) REFERENCES routines (id) ON DELETE CASCADE
       )
@@ -501,6 +531,9 @@ class SqliteStore {
               's': re['target_sets'],
               'w': re['target_weight'],
               'r': re['target_reps'],
+              if (re['target_time_seconds'] != null) 't': re['target_time_seconds'],
+              if (re['target_cardio_param'] != null) 'cp': re['target_cardio_param'],
+              if (re['target_speed'] != null) 'sp': re['target_speed'],
             };
           }
 
@@ -597,8 +630,14 @@ class SqliteStore {
 
             final List<Map<String, dynamic>> setList = setRows
                 .map((st) => {
-                      'r': st['reps'],
-                      'w': st['weight'],
+                      'r': (st['reps'] as num?)?.toInt() ?? 0,
+                      'w': (st['weight'] as num?)?.toDouble() ?? 0.0,
+                      if (st['kind'] != null && (st['kind'] as num) != 0) 'k': (st['kind'] as num).toInt(),
+                      if (st['rpe'] != null) 'e': (st['rpe'] as num).toDouble(),
+                      if (st['sec'] != null) 't': (st['sec'] as num).toInt(),
+                      if (st['km'] != null) 'km': (st['km'] as num).toDouble(),
+                      if (st['cardio_param'] != null) 'cp': (st['cardio_param'] as num).toDouble(),
+                      if (st['speed'] != null) 'sp': (st['speed'] as num).toDouble(),
                     })
                 .toList();
 
@@ -649,12 +688,23 @@ class SqliteStore {
     return result;
   }
 
-  Future<void> saveFullState(Map<String, dynamic> data) async {
+  Future<void> _writeQueue = Future.value();
+
+  Future<void> saveFullState(Map<String, dynamic> data) {
+    final next = _writeQueue.then((_) => _executeSaveFullState(data));
+    _writeQueue = next.catchError((e) {
+      debugPrint('SqliteStore._writeQueue error: $e');
+    });
+    return next;
+  }
+
+  Future<void> _executeSaveFullState(Map<String, dynamic> data) async {
     if (data.isEmpty) return;
-    final database = await _ensureDb;
-    await database.transaction((txn) async {
-      await txn.delete('profiles');
-      await txn.delete('app_settings');
+    try {
+      final database = await _ensureDb;
+      await database.transaction((txn) async {
+        await txn.delete('profiles');
+        await txn.delete('app_settings');
       await txn.delete('sessions');
       await txn.delete('session_exercises');
       await txn.delete('session_sets');
@@ -727,6 +777,7 @@ class SqliteStore {
 
       // Mark migration done
       await saveSetting('migrated_v1', 'true');
+      await saveSetting('catalog_brazilian_v2_synced', 'true');
 
       // 3. Exercise Notes
       final exNotesMap = data['exNotes'] as Map?;
@@ -791,6 +842,9 @@ class SqliteStore {
               'target_sets': targetSets,
               'target_weight': targetWeight,
               'target_reps': targetReps,
+              'target_time_seconds': (c?['t'] as num?)?.toInt(),
+              'target_cardio_param': (c?['cp'] as num?)?.toDouble(),
+              'target_speed': (c?['sp'] as num?)?.toDouble(),
               'sort_order': i,
             });
           }
@@ -885,29 +939,42 @@ class SqliteStore {
 
           final exList = (sMap['ex'] as List?) ?? [];
           for (var i = 0; i < exList.length; i++) {
+            if (exList[i] is! Map) continue;
             final eMap = (exList[i] as Map).cast<String, dynamic>();
             final sessionExId = await txn.insert('session_exercises', {
               'session_id': sessionId,
-              'exercise_id': eMap['id'] as String,
-              'name': eMap['n'] as String,
-              'primary_muscle': eMap['p'] as String,
+              'exercise_id': (eMap['id']?.toString()) ?? '',
+              'name': (eMap['n']?.toString()) ?? '',
+              'primary_muscle': (eMap['p']?.toString()) ?? 'other',
               'sort_order': i,
             });
 
             final setList = (eMap['s'] as List?) ?? [];
             for (var j = 0; j < setList.length; j++) {
+              if (setList[j] is! Map) continue;
               final stMap = (setList[j] as Map).cast<String, dynamic>();
+              final rNum = (stMap['r'] as num?)?.toInt() ?? (stMap['t'] as num?)?.toInt() ?? 0;
+              final wNum = (stMap['w'] as num?)?.toDouble() ?? (stMap['cp'] as num?)?.toDouble() ?? 0.0;
               await txn.insert('session_sets', {
                 'session_exercise_id': sessionExId,
-                'reps': (stMap['r'] as num).toInt(),
-                'weight': (stMap['w'] as num).toDouble(),
+                'reps': rNum,
+                'weight': wNum,
                 'sort_order': j,
+                'kind': (stMap['k'] as num?)?.toInt() ?? 0,
+                'rpe': (stMap['e'] as num?)?.toDouble(),
+                'sec': (stMap['t'] as num?)?.toInt(),
+                'km': (stMap['km'] as num?)?.toDouble(),
+                'cardio_param': (stMap['cp'] as num?)?.toDouble(),
+                'speed': (stMap['sp'] as num?)?.toDouble(),
               });
             }
           }
         }
       }
     });
+    } catch (e, stack) {
+      debugPrint('SqliteStore._executeSaveFullState error: $e\n$stack');
+    }
   }
 
   Future<void> clearAll() async {

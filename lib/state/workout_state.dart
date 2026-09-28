@@ -666,6 +666,7 @@ mixin WorkoutState on FitCore, SettingsState, LibraryState, StatsState, Routines
         photosBefore: s.photosBefore,
         photosAfter: s.photosAfter,
       ));
+      sessions.sort((a, b) => a.date.compareTo(b.date));
       _computeSummaryHighlights(logged);
     } else {
       summaryPrs = 0;

@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fitiron/models/profile.dart';
+import 'package:fitiron/models/workout.dart';
 import 'package:fitiron/services/local_store.dart';
 import 'package:fitiron/services/sqlite_store.dart';
 import 'package:fitiron/state/fit_state.dart';
@@ -199,6 +200,42 @@ void main() {
     await Store.instance.init();
     fit.loadFromStore();
     expect(fit.profile.name, 'AsyncUser');
+  });
+
+  test('workout sessions with cardio and rpe survive sqlite persistence and reload', () async {
+    final date = DateTime(2026, 9, 20, 15, 30);
+    final strengthSet = LoggedSet(10, 70.0, rpe: 8.5, kind: SetKind.normal);
+    final cardioSet = LoggedSet(1500, 2.0, sec: 1500, cardioParam: 2.0, speed: 10.0);
+
+    final session = LoggedSession(
+      date,
+      3600,
+      [
+        LoggedExercise('bench-press', 'Supino Reto', 'chest', [strengthSet]),
+        LoggedExercise('treadmill', 'Esteira', 'cardio', [cardioSet]),
+      ],
+    );
+
+    fit.addLoggedSession(session);
+    await fit.persistNow();
+
+    // Re-init store from SQLite directly
+    await Store.instance.init();
+    fit.loadFromStore();
+
+    final restored = fit.sessions.firstWhere((s) => s.date == date);
+    expect(restored.exercises.length, 2);
+
+    final restoredStrength = restored.exercises.firstWhere((e) => e.id == 'bench-press');
+    expect(restoredStrength.sets.first.reps, 10);
+    expect(restoredStrength.sets.first.weight, 70.0);
+    expect(restoredStrength.sets.first.rpe, 8.5);
+
+    final restoredCardio = restored.exercises.firstWhere((e) => e.id == 'treadmill');
+    expect(restoredCardio.isCardio, isTrue);
+    expect(restoredCardio.sets.first.sec, 1500);
+    expect(restoredCardio.sets.first.cardioParam, 2.0);
+    expect(restoredCardio.sets.first.speed, 10.0);
   });
 }
 

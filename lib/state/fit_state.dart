@@ -80,7 +80,14 @@ class FitState extends FitCore
           ..clear()
           ..addAll(((data['routines'] as List?) ?? [])
               .whereType<Map>()
-              .map((e) => Routine.fromJson(e.cast<String, dynamic>())));
+              .map((e) {
+                try {
+                  return Routine.fromJson(e.cast<String, dynamic>());
+                } catch (err) {
+                  return null;
+                }
+              })
+              .whereType<Routine>());
         weeklyPlan
           ..clear()
           ..addAll(((data['weeklyPlan'] as Map?) ?? {})
@@ -95,7 +102,15 @@ class FitState extends FitCore
           ..clear()
           ..addAll(((data['sessions'] as List?) ?? [])
               .whereType<Map>()
-              .map((e) => LoggedSession.fromJson(e.cast<String, dynamic>())));
+              .map((e) {
+                try {
+                  return LoggedSession.fromJson(e.cast<String, dynamic>());
+                } catch (err) {
+                  debugPrint('Error decoding LoggedSession: $err');
+                  return null;
+                }
+              })
+              .whereType<LoggedSession>());
         bodyweight
           ..clear()
           ..addAll(((data['bodyweight'] as List?) ?? [])

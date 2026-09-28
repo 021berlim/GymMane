@@ -49,8 +49,8 @@ class LoggedSet {
         if (speed != null) 'sp': speed,
       };
   factory LoggedSet.fromJson(Map<String, dynamic> j) => LoggedSet(
-        (j['r'] as num).toInt(),
-        (j['w'] as num).toDouble(),
+        (j['r'] as num?)?.toInt() ?? (j['t'] as num?)?.toInt() ?? 0,
+        (j['w'] as num?)?.toDouble() ?? (j['cp'] as num?)?.toDouble() ?? 0.0,
         kind: setKindFrom(j['k']),
         rpe: (j['e'] as num?)?.toDouble(),
         sec: (j['t'] as num?)?.toInt(),
@@ -80,10 +80,13 @@ class LoggedExercise {
         's': sets.map((s) => s.toJson()).toList(),
       };
   factory LoggedExercise.fromJson(Map<String, dynamic> j) => LoggedExercise(
-        j['id'] as String,
-        j['n'] as String,
-        j['p'] as String,
-        (j['s'] as List).map((e) => LoggedSet.fromJson(e as Map<String, dynamic>)).toList(),
+        (j['id']?.toString()) ?? '',
+        (j['n']?.toString()) ?? '',
+        (j['p']?.toString()) ?? 'other',
+        ((j['s'] as List?) ?? [])
+            .whereType<Map>()
+            .map((e) => LoggedSet.fromJson(e.cast<String, dynamic>()))
+            .toList(),
       );
 }
 
@@ -169,10 +172,15 @@ class LoggedSession {
       pas = [j['pa'] as String];
     }
 
+    final dateParsed = DateTime.tryParse(j['d']?.toString() ?? '') ?? DateTime.now();
+
     return LoggedSession(
-      DateTime.parse(j['d'] as String),
+      dateParsed,
       (j['dur'] as num?)?.toInt() ?? 0,
-      (j['ex'] as List).map((e) => LoggedExercise.fromJson(e as Map<String, dynamic>)).toList(),
+      ((j['ex'] as List?) ?? [])
+          .whereType<Map>()
+          .map((e) => LoggedExercise.fromJson(e.cast<String, dynamic>()))
+          .toList(),
       bwBefore: (j['bwb'] as num?)?.toDouble(),
       bwAfter: (j['bwa'] as num?)?.toDouble(),
       photosBefore: pbs,
@@ -244,7 +252,7 @@ class RoutineExerciseConfig {
       };
 
   factory RoutineExerciseConfig.fromJson(Map<String, dynamic> j) => RoutineExerciseConfig(
-        exerciseId: j['id'] as String,
+        exerciseId: (j['id']?.toString()) ?? '',
         targetSets: (j['s'] as num?)?.toInt() ?? 3,
         targetWeight: (j['w'] as num?)?.toDouble() ?? 0.0,
         targetReps: (j['r'] as num?)?.toInt() ?? 10,
@@ -280,17 +288,19 @@ class Routine {
   factory Routine.fromJson(Map<String, dynamic> j) {
     final cfgMap = <String, RoutineExerciseConfig>{};
     if (j['cfg'] != null) {
-      final rawCfg = j['cfg'] as Map<String, dynamic>;
-      rawCfg.forEach((k, v) {
-        if (v is Map<String, dynamic>) {
-          cfgMap[k] = RoutineExerciseConfig.fromJson(v);
-        }
-      });
+      final rawCfg = j['cfg'];
+      if (rawCfg is Map) {
+        rawCfg.forEach((k, v) {
+          if (v is Map) {
+            cfgMap[k.toString()] = RoutineExerciseConfig.fromJson(v.cast<String, dynamic>());
+          }
+        });
+      }
     }
     return Routine(
-      j['id'] as String,
-      j['n'] as String,
-      ((j['ex'] as List?) ?? []).cast<String>(),
+      (j['id']?.toString()) ?? '',
+      (j['n']?.toString()) ?? '',
+      ((j['ex'] as List?) ?? []).map((e) => e.toString()).toList(),
       configs: cfgMap,
     );
   }
