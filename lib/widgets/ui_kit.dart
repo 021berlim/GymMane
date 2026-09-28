@@ -12,7 +12,7 @@ class SoftCard extends StatelessWidget {
     super.key,
     required this.child,
     this.padding = const EdgeInsets.all(20),
-    this.radius = 20,
+    this.radius = AppRadius.card,
     this.borderColor,
     this.color,
     this.clip = false,
@@ -42,25 +42,54 @@ class SoftCard extends StatelessWidget {
 }
 
 class RoundBtn extends StatelessWidget {
-  const RoundBtn({super.key, required this.icon, required this.onTap, this.iconColor});
-  final List<IconPath> icon;
+  const RoundBtn({
+    super.key,
+    this.icon,
+    this.iconData,
+    this.child,
+    required this.onTap,
+    this.iconColor,
+    this.size = 36,
+  });
+
+  final List<IconPath>? icon;
+  final IconData? iconData;
+  final Widget? child;
   final VoidCallback onTap;
   final Color? iconColor;
+  final double size;
 
   @override
   Widget build(BuildContext context) {
     final gc = context.gc;
+    Widget iconContent;
+    if (child != null) {
+      iconContent = child!;
+    } else if (iconData != null) {
+      iconContent = Icon(iconData, size: size * 0.5, color: iconColor ?? gc.text);
+    } else if (icon != null) {
+      iconContent = SvgPathIcon(icon!, size: size * 0.45, color: iconColor ?? gc.text);
+    } else {
+      iconContent = const SizedBox.shrink();
+    }
+
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: onTap,
-      child: Container(
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(
-          color: gc.bgRaised,
-          shape: BoxShape.circle,
-          border: Border.all(color: gc.border),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+        child: Center(
+          child: Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              color: gc.bgRaised,
+              shape: BoxShape.circle,
+              border: Border.all(color: gc.border),
+            ),
+            child: Center(child: iconContent),
+          ),
         ),
-        child: Center(child: SvgPathIcon(icon, size: 16, color: iconColor ?? gc.text)),
       ),
     );
   }
@@ -307,31 +336,70 @@ class PrimaryButton extends StatelessWidget {
     this.fg,
     this.height = 56,
     this.icon,
+    this.iconData,
+    this.enabled = true,
+    this.isLoading = false,
   });
+
   final String label;
   final VoidCallback onTap;
   final Color? bg;
   final Color? fg;
   final double height;
   final List<IconPath>? icon;
+  final IconData? iconData;
+  final bool enabled;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
     final gc = context.gc;
-    final f = fg ?? gc.onEmber;
+    final isInteractive = enabled && !isLoading;
+    final backgroundColor = !enabled ? gc.bgRaised2 : (bg ?? gc.ember);
+    final foregroundColor = !enabled ? gc.textTertiary : (fg ?? gc.onEmber);
+
+    Widget content;
+    if (isLoading) {
+      content = SizedBox(
+        width: 22,
+        height: 22,
+        child: CircularProgressIndicator(
+          strokeWidth: 2.2,
+          valueColor: AlwaysStoppedAnimation<Color>(foregroundColor),
+        ),
+      );
+    } else {
+      content = Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (icon != null) ...[
+            SvgPathIcon(icon!, size: 18, color: foregroundColor),
+            const SizedBox(width: 10),
+          ] else if (iconData != null) ...[
+            Icon(iconData, size: 20, color: foregroundColor),
+            const SizedBox(width: 10),
+          ],
+          Text(
+            label,
+            style: AppTheme.d(16, weight: FontWeight.w700, color: foregroundColor, letterSpacing: 2),
+          ),
+        ],
+      );
+    }
+
     return GestureDetector(
-      onTap: onTap,
-      child: Container(
+      behavior: HitTestBehavior.opaque,
+      onTap: isInteractive ? onTap : null,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
         width: double.infinity,
         height: height,
-        decoration: BoxDecoration(color: bg ?? gc.ember, borderRadius: BorderRadius.circular(100)),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (icon != null) ...[SvgPathIcon(icon!, size: 18, color: f), const SizedBox(width: 10)],
-            Text(label, style: AppTheme.d(16, weight: FontWeight.w600, color: f, letterSpacing: 2)),
-          ],
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
         ),
+        alignment: Alignment.center,
+        child: content,
       ),
     );
   }
@@ -349,7 +417,7 @@ Future<bool> showConfirmDeleteModal({
     context: context,
     builder: (dctx) => AlertDialog(
       backgroundColor: gc.bgRaised,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
       title: Text(title, style: AppTheme.d(18, weight: FontWeight.w700, color: gc.text)),
       content: message != null && message.isNotEmpty
           ? Text(message, style: AppTheme.s(13, color: gc.textSecondary))
@@ -361,7 +429,7 @@ Future<bool> showConfirmDeleteModal({
         ),
         TextButton(
           onPressed: () => Navigator.of(dctx).pop(true),
-          child: Text(confirmLabel ?? t.delete, style: AppTheme.s(14, weight: FontWeight.w700, color: gc.accent)),
+          child: Text(confirmLabel ?? t.delete, style: AppTheme.s(14, weight: FontWeight.w700, color: gc.danger)),
         ),
       ],
     ),
@@ -372,15 +440,19 @@ Future<bool> showConfirmDeleteModal({
 class EmptyStateView extends StatelessWidget {
   const EmptyStateView({
     super.key,
-    required this.icon,
+    this.icon,
+    this.iconWidget,
     required this.title,
     required this.subtitle,
+    this.action,
     this.padding = const EdgeInsets.symmetric(vertical: 40, horizontal: 16),
   });
 
-  final IconData icon;
+  final IconData? icon;
+  final Widget? iconWidget;
   final String title;
   final String subtitle;
+  final Widget? action;
   final EdgeInsets padding;
 
   @override
@@ -393,7 +465,7 @@ class EmptyStateView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Center(
-            child: Icon(icon, size: 48, color: gc.textTertiary),
+            child: iconWidget ?? (icon != null ? Icon(icon, size: 48, color: gc.textTertiary) : const SizedBox.shrink()),
           ),
           const SizedBox(height: 16),
           Text(
@@ -407,6 +479,131 @@ class EmptyStateView extends StatelessWidget {
             textAlign: TextAlign.center,
             style: AppTheme.s(13, color: gc.textSecondary),
           ),
+          if (action != null) ...[
+            const SizedBox(height: 16),
+            action!,
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class CircularCheckbox extends StatelessWidget {
+  const CircularCheckbox({
+    super.key,
+    required this.checked,
+    this.onTap,
+    this.size = 26,
+  });
+
+  final bool checked;
+  final VoidCallback? onTap;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final gc = context.gc;
+    final box = AnimatedContainer(
+      duration: const Duration(milliseconds: 160),
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: checked ? gc.ember : Colors.transparent,
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: checked ? gc.ember : gc.border,
+          width: 2,
+        ),
+      ),
+      child: checked
+          ? Center(child: SvgPathIcon(Ic.checkBold, size: size * 0.5, color: gc.onEmber))
+          : null,
+    );
+
+    if (onTap == null) return box;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: box,
+    );
+  }
+}
+
+class ModalDragHandle extends StatelessWidget {
+  const ModalDragHandle({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final gc = context.gc;
+    return Center(
+      child: Container(
+        width: 40,
+        height: 4,
+        decoration: BoxDecoration(
+          color: gc.bgRaised2,
+          borderRadius: BorderRadius.circular(2),
+        ),
+      ),
+    );
+  }
+}
+
+class AppSearchBar extends StatelessWidget {
+  const AppSearchBar({
+    super.key,
+    required this.controller,
+    required this.onChanged,
+    required this.hintText,
+    this.onClear,
+    this.height = 48,
+  });
+
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+  final String hintText;
+  final VoidCallback? onClear;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    final gc = context.gc;
+    final hasQuery = controller.text.isNotEmpty;
+    return Container(
+      height: height,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: gc.bgRaised,
+        border: Border.all(color: gc.border),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+      ),
+      child: Row(
+        children: [
+          SvgPathIcon(Ic.search, size: 16, color: gc.textSecondary),
+          const SizedBox(width: 10),
+          Expanded(
+            child: TextField(
+              controller: controller,
+              onChanged: onChanged,
+              style: AppTheme.s(14, color: gc.text),
+              cursorColor: gc.accent,
+              decoration: InputDecoration(
+                isCollapsed: true,
+                border: InputBorder.none,
+                hintText: hintText,
+                hintStyle: AppTheme.s(14, color: gc.textSecondary),
+              ),
+            ),
+          ),
+          if (hasQuery && onClear != null)
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: onClear,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 6),
+                child: SvgPathIcon(Ic.closeThin, size: 14, color: gc.textSecondary),
+              ),
+            ),
         ],
       ),
     );

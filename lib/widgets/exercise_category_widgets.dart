@@ -137,12 +137,14 @@ class MuscleCategoryCard extends StatelessWidget {
   final String muscleId;
   final int count;
   final VoidCallback onTap;
+  final Widget? trailing;
 
   const MuscleCategoryCard({
     super.key,
     required this.muscleId,
     required this.count,
     required this.onTap,
+    this.trailing,
   });
 
   @override
@@ -155,7 +157,7 @@ class MuscleCategoryCard extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: gc.bgRaised,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           border: Border.all(color: gc.border),
         ),
         child: Row(
@@ -178,7 +180,7 @@ class MuscleCategoryCard extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(PhosphorIconsRegular.caretRight, size: 18, color: gc.textTertiary),
+            trailing ?? Icon(PhosphorIconsRegular.caretRight, size: 18, color: gc.textTertiary),
           ],
         ),
       ),
@@ -190,12 +192,14 @@ class EquipmentCategoryCard extends StatelessWidget {
   final EquipmentItemData item;
   final int count;
   final VoidCallback onTap;
+  final Widget? trailing;
 
   const EquipmentCategoryCard({
     super.key,
     required this.item,
     required this.count,
     required this.onTap,
+    this.trailing,
   });
 
   @override
@@ -239,7 +243,7 @@ class EquipmentCategoryCard extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(PhosphorIconsRegular.caretRight, size: 18, color: gc.textTertiary),
+            trailing ?? Icon(PhosphorIconsRegular.caretRight, size: 18, color: gc.textTertiary),
           ],
         ),
       ),
