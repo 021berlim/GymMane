@@ -9,6 +9,7 @@ import '../models/workout.dart';
 import '../state/fit_state.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import 'exercise_media.dart';
 import 'exercise_picker_sheet.dart';
 import 'glass.dart';
 import 'ui_kit.dart';
@@ -42,6 +43,7 @@ class _ManualExerciseDraft {
 
   final Exercise exercise;
   final List<_ManualSetDraft> sets;
+  bool isExpanded = false;
   bool get isCardio => exercise.isCardio;
 }
 
@@ -272,24 +274,14 @@ class _ManualWorkoutSheetState extends State<ManualWorkoutSheet> {
 
   void _saveWorkout() {
     if (_exercises.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(t.selectAtLeastOneExercise),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      AppToast.show(context, message: t.selectAtLeastOneExercise, type: AppToastType.error);
       return;
     }
 
     // Validate metrics
     for (final exDraft in _exercises) {
       if (exDraft.sets.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(t.fillAllMetricsWarning),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        AppToast.show(context, message: t.fillAllMetricsWarning, type: AppToastType.error);
         return;
       }
 
@@ -299,12 +291,7 @@ class _ManualWorkoutSheetState extends State<ManualWorkoutSheet> {
           final secs = int.tryParse(st.durSecCtrl.text) ?? 0;
           final totalSec = (mins * 60) + secs;
           if (totalSec <= 0) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(t.fillAllMetricsWarning),
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
+            AppToast.show(context, message: t.fillAllMetricsWarning, type: AppToastType.error);
             return;
           }
           final param = double.tryParse(st.paramCtrl.text) ?? 0.0;
@@ -316,12 +303,7 @@ class _ManualWorkoutSheetState extends State<ManualWorkoutSheet> {
         } else {
           final reps = int.tryParse(st.repsCtrl.text) ?? 0;
           if (reps <= 0) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(t.fillAllMetricsWarning),
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
+            AppToast.show(context, message: t.fillAllMetricsWarning, type: AppToastType.error);
             return;
           }
           final weight = double.tryParse(st.weightCtrl.text.replaceAll(',', '.')) ?? 0.0;
@@ -370,12 +352,7 @@ class _ManualWorkoutSheetState extends State<ManualWorkoutSheet> {
     fit.addLoggedSession(session);
 
     Navigator.of(context).pop(true);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(t.workoutSaved),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    AppToast.show(context, message: t.workoutSaved, type: AppToastType.success);
   }
 
   @override
@@ -414,13 +391,9 @@ class _ManualWorkoutSheetState extends State<ManualWorkoutSheet> {
                 t.registerWorkout,
                 style: AppTheme.d(20, weight: FontWeight.w700, color: gc.text),
               ),
-              GestureDetector(
-                behavior: HitTestBehavior.opaque,
+              RoundBtn(
+                iconData: PhosphorIconsRegular.x,
                 onTap: () => Navigator.of(context).pop(false),
-                child: Padding(
-                  padding: const EdgeInsets.all(4),
-                  child: Icon(PhosphorIconsRegular.x, size: 20, color: gc.textSecondary),
-                ),
               ),
             ],
           ),
@@ -644,11 +617,67 @@ class _ManualWorkoutSheetState extends State<ManualWorkoutSheet> {
 
   Widget _routinePicker(GymColors gc) {
     if (fit.routines.isEmpty) {
-      return Text(
-        t.noRoutinesAvailable,
-        style: AppTheme.s(12, color: gc.textSecondary),
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: gc.bgRaised2,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: gc.border),
+        ),
+        child: Text(
+          t.noRoutinesAvailable,
+          style: AppTheme.s(12, color: gc.textSecondary),
+        ),
       );
     }
+
+    // Se tiver apenas 1 treino, exibe o card direto sem dropdown
+    if (fit.routines.length == 1) {
+      final routine = fit.routines.first;
+      final displayName = routine.name.trim().isEmpty ? t.newRoutineName : routine.name;
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            t.selectRoutineHint,
+            style: AppTheme.s(12, weight: FontWeight.w600, color: gc.textSecondary),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            height: 48,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            decoration: BoxDecoration(
+              color: gc.bgRaised2,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: gc.border),
+            ),
+            child: Row(
+              children: [
+                Icon(PhosphorIconsRegular.clipboardText, size: 16, color: gc.accent),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    displayName,
+                    style: AppTheme.s(14, weight: FontWeight.w600, color: gc.text),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Text(
+                  '${routine.exerciseIds.length} ex.',
+                  style: AppTheme.s(12, color: gc.textSecondary),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Mais de 1 treino: exibe como Dropdown
+    final selectedId = fit.routines.any((r) => r.id == _selectedRoutineId)
+        ? _selectedRoutineId
+        : fit.routines.first.id;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -658,47 +687,52 @@ class _ManualWorkoutSheetState extends State<ManualWorkoutSheet> {
           style: AppTheme.s(12, weight: FontWeight.w600, color: gc.textSecondary),
         ),
         const SizedBox(height: 8),
-        SizedBox(
-          height: 38,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: fit.routines.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 8),
-            itemBuilder: (ctx, i) {
-              final routine = fit.routines[i];
-              final isSelected = routine.id == _selectedRoutineId;
-
-              return GestureDetector(
-                onTap: () => _loadRoutine(routine),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: isSelected ? gc.accentSoft : gc.bgRaised2,
-                    border: Border.all(color: isSelected ? gc.accent : gc.border),
-                    borderRadius: BorderRadius.circular(100),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        PhosphorIconsRegular.clipboardText,
-                        size: 14,
-                        color: isSelected ? gc.accent : gc.textSecondary,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        routine.name,
-                        style: AppTheme.s(
-                          12,
-                          weight: FontWeight.w600,
-                          color: isSelected ? gc.accent : gc.text,
+        Container(
+          height: 48,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            color: gc.bgRaised2,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: gc.border),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: selectedId,
+              isExpanded: true,
+              dropdownColor: gc.bgRaised,
+              icon: Icon(PhosphorIconsRegular.caretDown, size: 18, color: gc.accent),
+              style: AppTheme.s(14, weight: FontWeight.w600, color: gc.text),
+              borderRadius: BorderRadius.circular(14),
+              items: [
+                for (final routine in fit.routines)
+                  DropdownMenuItem<String>(
+                    value: routine.id,
+                    child: Row(
+                      children: [
+                        Icon(PhosphorIconsRegular.clipboardText, size: 16, color: gc.accent),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            routine.name.trim().isEmpty ? t.newRoutineName : routine.name,
+                            style: AppTheme.s(14, weight: FontWeight.w600, color: gc.text),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
-                    ],
+                        Text(
+                          '${routine.exerciseIds.length} ex.',
+                          style: AppTheme.s(12, color: gc.textSecondary),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              );
-            },
+              ],
+              onChanged: (id) {
+                if (id != null) {
+                  final r = fit.routines.firstWhere((x) => x.id == id);
+                  _loadRoutine(r);
+                }
+              },
+            ),
           ),
         ),
       ],
@@ -736,53 +770,71 @@ class _ManualWorkoutSheetState extends State<ManualWorkoutSheet> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Exercise header
-            Row(
-              children: [
-                Container(
-                  width: 30,
-                  height: 30,
-                  decoration: BoxDecoration(
-                    color: draft.isCardio ? gc.accentSoft : gc.bgRaised,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: draft.isCardio ? gc.accent : gc.border),
+            // Exercise header (tappable to expand / collapse)
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                setState(() {
+                  draft.isExpanded = !draft.isExpanded;
+                });
+              },
+              child: Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: SizedBox(
+                      width: 38,
+                      height: 38,
+                      child: ExerciseMedia(ex: ex, height: 38, width: 38, radius: 10),
+                    ),
                   ),
-                  child: Icon(
-                    draft.isCardio ? PhosphorIconsRegular.heartStraight : PhosphorIconsRegular.barbell,
-                    size: 16,
-                    color: draft.isCardio ? gc.accent : gc.textSecondary,
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          name,
+                          style: AppTheme.s(14, weight: FontWeight.w700, color: gc.text),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          draft.isCardio
+                              ? 'Cardio · ${ex.cardioType.displayNamePt} (${draft.sets.length} ${draft.sets.length == 1 ? "etapa" : "etapas"})'
+                              : '${draft.sets.length} ${draft.sets.length == 1 ? "série" : "séries"} · ${muscleLabel(ex.primary)}',
+                          style: AppTheme.s(11, color: gc.textSecondary),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        name,
-                        style: AppTheme.s(14, weight: FontWeight.w700, color: gc.text),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        draft.isCardio ? 'Cardio · ${ex.cardioType.displayNamePt}' : muscleLabel(ex.primary),
-                        style: AppTheme.s(11, color: gc.textSecondary),
-                      ),
-                    ],
+                  IconButton(
+                    icon: Icon(PhosphorIconsRegular.trash, size: 16, color: gc.textTertiary),
+                    onPressed: () => _removeExercise(exIdx),
+                    visualDensity: VisualDensity.compact,
                   ),
-                ),
-                IconButton(
-                  icon: Icon(PhosphorIconsRegular.trash, size: 16, color: gc.textTertiary),
-                  onPressed: () => _removeExercise(exIdx),
-                  visualDensity: VisualDensity.compact,
-                ),
-              ],
+                  const SizedBox(width: 4),
+                  AnimatedRotation(
+                    turns: draft.isExpanded ? 0.5 : 0.0,
+                    duration: const Duration(milliseconds: 200),
+                    child: Icon(
+                      PhosphorIconsRegular.caretDown,
+                      size: 18,
+                      color: draft.isExpanded ? gc.accent : gc.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 12),
-            // Sets or Cardio stages
-            if (draft.isCardio)
-              _cardioSetsEditor(gc, exIdx, draft)
-            else
-              _strengthSetsEditor(gc, exIdx, draft),
+            if (draft.isExpanded) ...[
+              const SizedBox(height: 12),
+              Divider(height: 1, color: gc.border.withValues(alpha: 0.5)),
+              const SizedBox(height: 12),
+              // Sets or Cardio stages
+              if (draft.isCardio)
+                _cardioSetsEditor(gc, exIdx, draft)
+              else
+                _strengthSetsEditor(gc, exIdx, draft),
+            ],
           ],
         ),
       );

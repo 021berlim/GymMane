@@ -568,7 +568,7 @@ class _SessionScreenState extends State<SessionScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                       decoration: BoxDecoration(
                         color: gc.bgRaised2,
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
                       child: Text(
                         t.skip,
@@ -592,7 +592,7 @@ class _SessionScreenState extends State<SessionScreen> {
                   decoration: BoxDecoration(
                     color: gc.bgRaised,
                     border: Border.all(color: gc.border),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(AppRadius.card),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -681,7 +681,7 @@ class _SessionScreenState extends State<SessionScreen> {
                   decoration: BoxDecoration(
                     color: gc.bgRaised,
                     border: Border.all(color: gc.border),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(AppRadius.card),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -888,13 +888,12 @@ class _SessionScreenState extends State<SessionScreen> {
           },
           child: Container(
             width: double.infinity,
-            height: 54,
+            height: 56,
             decoration: BoxDecoration(
-              color: isDone ? gc.bgRaised2 : gc.accent,
-              borderRadius: BorderRadius.circular(100),
+              color: isDone ? gc.bgRaised2 : gc.ember,
+              borderRadius: BorderRadius.circular(AppRadius.pill),
               border: Border.all(
-                color: isDone ? gc.border : gc.accent,
-                width: 1.5,
+                color: isDone ? gc.border : gc.ember,
               ),
             ),
             alignment: Alignment.center,
@@ -903,17 +902,17 @@ class _SessionScreenState extends State<SessionScreen> {
               children: [
                 Icon(
                   isDone ? Icons.check_circle_rounded : Icons.check_rounded,
-                  color: isDone ? gc.sage : Colors.black,
+                  color: isDone ? gc.accent : gc.onEmber,
                   size: 20,
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  buttonText,
+                  buttonText.toUpperCase(),
                   style: AppTheme.d(
-                    15,
-                    weight: FontWeight.w800,
-                    color: isDone ? gc.text : Colors.black,
-                    letterSpacing: 1.0,
+                    16,
+                    weight: FontWeight.w700,
+                    color: isDone ? gc.text : gc.onEmber,
+                    letterSpacing: 1.5,
                   ),
                 ),
               ],
@@ -1536,7 +1535,7 @@ class _SessionScreenState extends State<SessionScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
           decoration: BoxDecoration(
             color: gc.bgRaised2,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadius.pill),
           ),
           child: Text(
             glyph,
@@ -1663,9 +1662,8 @@ class _SessionScreenState extends State<SessionScreen> {
                 ],
                 const SizedBox(height: 20),
                 PrimaryButton(
-                  label: 'Voltar ao Treino',
+                  label: 'VOLTAR AO TREINO',
                   onTap: () => Navigator.of(bctx).pop(),
-                  height: 50,
                 ),
               ],
             );

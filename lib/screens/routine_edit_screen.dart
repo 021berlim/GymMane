@@ -1004,7 +1004,7 @@ class _RoutineEditScreenState extends State<RoutineEditScreen> {
         decoration: BoxDecoration(
           color: gc.bgRaised,
           border: Border.all(color: inRoutine ? gc.ember : gc.border),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadius.card),
         ),
         child: Row(children: [
           SizedBox(width: 44, child: ExerciseMedia(ex: ex, height: 44, radius: 10)),
@@ -1019,18 +1019,7 @@ class _RoutineEditScreenState extends State<RoutineEditScreen> {
               ],
             ),
           ),
-          Container(
-            width: 30,
-            height: 30,
-            decoration: BoxDecoration(
-              color: inRoutine ? gc.ember : Colors.transparent,
-              shape: BoxShape.circle,
-              border: Border.all(color: inRoutine ? gc.ember : gc.border, width: 2),
-            ),
-            child: inRoutine
-                ? SvgPathIcon(Ic.checkBold, size: 14, color: gc.onEmber)
-                : Icon(PhosphorIconsRegular.plus, size: 15, color: gc.textSecondary),
-          ),
+          CircularCheckbox(checked: inRoutine),
         ]),
       ),
     );
@@ -1041,7 +1030,7 @@ class _RoutineEditScreenState extends State<RoutineEditScreen> {
     showAppSheet<void>(
       context: context,
       backgroundColor: gc.bgRaised,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet))),
       builder: (_) => SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
@@ -1049,11 +1038,12 @@ class _RoutineEditScreenState extends State<RoutineEditScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(t.deleteRoutine, style: AppTheme.s(15, weight: FontWeight.w600, color: gc.text)),
+              Text(t.deleteRoutine.toUpperCase(), style: AppTheme.d(18, weight: FontWeight.w700, color: gc.text)),
               const SizedBox(height: 18),
               PrimaryButton(
                 label: t.deleteCaps,
-                bg: gc.accent,
+                bg: gc.danger,
+                fg: Colors.white,
                 onTap: () {
                   Navigator.pop(context);
                   fit.deleteRoutine(_id);

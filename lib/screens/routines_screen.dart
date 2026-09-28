@@ -190,17 +190,17 @@ class RoutinesScreen extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: selected ? gc.emberSoft : gc.bgRaised2,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: selected ? gc.ember : Colors.transparent),
+          color: gc.bgRaised,
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          border: Border.all(color: selected ? gc.ember : gc.border, width: selected ? 1.5 : 1),
         ),
         child: Row(
           children: [
             Expanded(
               child: Text(label,
-                  style: AppTheme.s(14, weight: FontWeight.w600, color: selected ? gc.ember : gc.text)),
+                  style: AppTheme.s(14, weight: FontWeight.w600, color: gc.text)),
             ),
-            if (selected) SvgPathIcon(Ic.checkBold, size: 16, color: gc.ember),
+            CircularCheckbox(checked: selected),
           ],
         ),
       ),
