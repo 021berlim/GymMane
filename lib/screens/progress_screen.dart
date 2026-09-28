@@ -1116,8 +1116,6 @@ class _WeeklyProgressCardWidgetState extends State<WeeklyProgressCardWidget> {
 
   Widget _tabButton(GymColors gc, String label) {
     final selected = _metric == label;
-    final activePillColor = gc.accent.withValues(alpha: 0.18);
-    final activeTextColor = gc.accent;
 
     return Expanded(
       child: GestureDetector(
@@ -1127,16 +1125,16 @@ class _WeeklyProgressCardWidgetState extends State<WeeklyProgressCardWidget> {
           padding: const EdgeInsets.symmetric(vertical: 10),
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: selected ? activePillColor : Colors.transparent,
-            borderRadius: BorderRadius.circular(100),
+            color: selected ? gc.ember : Colors.transparent,
+            borderRadius: BorderRadius.circular(AppRadius.pill),
           ),
           child: Text(
             label,
             style: AppTheme.d(
               11,
-              weight: selected ? FontWeight.w700 : FontWeight.w600,
-              color: selected ? activeTextColor : gc.textTertiary,
-              letterSpacing: 1.2,
+              weight: selected ? FontWeight.w700 : FontWeight.w500,
+              color: selected ? gc.onEmber : gc.textSecondary,
+              letterSpacing: 1.0,
             ),
           ),
         ),

@@ -81,31 +81,18 @@ class _MuscleDistributionScreenState extends State<MuscleDistributionScreen> {
 
   Widget _buildAppBar(BuildContext context, GymColors gc) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          IconButton(
-            onPressed: () => Navigator.of(context).pop(),
-            icon: Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: gc.bgRaised,
-                border: Border.all(color: gc.border),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                PhosphorIconsRegular.caretLeft,
-                size: 20,
-                color: gc.text,
-              ),
-            ),
+          RoundBtn(
+            iconData: PhosphorIconsRegular.caretLeft,
+            onTap: () => Navigator.of(context).pop(),
           ),
           Expanded(
             child: Text(
-              t.muscleDistribution,
+              t.muscleDistribution.toUpperCase(),
               textAlign: TextAlign.center,
-              style: AppTheme.d(18, weight: FontWeight.w600, color: gc.text),
+              style: AppTheme.d(18, weight: FontWeight.w700, color: gc.text, letterSpacing: 1),
             ),
           ),
           const SizedBox(width: 48), // Balance leading back button
@@ -120,7 +107,7 @@ class _MuscleDistributionScreenState extends State<MuscleDistributionScreen> {
       decoration: BoxDecoration(
         color: gc.bgRaised,
         border: Border.all(color: gc.border),
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Row(
         children: [
@@ -148,17 +135,17 @@ class _MuscleDistributionScreenState extends State<MuscleDistributionScreen> {
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: isSelected ? gc.accent : Colors.transparent,
-            borderRadius: BorderRadius.circular(24),
+            color: isSelected ? gc.ember : Colors.transparent,
+            borderRadius: BorderRadius.circular(AppRadius.pill),
           ),
           child: Text(
             label.toUpperCase(),
             textAlign: TextAlign.center,
             style: AppTheme.d(
               12,
-              weight: isSelected ? FontWeight.w800 : FontWeight.w600,
-              color: isSelected ? Colors.black : gc.textSecondary,
-              letterSpacing: 1.2,
+              weight: isSelected ? FontWeight.w700 : FontWeight.w500,
+              color: isSelected ? gc.onEmber : gc.textSecondary,
+              letterSpacing: 1.0,
             ),
           ),
         ),

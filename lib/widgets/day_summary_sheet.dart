@@ -46,13 +46,7 @@ class DaySummarySheet extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(color: gc.bgRaised2, borderRadius: BorderRadius.circular(2)),
-            ),
-          ),
+          const ModalDragHandle(),
           const SizedBox(height: 18),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -60,32 +54,13 @@ class DaySummarySheet extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  t.longDate(date),
-                  style: AppTheme.d(20, weight: FontWeight.w700, color: gc.text),
+                  t.longDate(date).toUpperCase(),
+                  style: AppTheme.d(20, weight: FontWeight.w700, color: gc.text, letterSpacing: 1),
                 ),
               ),
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: () => showManualWorkoutSheet(context, initialDate: date),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: gc.accentSoft,
-                    border: Border.all(color: gc.accent),
-                    borderRadius: BorderRadius.circular(100),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(PhosphorIconsRegular.plus, size: 14, color: gc.accent),
-                      const SizedBox(width: 4),
-                      Text(
-                        t.registerWorkout,
-                        style: AppTheme.s(11, weight: FontWeight.w600, color: gc.accent),
-                      ),
-                    ],
-                  ),
-                ),
+              RoundBtn(
+                iconData: PhosphorIconsRegular.x,
+                onTap: () => Navigator.of(context).pop(),
               ),
             ],
           ),

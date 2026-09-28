@@ -177,27 +177,14 @@ class _WeeklyProgressDetailScreenState extends State<WeeklyProgressDetailScreen>
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Row(
         children: [
-          IconButton(
-            onPressed: () => Navigator.of(context).pop(),
-            icon: Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: gc.bgRaised,
-                border: Border.all(color: gc.border),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                PhosphorIconsRegular.caretLeft,
-                size: 20,
-                color: gc.text,
-              ),
-            ),
+          RoundBtn(
+            iconData: PhosphorIconsRegular.caretLeft,
+            onTap: () => Navigator.of(context).pop(),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 12),
           Text(
-            'Progresso semanal',
-            style: AppTheme.d(18, weight: FontWeight.w700, color: gc.text),
+            'PROGRESSO SEMANAL',
+            style: AppTheme.d(18, weight: FontWeight.w700, color: gc.text, letterSpacing: 1),
           ),
         ],
       ),
@@ -208,8 +195,8 @@ class _WeeklyProgressDetailScreenState extends State<WeeklyProgressDetailScreen>
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: gc.bgRaised2.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(100),
+        color: gc.bgRaised2,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Row(
         children: [
@@ -223,8 +210,6 @@ class _WeeklyProgressDetailScreenState extends State<WeeklyProgressDetailScreen>
 
   Widget _grainTab(GymColors gc, String label, WeeklyDetailGrain grain) {
     final selected = _grain == grain;
-    final activePillColor = gc.accent.withValues(alpha: 0.18);
-    final activeTextColor = gc.accent;
 
     return Expanded(
       child: GestureDetector(
@@ -234,16 +219,16 @@ class _WeeklyProgressDetailScreenState extends State<WeeklyProgressDetailScreen>
           padding: const EdgeInsets.symmetric(vertical: 10),
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: selected ? activePillColor : Colors.transparent,
-            borderRadius: BorderRadius.circular(100),
+            color: selected ? gc.ember : Colors.transparent,
+            borderRadius: BorderRadius.circular(AppRadius.pill),
           ),
           child: Text(
             label,
             style: AppTheme.d(
               11,
-              weight: selected ? FontWeight.w700 : FontWeight.w600,
-              color: selected ? activeTextColor : gc.textTertiary,
-              letterSpacing: 1.2,
+              weight: selected ? FontWeight.w700 : FontWeight.w500,
+              color: selected ? gc.onEmber : gc.textSecondary,
+              letterSpacing: 1.0,
             ),
           ),
         ),

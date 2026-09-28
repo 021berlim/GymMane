@@ -60,10 +60,10 @@ class HomeScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(t.today,
-                              style: AppTheme.s(11, weight: FontWeight.w600, color: gc.textTertiary, letterSpacing: 1.5)),
+                          Text(t.today.toUpperCase(),
+                              style: AppTheme.d(11, weight: FontWeight.w600, color: gc.brass, letterSpacing: 2.5)),
                           const SizedBox(height: 2),
-                          Text(dateLabel, style: AppTheme.d(20, weight: FontWeight.w600, color: gc.text)),
+                          Text(dateLabel.toUpperCase(), style: AppTheme.d(20, weight: FontWeight.w700, color: gc.text, letterSpacing: 1)),
                         ],
                       ),
                     ),
@@ -86,7 +86,7 @@ class HomeScreen extends StatelessWidget {
                 _FocusHero(),
                 const SizedBox(height: 22),
                 SoftCard(
-                  radius: 20,
+                  radius: AppRadius.card,
                   padding: const EdgeInsets.all(18),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -95,8 +95,8 @@ class HomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  _titleCase(t.thisWeek),
-                  style: AppTheme.d(18, weight: FontWeight.w700, color: gc.text),
+                  t.thisWeek.toUpperCase(),
+                  style: AppTheme.d(18, weight: FontWeight.w700, color: gc.text, letterSpacing: 1),
                 ),
                 const SizedBox(height: 12),
                 _thisWeekCard(gc, pinnedGoal, pinnedProgress),
@@ -302,8 +302,8 @@ class HomeScreen extends StatelessWidget {
       child: Row(
         children: [
           Text(
-            _titleCase(t.activityLabel),
-            style: AppTheme.d(18, weight: FontWeight.w700, color: gc.text),
+            t.activityLabel.toUpperCase(),
+            style: AppTheme.d(18, weight: FontWeight.w700, color: gc.text, letterSpacing: 1),
           ),
           const Spacer(),
           Icon(
@@ -320,7 +320,7 @@ class HomeScreen extends StatelessWidget {
     return GestureDetector(
       onTap: fit.goProgress,
       child: SoftCard(
-        radius: 20,
+        radius: AppRadius.card,
         padding: const EdgeInsets.all(18),
         child: Heatmap(
           levels: fit.heatmapLevels,
@@ -330,17 +330,12 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  String _titleCase(String text) {
-    if (text.isEmpty) return text;
-    final lower = text.toLowerCase();
-    return lower[0].toUpperCase() + lower.substring(1);
-  }
 
   Widget _quick(GymColors gc, Widget iconWidget, String label, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: SoftCard(
-        radius: 18,
+        radius: AppRadius.card,
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
