@@ -162,7 +162,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(ex.localizedName(context), style: AppTheme.d(24, weight: FontWeight.w700, color: gc.text)),
+                  Text(ex.localizedName(context).toUpperCase(), style: AppTheme.d(24, weight: FontWeight.w700, color: gc.text, letterSpacing: 1)),
                   const SizedBox(height: 4),
                   Text('ID: ${ex.id}', style: AppTheme.s(12, color: gc.textTertiary)),
                   const SizedBox(height: 20),
@@ -209,7 +209,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
                     ),
                     const SizedBox(height: 20),
                   ],
-                  Text(t.history, style: AppTheme.d(14, weight: FontWeight.w600, color: gc.text, letterSpacing: 1)),
+                  Text(t.history.toUpperCase(), style: AppTheme.d(14, weight: FontWeight.w700, color: gc.text, letterSpacing: 1.5)),
                   const SizedBox(height: 12),
                   if (history.isEmpty)
                     Text(t.noHistory,
@@ -218,7 +218,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
                     for (int i = 0; i < history.length && i < 8; i++)
                       _historyRow(gc, history[i], i < history.length - 1 && i < 7),
                   const SizedBox(height: 24),
-                  Text(t.notes, style: AppTheme.d(14, weight: FontWeight.w600, color: gc.text, letterSpacing: 1)),
+                  Text(t.notes.toUpperCase(), style: AppTheme.d(14, weight: FontWeight.w700, color: gc.text, letterSpacing: 1.5)),
                   const SizedBox(height: 12),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
@@ -268,7 +268,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
                   _notesList(gc, ex.id),
                   const SizedBox(height: 24),
                   if (steps.isNotEmpty) ...[
-                    Text(t.howTo, style: AppTheme.d(14, weight: FontWeight.w600, color: gc.text, letterSpacing: 1)),
+                    Text(t.howTo.toUpperCase(), style: AppTheme.d(14, weight: FontWeight.w700, color: gc.text, letterSpacing: 1.5)),
                     const SizedBox(height: 12),
                     for (int i = 0; i < steps.length; i++) ...[
                       _step(gc, i + 1, steps[i]),
@@ -277,7 +277,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
                   ],
                   if (fit.similarExercises(ex, 4).isNotEmpty) ...[
                     const SizedBox(height: 24),
-                    Text(t.similar, style: AppTheme.d(14, weight: FontWeight.w600, color: gc.text, letterSpacing: 1)),
+                    Text(t.similar.toUpperCase(), style: AppTheme.d(14, weight: FontWeight.w700, color: gc.text, letterSpacing: 1.5)),
                     const SizedBox(height: 12),
                     for (final s in fit.similarExercises(ex, 4)) _similarRow(gc, s),
                   ],

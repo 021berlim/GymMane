@@ -132,7 +132,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
           children: [
             Icon(PhosphorIconsRegular.barbell, size: 22, color: gc.text),
             const SizedBox(width: 10),
-            Text(t.exercises, style: AppTheme.d(22, weight: FontWeight.w700, color: gc.text)),
+            Text(t.exercises.toUpperCase(), style: AppTheme.d(22, weight: FontWeight.w700, color: gc.text, letterSpacing: 1.5)),
           ],
         ),
         const SizedBox(height: 14),
@@ -189,7 +189,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                   decoration: BoxDecoration(
                     color: gc.emberSoft,
                     border: Border.all(color: gc.ember),
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -213,7 +213,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                   decoration: BoxDecoration(
                     color: gc.bgRaised2,
                     border: Border.all(color: gc.border),
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -459,7 +459,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
       decoration: BoxDecoration(
         color: gc.bgRaised,
         border: Border.all(color: gc.border),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AppRadius.card),
       ),
       child: Stack(
         children: [
@@ -578,13 +578,7 @@ void showCreateExerciseSheet(BuildContext context, {void Function(String id)? on
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(color: gc.bgRaised2, borderRadius: BorderRadius.circular(2)),
-                    ),
-                  ),
+                  const ModalDragHandle(),
                   const SizedBox(height: 18),
                   Text(t.newExercise.toUpperCase(),
                       style: AppTheme.d(14, weight: FontWeight.w600, color: gc.text, letterSpacing: 2),
