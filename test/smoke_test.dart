@@ -32,6 +32,8 @@ void main() {
     'progress',
     'exercises',
     'settings',
+    'preferences',
+    'awards',
     'routines',
     'tools',
     'train',

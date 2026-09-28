@@ -294,8 +294,13 @@ class _NavBar extends StatelessWidget {
   static const _routes = ['home', 'progress', 'exercises', 'settings'];
 
   int get _selectedIndex {
-    final route = (fit.route == 'preferences' || fit.route == 'awards') ? 'settings' : fit.route;
-    final i = _routes.indexOf(route);
+    final String baseRoute = switch (fit.route) {
+      'preferences' || 'awards' || 'about' => 'settings',
+      'gallery' => 'progress',
+      'tools' || 'routines' => 'home',
+      _ => fit.route,
+    };
+    final i = _routes.indexOf(baseRoute);
     return i < 0 ? 0 : i;
   }
 

@@ -39,7 +39,10 @@ class SettingsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            ScreenTitle(t.settings),
+            ScreenHeader(
+              title: t.settings,
+              onBack: fit.backFromPreferences,
+            ),
             const SizedBox(height: 22),
             GestureDetector(
               onTap: () => _editProfile(context),

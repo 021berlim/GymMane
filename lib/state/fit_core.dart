@@ -107,7 +107,18 @@ abstract class FitCore extends ChangeNotifier {
     notifyListeners();
   }
 
-  bool get showNav => const ['home', 'progress', 'gallery', 'exercises', 'settings'].contains(route);
+  bool get showNav => const [
+        'home',
+        'progress',
+        'gallery',
+        'exercises',
+        'settings',
+        'preferences',
+        'awards',
+        'about',
+        'tools',
+        'routines',
+      ].contains(route);
 
   void setUnits(String u) {
     units = u;
