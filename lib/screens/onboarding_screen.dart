@@ -343,24 +343,26 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   duration: const Duration(milliseconds: 200),
                   padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
                   decoration: BoxDecoration(
-                    color: p.trainingFocus == opt.$1 ? gc.ember : gc.bgRaised,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: p.trainingFocus == opt.$1 ? gc.ember : gc.border),
+                    color: gc.bgRaised,
+                    borderRadius: BorderRadius.circular(AppRadius.card),
+                    border: Border.all(
+                      color: p.trainingFocus == opt.$1 ? gc.ember : gc.border,
+                      width: p.trainingFocus == opt.$1 ? 1.5 : 1,
+                    ),
                   ),
                   child: Row(
                     children: [
-                      Icon(opt.$3, color: p.trainingFocus == opt.$1 ? gc.onEmber : gc.textSecondary, size: 22),
+                      Icon(opt.$3, color: p.trainingFocus == opt.$1 ? gc.accent : gc.textSecondary, size: 22),
                       const SizedBox(width: 14),
                       Expanded(
                         child: Text(
                           opt.$2,
                           style: AppTheme.d(16,
                               weight: FontWeight.w600,
-                              color: p.trainingFocus == opt.$1 ? gc.onEmber : gc.text),
+                              color: gc.text),
                         ),
                       ),
-                      if (p.trainingFocus == opt.$1)
-                        Icon(PhosphorIconsRegular.checkCircle, color: gc.onEmber, size: 20),
+                      CircularCheckbox(checked: p.trainingFocus == opt.$1),
                     ],
                   ),
                 ),
@@ -391,14 +393,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     duration: const Duration(milliseconds: 160),
                     height: 90,
                     decoration: BoxDecoration(
-                      color: fit.units == u ? gc.ember : gc.bgRaised,
-                      border: Border.all(color: fit.units == u ? gc.ember : gc.border),
-                      borderRadius: BorderRadius.circular(18),
+                      color: gc.bgRaised,
+                      border: Border.all(
+                        color: fit.units == u ? gc.ember : gc.border,
+                        width: fit.units == u ? 2 : 1,
+                      ),
+                      borderRadius: BorderRadius.circular(AppRadius.card),
                     ),
                     alignment: Alignment.center,
                     child: Text(u,
                         style: AppTheme.d(30,
-                            weight: FontWeight.w700, color: fit.units == u ? gc.onEmber : gc.text)),
+                            weight: FontWeight.w700, color: fit.units == u ? gc.ember : gc.textSecondary)),
                   ),
                 ),
               ),

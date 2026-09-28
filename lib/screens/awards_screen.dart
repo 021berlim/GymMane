@@ -26,7 +26,7 @@ class AwardsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            ScreenHeader(title: t.awardsTitle, onBack: fit.backFromAwards),
+            ScreenHeader(title: t.awardsTitle.toUpperCase(), onBack: fit.backFromAwards),
             const SizedBox(height: 22),
             if (won.isNotEmpty) ...[
               _section(gc, t.awardsEarned, won.length),
@@ -48,7 +48,7 @@ class AwardsScreen extends StatelessWidget {
   Widget _section(GymColors gc, String label, int count) {
     return Row(
       children: [
-        Text(label, style: AppTheme.d(18, weight: FontWeight.w700, color: gc.text)),
+        Text(label.toUpperCase(), style: AppTheme.d(16, weight: FontWeight.w700, color: gc.text, letterSpacing: 1)),
         const SizedBox(width: 8),
         Text('$count', style: AppTheme.s(15, weight: FontWeight.w600, color: gc.textTertiary)),
       ],
@@ -81,7 +81,7 @@ class AwardsScreen extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(12, 16, 12, 14),
         decoration: BoxDecoration(
           color: gc.bgRaised,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           border: Border.all(color: gc.border),
         ),
         child: Column(

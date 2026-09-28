@@ -52,7 +52,7 @@ class _AboutScreenState extends State<AboutScreen> {
             Row(children: [
               RoundBtn(icon: Ic.chevronLeft, onTap: fit.backFromAbout),
               const SizedBox(width: 12),
-              Text(t.about, style: AppTheme.d(18, weight: FontWeight.w700, color: gc.text, letterSpacing: 1)),
+              Text(t.about.toUpperCase(), style: AppTheme.d(18, weight: FontWeight.w700, color: gc.text, letterSpacing: 1.5)),
             ]),
             const SizedBox(height: 20),
             _hero(gc),
@@ -102,7 +102,7 @@ class _AboutScreenState extends State<AboutScreen> {
       decoration: BoxDecoration(
         color: gc.bgRaised,
         border: Border.all(color: gc.border),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.card),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -129,7 +129,7 @@ class _AboutScreenState extends State<AboutScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: gc.accentSoft,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
                 child: Text(
                   'v$_version',
@@ -139,7 +139,7 @@ class _AboutScreenState extends State<AboutScreen> {
             ],
           ),
           const SizedBox(height: 14),
-          const Divider(color: Color(0x1FFFFFFF), height: 1),
+          Divider(color: gc.border, height: 1),
           const SizedBox(height: 14),
           Text(
             'Ilustrações de Exercícios:',

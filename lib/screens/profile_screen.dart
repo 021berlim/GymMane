@@ -159,7 +159,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: gc.bgRaised,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(color: gc.border),
       ),
       child: Column(
@@ -268,7 +268,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       onTap: onMore,
       child: Row(
         children: [
-          Text(title, style: AppTheme.d(16.5, weight: FontWeight.w700, color: gc.text)),
+          Text(title.toUpperCase(), style: AppTheme.d(16, weight: FontWeight.w700, color: gc.text, letterSpacing: 1)),
           if (count != null) ...[
             const SizedBox(width: 8),
             Text(count, style: AppTheme.s(13, weight: FontWeight.w600, color: gc.textTertiary)),

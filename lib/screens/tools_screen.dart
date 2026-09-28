@@ -36,7 +36,7 @@ class ToolsScreen extends StatelessWidget {
               children: [
                 RoundBtn(icon: Ic.chevronLeft, onTap: fit.backFromTools),
                 const SizedBox(width: 12),
-                ScreenTitle(t.tools),
+                ScreenTitle(t.tools.toUpperCase()),
               ],
             ),
             const SizedBox(height: 6),
@@ -69,7 +69,7 @@ class ToolsScreen extends StatelessWidget {
         decoration: BoxDecoration(
           color: gc.bgRaised,
           border: Border.all(color: gc.border),
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(AppRadius.card),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -82,7 +82,7 @@ class ToolsScreen extends StatelessWidget {
               child: Center(child: Icon(_toolIcon(tool.id), size: 20, color: gc.ember)),
             ),
             const Spacer(),
-            Text(t.toolName(tool.id), style: AppTheme.d(15, weight: FontWeight.w600, color: gc.text, letterSpacing: 0.5)),
+            Text(t.toolName(tool.id).toUpperCase(), style: AppTheme.d(15, weight: FontWeight.w700, color: gc.text, letterSpacing: 0.8)),
             const SizedBox(height: 2),
             Text(t.toolDesc(tool.id),
                 maxLines: 2,
