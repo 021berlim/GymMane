@@ -151,7 +151,9 @@ class _BodyCanvas extends StatelessWidget {
                 final id = muscleAt(p);
                 if (id != null) onTap!(id);
               },
-        child: CustomPaint(size: Size(w, w * _bodyAspect), painter: painter),
+        child: RepaintBoundary(
+          child: CustomPaint(size: Size(w, w * _bodyAspect), painter: painter),
+        ),
       );
     });
   }

@@ -275,37 +275,55 @@ class UpdateService {
     void Function(double progress) onProgress,
   ) async {
     try {
+      final uri = Uri.parse(info.apkUrl);
+      final isSecureHost = uri.scheme == 'https' &&
+          (uri.host == 'github.com' ||
+              uri.host.endsWith('.github.com') ||
+              uri.host == 'objects.githubusercontent.com');
+      if (!isSecureHost) {
+        throw Exception('Download URL is not trusted: ${info.apkUrl}');
+      }
+
       await _initNotifications();
       _showProgressNotification(info.version, 0);
 
-      final request = http.Request('GET', Uri.parse(info.apkUrl));
+      final request = http.Request('GET', uri);
       request.headers['User-Agent'] =
           'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36 FitIron-App/1.0';
       final streamedResponse = await request.send();
 
       final contentLength = streamedResponse.contentLength ?? 0;
-      final bytes = <int>[];
+      final dir = await getTemporaryDirectory();
+      final tmpFile = File('${dir.path}/fitiron_update.apk.tmp');
+      final sink = tmpFile.openWrite();
       int received = 0;
       int lastPercent = -1;
 
-      await for (final chunk in streamedResponse.stream) {
-        bytes.addAll(chunk);
-        received += chunk.length;
-        if (contentLength > 0) {
-          final progress = received / contentLength;
-          onProgress(progress);
+      try {
+        await for (final chunk in streamedResponse.stream) {
+          sink.add(chunk);
+          received += chunk.length;
+          if (contentLength > 0) {
+            final progress = received / contentLength;
+            onProgress(progress);
 
-          final percent = (progress * 100).toInt();
-          if (percent - lastPercent >= 5 || percent == 100) {
-            lastPercent = percent;
-            _showProgressNotification(info.version, percent);
+            final percent = (progress * 100).toInt();
+            if (percent - lastPercent >= 5 || percent == 100) {
+              lastPercent = percent;
+              _showProgressNotification(info.version, percent);
+            }
           }
         }
+        await sink.flush();
+      } finally {
+        await sink.close();
       }
 
-      final dir = await getTemporaryDirectory();
       final file = File('${dir.path}/fitiron_update.apk');
-      await file.writeAsBytes(bytes, flush: true);
+      if (await file.exists()) {
+        await file.delete();
+      }
+      await tmpFile.rename(file.path);
 
       _showCompletedNotification(info.version, file.path);
 

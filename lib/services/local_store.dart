@@ -16,7 +16,8 @@ class Store {
     try {
       await SqliteStore.instance.init(dbPathOverride: dbPathOverride);
       _cachedState = await SqliteStore.instance.loadFullState();
-    } catch (_) {
+    } catch (e, stack) {
+      debugPrint('Store.init error: $e\n$stack');
       _cachedState = {};
     }
   }

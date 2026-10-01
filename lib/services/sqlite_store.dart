@@ -369,6 +369,8 @@ class SqliteStore {
       await db.execute('CREATE INDEX IF NOT EXISTS idx_session_exercises_session_id ON session_exercises (session_id)');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_session_sets_exercise_id ON session_sets (session_exercise_id)');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_routine_exercises_routine_id ON routine_exercises (routine_id)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_bodyweight_date ON bodyweight (date)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_exercise_notes_name ON exercise_notes (exercise_name)');
     } catch (_) {}
   }
 

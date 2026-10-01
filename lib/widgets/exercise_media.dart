@@ -167,14 +167,15 @@ class _VideoTileState extends State<_VideoTile> {
   }
 
   Future<void> _load() async {
+    VideoPlayerController? c;
     try {
-      final c = VideoPlayerController.file(File(widget.path));
+      c = VideoPlayerController.file(File(widget.path));
       await c.initialize();
       await c.setLooping(true);
       await c.setVolume(0);
       await c.play();
       if (!mounted) {
-        c.dispose();
+        await c.dispose();
         return;
       }
       setState(() {
@@ -182,6 +183,7 @@ class _VideoTileState extends State<_VideoTile> {
         _ok = true;
       });
     } catch (_) {
+      await c?.dispose();
       if (mounted) setState(() => _failed = true);
     }
   }

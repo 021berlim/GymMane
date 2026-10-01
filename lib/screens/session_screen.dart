@@ -162,7 +162,6 @@ class _SessionScreenState extends State<SessionScreen> {
               controller: _pageController,
               onPageChanged: (idx) {
                 fit.goToExercise(idx);
-                setState(() {});
               },
               itemCount: s.exercises.length,
               itemBuilder: (context, i) => SingleChildScrollView(

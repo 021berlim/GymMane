@@ -83,7 +83,7 @@ class HomeScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 22),
-                _FocusHero(),
+                const _FocusHero(),
                 const SizedBox(height: 22),
                 SoftCard(
                   radius: AppRadius.card,
@@ -384,6 +384,8 @@ class HomeScreen extends StatelessWidget {
 }
 
 class _FocusHero extends StatelessWidget {
+  const _FocusHero();
+
   @override
   Widget build(BuildContext context) {
     final gc = context.gc;

@@ -13,4 +13,12 @@ formatter:
 linter:
   rules:
     prefer_single_quotes: true
-    require_trailing_commas: false
+    require_trailing_commas: true
+    prefer_relative_imports: true
+    cancel_subscriptions: true
+    close_sinks: true
+    avoid_void_async: true
+    prefer_is_empty: true
+    prefer_is_not_empty: true
+    prefer_iterable_whereType: true
+    unnecessary_to_list_in_spreads: true

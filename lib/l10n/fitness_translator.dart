@@ -1726,9 +1726,8 @@ String normalizeSearchText(String input) {
       case 253 || 255 || 375:
         sb.write('y');
       default:
-        final char = String.fromCharCode(rune);
-        if (RegExp(r'[a-z0-9]').hasMatch(char)) {
-          sb.write(char);
+        if ((rune >= 97 && rune <= 122) || (rune >= 48 && rune <= 57)) {
+          sb.writeCharCode(rune);
         } else {
           sb.write(' ');
         }

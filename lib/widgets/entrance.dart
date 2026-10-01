@@ -68,15 +68,6 @@ class _RiseState extends State<Rise> with SingleTickerProviderStateMixin {
   }
 }
 
-/// Helper para aplicar a animação escalonada Rise a uma lista de widgets.
-List<Widget> riseAll(List<Widget> children) {
-  var i = 0;
-  return [
-    for (final c in children)
-      c is SizedBox && c.child == null ? c : Rise(index: i++, child: c),
-  ];
-}
-
 /// Transição animada para troca de exercício na sessão ativa:
 /// AnimatedSwitcher de 520ms com curvas assimétricas (Interval(0.3, 1, easeOutCubic) / Interval(0.55, 1, easeInCubic)),
 /// Slide horizontal direcional (Offset(0.5 * dir, 0)), Scale (0.94 -> 1.0) e Fade.

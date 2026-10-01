@@ -271,45 +271,53 @@ class FitState extends FitCore
     final map = Store.instance.tryParse(raw);
     if (map == null) return false;
     _loading = true;
-    profile = Profile.fromJson((map['profile'] as Map?)?.cast<String, dynamic>() ?? {});
-    dark = map['dark'] as bool? ?? dark;
-    units = map['units'] as String? ?? units;
-    _applyLanguage(map['language'] as String? ?? language);
-    restSeconds = (map['rest'] as num?)?.toInt() ?? restSeconds;
-    bgPattern = map['bg'] as String? ?? bgPattern;
-    onboarded = map['onboarded'] as bool? ?? onboarded;
-    enablePhotos = map['enablePhotos'] as bool? ?? enablePhotos;
-    photoTiming = map['photoTiming'] as String? ?? photoTiming;
-    favorites
-      ..clear()
-      ..addAll(((map['favorites'] as Map?) ?? {}).map((k, v) => MapEntry(k as String, v as bool)));
-    _loadNotes(map);
-    checkins
-      ..clear()
-      ..addAll(((map['checkins'] as List?) ?? []).cast<String>());
-    routines
-      ..clear()
-      ..addAll(((map['routines'] as List?) ?? [])
-          .map((e) => Routine.fromJson((e as Map).cast<String, dynamic>())));
-    weeklyPlan
-      ..clear()
-      ..addAll(((map['weeklyPlan'] as Map?) ?? {})
-          .map((k, v) => MapEntry(int.parse(k as String), v as String)));
-    customExercises
-      ..clear()
-      ..addAll(((map['custom'] as List?) ?? [])
-          .map((e) => Exercise.fromJson((e as Map).cast<String, dynamic>())));
-    sessions
-      ..clear()
-      ..addAll(((map['sessions'] as List?) ?? [])
-          .map((e) => LoggedSession.fromJson((e as Map).cast<String, dynamic>())));
-    bodyweight
-      ..clear()
-      ..addAll(((map['bodyweight'] as List?) ?? [])
-          .map((e) => BodyweightEntry.fromJson((e as Map).cast<String, dynamic>())));
-    _loadAwards(map);
-    _seedCalculatorsFromProfile();
-    _loading = false;
+    try {
+      profile = Profile.fromJson((map['profile'] as Map?)?.cast<String, dynamic>() ?? {});
+      dark = map['dark'] as bool? ?? dark;
+      units = map['units'] as String? ?? units;
+      _applyLanguage(map['language'] as String? ?? language);
+      restSeconds = (map['rest'] as num?)?.toInt() ?? restSeconds;
+      bgPattern = map['bg'] as String? ?? bgPattern;
+      onboarded = map['onboarded'] as bool? ?? onboarded;
+      enablePhotos = map['enablePhotos'] as bool? ?? enablePhotos;
+      photoTiming = map['photoTiming'] as String? ?? photoTiming;
+      favorites
+        ..clear()
+        ..addAll(((map['favorites'] as Map?) ?? {})
+            .map((k, v) => MapEntry(k.toString(), v == true)));
+      _loadNotes(map);
+      checkins
+        ..clear()
+        ..addAll(((map['checkins'] as List?) ?? []).map((e) => e.toString()));
+      routines
+        ..clear()
+        ..addAll(((map['routines'] as List?) ?? [])
+            .whereType<Map>()
+            .map((e) => Routine.fromJson(e.cast<String, dynamic>())));
+      weeklyPlan
+        ..clear()
+        ..addAll(((map['weeklyPlan'] as Map?) ?? {})
+            .map((k, v) => MapEntry(int.tryParse(k.toString()) ?? 0, v.toString())));
+      customExercises
+        ..clear()
+        ..addAll(((map['custom'] as List?) ?? [])
+            .whereType<Map>()
+            .map((e) => Exercise.fromJson(e.cast<String, dynamic>())));
+      sessions
+        ..clear()
+        ..addAll(((map['sessions'] as List?) ?? [])
+            .whereType<Map>()
+            .map((e) => LoggedSession.fromJson(e.cast<String, dynamic>())));
+      bodyweight
+        ..clear()
+        ..addAll(((map['bodyweight'] as List?) ?? [])
+            .whereType<Map>()
+            .map((e) => BodyweightEntry.fromJson(e.cast<String, dynamic>())));
+      _loadAwards(map);
+      _seedCalculatorsFromProfile();
+    } finally {
+      _loading = false;
+    }
     _persist();
     _refreshWidgets();
     notifyListeners();
@@ -439,6 +447,7 @@ class FitState extends FitCore
   void dispose() {
     _sessionTimer?.cancel();
     _restTimer?.cancel();
+    _saveDebounce?.cancel();
     super.dispose();
   }
 }

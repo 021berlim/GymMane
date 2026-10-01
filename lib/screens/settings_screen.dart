@@ -49,7 +49,7 @@ class SettingsScreen extends StatelessWidget {
               child: SoftCard(
                 radius: 20,
                 child: Row(children: [
-                  ProfileAvatar(),
+                  const ProfileAvatar(),
                   const SizedBox(width: 14),
                   Expanded(
                     child: Column(
@@ -624,7 +624,7 @@ class SettingsScreen extends StatelessWidget {
     showAppSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (_) => _LanguageSheet(),
+      builder: (_) => const _LanguageSheet(),
     );
   }
 
@@ -707,6 +707,8 @@ class SettingsScreen extends StatelessWidget {
 }
 
 class _SourceSheet extends StatelessWidget {
+  const _SourceSheet();
+
   @override
   Widget build(BuildContext context) {
     final gc = context.gc;
@@ -754,6 +756,8 @@ class _SourceSheet extends StatelessWidget {
 }
 
 class _LanguageSheet extends StatelessWidget {
+  const _LanguageSheet();
+
   @override
   Widget build(BuildContext context) {
     final gc = context.gc;
@@ -1048,7 +1052,7 @@ class _ProfileSheetState extends State<_ProfileSheet> {
           child: Stack(
             alignment: Alignment.bottomRight,
             children: [
-              ProfileAvatar(size: 96),
+              const ProfileAvatar(size: 96),
               Container(
                 padding: const EdgeInsets.all(7),
                 decoration: BoxDecoration(
@@ -1129,7 +1133,7 @@ class _ProfileSheetState extends State<_ProfileSheet> {
     final source = await showAppSheet<ImageSource>(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (sheetCtx) => _SourceSheet(),
+      builder: (sheetCtx) => const _SourceSheet(),
     );
     if (source == null) return;
 
@@ -1149,7 +1153,7 @@ class _ProfileSheetState extends State<_ProfileSheet> {
     final source = await showAppSheet<ImageSource>(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (sheetCtx) => _SourceSheet(),
+      builder: (sheetCtx) => const _SourceSheet(),
     );
     if (source == null) return;
 

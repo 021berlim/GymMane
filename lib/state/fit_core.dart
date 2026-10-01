@@ -65,9 +65,13 @@ abstract class FitCore extends ChangeNotifier {
     _saveDebounce?.cancel();
     _saveDebounce = null;
     if (_loading) return;
-    final data = toJson();
-    if (data.isNotEmpty) {
-      await Store.instance.save(data);
+    try {
+      final data = toJson();
+      if (data.isNotEmpty) {
+        await Store.instance.save(data);
+      }
+    } catch (e, stack) {
+      debugPrint('persistNow error: $e\n$stack');
     }
   }
 

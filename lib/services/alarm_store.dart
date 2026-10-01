@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 class AlarmStore {
@@ -28,8 +29,10 @@ class AlarmStore {
 
   static String? pathFor(String? basename) {
     if (_dir == null || basename == null || basename.isEmpty) return null;
-    final p = '$_dir/$basename';
-    return File(p).existsSync() ? p : null;
+    final clean = p.basename(basename);
+    if (clean != basename || clean.contains('..')) return null;
+    final path = '$_dir/$clean';
+    return File(path).existsSync() ? path : null;
   }
 
   static Future<String?> importSound(String srcPath) async {

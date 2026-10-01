@@ -73,14 +73,7 @@ mixin StatsState on FitCore, ToolsState, LibraryState {
     return t.subtract(Duration(days: t.weekday - 1));
   }
 
-  Iterable<LoggedSession> get _thisWeekSessions {
-    final start = _weekStart;
-    final end = start.add(const Duration(days: 7));
-    return sessions.where((s) {
-      final k = _dayKey(s.date);
-      return !k.isBefore(start) && k.isBefore(end);
-    });
-  }
+  Iterable<LoggedSession> get _thisWeekSessions => _sessionsForWeek(_weekStart);
 
   List<double> _dailyVolumes(int days) {
     final today = _dayKey(DateTime.now());

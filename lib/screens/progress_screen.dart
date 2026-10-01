@@ -7,7 +7,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../l10n/l10n.dart';
 import '../models/exercise.dart';
 import '../models/goal.dart';
-import '../models/workout.dart';
+import '../models/weight_entry.dart';
 import '../services/weight_trend_calculator.dart';
 import '../state/fit_state.dart';
 import '../theme/app_colors.dart';
@@ -74,7 +74,7 @@ class ProgressScreen extends StatelessWidget {
                 const SizedBox(height: 22),
                 const _GoalsCard(),
                 const SizedBox(height: 22),
-                _BodyweightCard(),
+                const _BodyweightCard(),
                 const SizedBox(height: 22),
                 const _MuscleMapCard(),
                 const SizedBox(height: 22),
@@ -361,84 +361,6 @@ class _MuscleMapCardState extends State<_MuscleMapCard> {
   }
 }
 
-
-class _LogBodyweightSheet extends StatefulWidget {
-  const _LogBodyweightSheet({required this.start});
-  final double start;
-  @override
-  State<_LogBodyweightSheet> createState() => _LogBodyweightSheetState();
-}
-
-class _LogBodyweightSheetState extends State<_LogBodyweightSheet> {
-  late double _shown = ((fit.toDisplayWeight(widget.start)) * 10).round() / 10;
-
-  void _bump(double d) => setState(() => _shown = ((_shown + d) * 10).round() / 10);
-
-  @override
-  Widget build(BuildContext context) {
-    final gc = context.gc;
-    return Container(
-      padding: EdgeInsets.fromLTRB(20, 12, 20, 20 + MediaQuery.of(context).viewInsets.bottom),
-      decoration: BoxDecoration(
-        color: gc.bgRaised,
-        border: Border.all(color: gc.border),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(color: gc.bgRaised2, borderRadius: BorderRadius.circular(2)),
-          ),
-          const SizedBox(height: 18),
-          Text(t.logBodyweight,
-              style: AppTheme.d(14, weight: FontWeight.w600, color: gc.text, letterSpacing: 2)),
-          const SizedBox(height: 4),
-          Text(t.trackWeight, style: AppTheme.s(13, color: gc.textSecondary)),
-          const SizedBox(height: 22),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _round(gc, '–', () => _bump(-0.1)),
-              const SizedBox(width: 22),
-              SizedBox(
-                width: 130,
-                child: Text('${fmt(_shown)} ${fit.units}',
-                    textAlign: TextAlign.center,
-                    style: AppTheme.d(40, weight: FontWeight.w700, color: gc.text)),
-              ),
-              const SizedBox(width: 22),
-              _round(gc, '+', () => _bump(0.1)),
-            ],
-          ),
-          const SizedBox(height: 22),
-          PrimaryButton(
-            label: t.save,
-            onTap: () {
-              fit.addBodyweight(fit.fromDisplayWeight(_shown));
-              Navigator.of(context).pop();
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _round(GymColors gc, String glyph, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 52,
-        height: 52,
-        decoration: BoxDecoration(color: gc.bgRaised2, shape: BoxShape.circle),
-        alignment: Alignment.center,
-        child: Text(glyph, style: TextStyle(color: gc.text, fontSize: 26, height: 1)),
-      ),
-    );
-  }
-}
 
 class _BodyweightCard extends StatefulWidget {
   const _BodyweightCard();
@@ -906,7 +828,6 @@ class _WeeklyProgressCardWidgetState extends State<WeeklyProgressCardWidget> {
         subHeaderLabel = 'Calorias por dia';
         avgLabelText = 'Média de calorias';
         metricAccent = const Color(0xFFFF6B4A);
-        break;
       case 'VOLUME':
         final totalVol = fit.volumeWeekKg(weekStart);
         final avgVol = fit.weeklyAvgVolumePerWorkout(weekStart);
@@ -915,7 +836,6 @@ class _WeeklyProgressCardWidgetState extends State<WeeklyProgressCardWidget> {
         subHeaderLabel = 'Volume por dia';
         avgLabelText = 'Média de volume';
         metricAccent = const Color(0xFFA855F7);
-        break;
       case 'REPS':
         final totalReps = fit.repsWeekTotal(weekStart);
         final avgReps = fit.weeklyAvgRepsPerWorkout(weekStart).round();
@@ -924,7 +844,6 @@ class _WeeklyProgressCardWidgetState extends State<WeeklyProgressCardWidget> {
         subHeaderLabel = 'Reps por dia';
         avgLabelText = 'Média de reps';
         metricAccent = const Color(0xFFEAB308);
-        break;
       case 'TEMPO':
       default:
         final totalDur = fit.durationWeekMin(weekStart);
@@ -934,7 +853,6 @@ class _WeeklyProgressCardWidgetState extends State<WeeklyProgressCardWidget> {
         subHeaderLabel = 'Tempo por dia';
         avgLabelText = 'Média de tempo';
         metricAccent = gc.accent;
-        break;
     }
 
     return SoftCard(

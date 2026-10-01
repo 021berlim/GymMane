@@ -71,6 +71,6 @@ class Profile {
         badge: (j['badge'] as String?) ?? 'blue',
         banner: (j['banner'] as String?) ?? '',
         since: DateTime.tryParse((j['since'] as String?) ?? ''),
-        recommendationSeed: (j['recommendationSeed'] ?? j['seed'] as num?)?.toInt(),
+        recommendationSeed: ((j['recommendationSeed'] ?? j['seed']) as num?)?.toInt(),
       );
 }

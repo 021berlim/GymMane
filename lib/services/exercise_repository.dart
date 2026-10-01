@@ -52,7 +52,6 @@ class ExerciseRepository {
     ''');
 
     await db.execute('CREATE INDEX IF NOT EXISTS idx_exercises_search ON $tableExercises(search_index);');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_exercises_id ON $tableExercises(id);');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_exercises_name_pt ON $tableExercises(name_pt);');
   }
 

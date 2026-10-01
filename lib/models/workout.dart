@@ -3,7 +3,9 @@ export 'weight_entry.dart';
 enum SetKind { normal, warmup, drop, failure, restPause }
 
 SetKind setKindFrom(Object? raw) {
-  final i = (raw as num?)?.toInt() ?? 0;
+  final int i = raw is num
+      ? raw.toInt()
+      : (raw is String ? int.tryParse(raw) ?? 0 : 0);
   return SetKind.values[i.clamp(0, SetKind.values.length - 1)];
 }
 

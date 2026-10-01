@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 class MediaStore {
@@ -20,15 +21,19 @@ class MediaStore {
 
   static bool get ready => _dir != null;
 
-  static String? pathFor(String basename) =>
-      (_dir == null || basename.isEmpty) ? null : '$_dir/$basename';
+  static String? pathFor(String basename) {
+    if (_dir == null || basename.isEmpty) return null;
+    final clean = p.basename(basename);
+    if (clean != basename || clean.contains('..')) return null;
+    return '$_dir/$clean';
+  }
 
   static Future<String?> importFor(String exerciseId, String srcPath) async {
     if (_dir == null) return null;
     try {
       final ext = _ext(srcPath);
-
-      final base = '$exerciseId-${DateTime.now().millisecondsSinceEpoch}.$ext';
+      final safeId = exerciseId.replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '_');
+      final base = '$safeId-${DateTime.now().millisecondsSinceEpoch}.$ext';
       final dst = File('$_dir/$base');
       await File(srcPath).copy(dst.path);
       return base;
@@ -40,7 +45,9 @@ class MediaStore {
   static Future<void> delete(String basename) async {
     if (_dir == null || basename.isEmpty) return;
     try {
-      final f = File('$_dir/$basename');
+      final clean = p.basename(basename);
+      if (clean != basename || clean.contains('..')) return;
+      final f = File('$_dir/$clean');
       if (await f.exists()) await f.delete();
     } catch (_) {}
   }

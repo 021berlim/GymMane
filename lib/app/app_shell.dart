@@ -149,7 +149,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
                 Positioned.fill(child: AppBackground(pattern: fit.bgPattern)),
                 Positioned.fill(child: _animatedScreen()),
                 if (fit.showNav)
-                  Positioned(left: 18, right: 18, bottom: 18, child: const _NavBar()),
+                  const Positioned(left: 18, right: 18, bottom: 18, child: _NavBar()),
                 if (fit.route != 'session' && _celebrating != null)
                   Positioned.fill(
                     child: AwardCelebration(
@@ -274,14 +274,14 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
       case 'awards':
         return const AwardsScreen();
       case 'about':
-        return AboutScreen();
+        return const AboutScreen();
       case 'routines':
-        return RoutinesScreen();
+        return const RoutinesScreen();
       case 'routine-edit':
         return RoutineEditScreen();
       case 'home':
       default:
-        return HomeScreen();
+        return const HomeScreen();
     }
   }
 }

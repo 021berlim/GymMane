@@ -39,7 +39,9 @@ class WeightEntry {
     }
 
     final rawDate = j['t'] ?? j['d'];
-    final date = rawDate != null ? DateTime.parse(rawDate as String) : DateTime.now();
+    final date = rawDate != null
+        ? (DateTime.tryParse(rawDate.toString()) ?? DateTime.now())
+        : DateTime.now();
     final weight = ((j['weightKg'] ?? j['kg']) as num?)?.toDouble() ?? 0.0;
     final idStr = j['id'] as String? ?? 'entry_${date.millisecondsSinceEpoch}';
 

@@ -11,8 +11,32 @@ mixin LibraryState on FitCore {
   List<Exercise> _catalogExercises = [];
   List<Exercise> get catalogExercises => _catalogExercises;
 
+  Map<String, Exercise>? _cachedExerciseMap;
+
+  Map<String, Exercise> get _exerciseMap {
+    if (_cachedExerciseMap == null) {
+      final map = <String, Exercise>{};
+      for (final e in kExercises) {
+        map[e.id] = e;
+      }
+      for (final e in _catalogExercises) {
+        map[e.id] = e;
+      }
+      for (final e in customExercises) {
+        map[e.id] = e;
+      }
+      _cachedExerciseMap = map;
+    }
+    return _cachedExerciseMap!;
+  }
+
+  void _invalidateExerciseIndex() {
+    _cachedExerciseMap = null;
+  }
+
   void setCatalogExercises(List<Exercise> list) {
     _catalogExercises = list;
+    _invalidateExerciseIndex();
     notifyListeners();
   }
 
@@ -21,20 +45,7 @@ mixin LibraryState on FitCore {
     ...customExercises,
   ];
 
-  Exercise? exerciseById(String id) {
-    if (_catalogExercises.isNotEmpty) {
-      for (final e in _catalogExercises) {
-        if (e.id == id) return e;
-      }
-    }
-    for (final e in customExercises) {
-      if (e.id == id) return e;
-    }
-    for (final e in kExercises) {
-      if (e.id == id) return e;
-    }
-    return null;
-  }
+  Exercise? exerciseById(String id) => _exerciseMap[id];
 
   void openExercise(String id) {
     if (route != 'exercise-detail') prevRoute = route;
@@ -232,6 +243,7 @@ mixin LibraryState on FitCore {
       art: '',
       steps: const [],
     ));
+    _invalidateExerciseIndex();
     _persist();
     notifyListeners();
     return id;
@@ -245,6 +257,7 @@ mixin LibraryState on FitCore {
       r.exerciseIds.remove(id);
     }
     favorites.remove(id);
+    _invalidateExerciseIndex();
     _persist();
     notifyListeners();
   }
@@ -257,6 +270,7 @@ mixin LibraryState on FitCore {
     if (base == null) return;
     if (old.isNotEmpty && old != base) await MediaStore.delete(old);
     customExercises[i] = customExercises[i].copyWith(media: base);
+    _invalidateExerciseIndex();
     _persist();
     notifyListeners();
   }
@@ -267,6 +281,7 @@ mixin LibraryState on FitCore {
     final old = customExercises[i].media;
     if (old.isNotEmpty) MediaStore.delete(old);
     customExercises[i] = customExercises[i].copyWith(media: '');
+    _invalidateExerciseIndex();
     _persist();
     notifyListeners();
   }

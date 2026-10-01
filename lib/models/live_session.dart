@@ -181,16 +181,18 @@ class WorkoutSession {
 
   factory WorkoutSession.fromJson(Map<String, dynamic> j) {
     final pbs = (j['pbs'] as List?)?.map((e) => e.toString()).where((e) => e.isNotEmpty).toList() ??
-        (j['pb'] != null && (j['pb'] as String).isNotEmpty ? [j['pb'] as String] : <String>[]);
+        (j['pb'] != null && j['pb'].toString().isNotEmpty ? [j['pb'].toString()] : <String>[]);
     final pas = (j['pas'] as List?)?.map((e) => e.toString()).where((e) => e.isNotEmpty).toList() ??
-        (j['pa'] != null && (j['pa'] as String).isNotEmpty ? [j['pa'] as String] : <String>[]);
+        (j['pa'] != null && j['pa'].toString().isNotEmpty ? [j['pa'].toString()] : <String>[]);
 
     return WorkoutSession(
       photosBefore: pbs,
       photosAfter: pas,
     )
-      ..exercises =
-          (j['ex'] as List).map((e) => SessionExercise.fromJson((e as Map).cast<String, dynamic>())).toList()
+      ..exercises = ((j['ex'] as List?) ?? [])
+          .whereType<Map>()
+          .map((e) => SessionExercise.fromJson(e.cast<String, dynamic>()))
+          .toList()
       ..currentIndex = (j['i'] as num?)?.toInt() ?? 0
       ..complete = j['c'] as bool? ?? false
       ..manual = j['m'] as bool? ?? false

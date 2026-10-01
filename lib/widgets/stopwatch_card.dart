@@ -25,7 +25,7 @@ class _StopwatchCardState extends State<StopwatchCard> {
         _ticker?.cancel();
       } else {
         _sw.start();
-        _ticker = Timer.periodic(const Duration(milliseconds: 200), (_) => setState(() {}));
+        _ticker = Timer.periodic(const Duration(milliseconds: 500), (_) => setState(() {}));
       }
     });
   }

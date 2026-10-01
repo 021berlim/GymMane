@@ -147,9 +147,6 @@ Future<int> applyBrazilianExercisesPatch({
     'CREATE INDEX IF NOT EXISTS idx_exercises_search ON ${ExerciseRepository.tableExercises}(search_index);',
   );
   await db.execute(
-    'CREATE INDEX IF NOT EXISTS idx_exercises_id ON ${ExerciseRepository.tableExercises}(id);',
-  );
-  await db.execute(
     'CREATE INDEX IF NOT EXISTS idx_exercises_name_pt ON ${ExerciseRepository.tableExercises}(name_pt);',
   );
 
