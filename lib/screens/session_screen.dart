@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
@@ -1300,49 +1301,54 @@ class _SessionScreenState extends State<SessionScreen> {
     final controller = TextEditingController(text: initialStr)
       ..selection = TextSelection(baseOffset: 0, extentOffset: initialStr.length);
 
-    final raw = await showAppDialog<String>(
-      context: context,
-      builder: (dctx) => AlertDialog(
-        backgroundColor: gc.bgRaised,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: BorderSide(color: gc.border),
-        ),
-        title: Text(
-          'VELOCIDADE',
-          style: AppTheme.d(14, weight: FontWeight.w700, color: gc.text, letterSpacing: 2),
-        ),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          textAlign: TextAlign.center,
-          style: AppTheme.d(32, weight: FontWeight.w700, color: gc.text),
-          cursorColor: gc.accent,
-          onSubmitted: (v) => Navigator.of(dctx).pop(v),
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: gc.bgRaised2,
-            suffixText: 'km/h',
-            suffixStyle: AppTheme.s(14, color: gc.textSecondary),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide.none,
+    String? raw;
+    try {
+      raw = await showAppDialog<String>(
+        context: context,
+        builder: (dctx) => AlertDialog(
+          backgroundColor: gc.bgRaised,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(color: gc.border),
+          ),
+          title: Text(
+            'VELOCIDADE',
+            style: AppTheme.d(14, weight: FontWeight.w700, color: gc.text, letterSpacing: 2),
+          ),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            textAlign: TextAlign.center,
+            style: AppTheme.d(32, weight: FontWeight.w700, color: gc.text),
+            cursorColor: gc.accent,
+            onSubmitted: (v) => Navigator.of(dctx).pop(v),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: gc.bgRaised2,
+              suffixText: 'km/h',
+              suffixStyle: AppTheme.s(14, color: gc.textSecondary),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
+              ),
             ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dctx).pop(),
+              child: Text(t.cancel, style: AppTheme.s(14, color: gc.textSecondary)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dctx).pop(controller.text),
+              child: Text(t.set, style: AppTheme.s(14, weight: FontWeight.w700, color: gc.accent)),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dctx).pop(),
-            child: Text(t.cancel, style: AppTheme.s(14, color: gc.textSecondary)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(dctx).pop(controller.text),
-            child: Text(t.set, style: AppTheme.s(14, weight: FontWeight.w700, color: gc.accent)),
-          ),
-        ],
-      ),
-    );
+      );
+    } finally {
+      controller.dispose();
+    }
 
     if (raw != null) {
       final parsed = double.tryParse(raw.trim().replaceAll(',', '.'));
@@ -1363,49 +1369,54 @@ class _SessionScreenState extends State<SessionScreen> {
     final controller = TextEditingController(text: '$initialMinutes')
       ..selection = TextSelection(baseOffset: 0, extentOffset: '$initialMinutes'.length);
 
-    final raw = await showAppDialog<String>(
-      context: context,
-      builder: (dctx) => AlertDialog(
-        backgroundColor: gc.bgRaised,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: BorderSide(color: gc.border),
-        ),
-        title: Text(
-          title,
-          style: AppTheme.d(14, weight: FontWeight.w700, color: gc.text, letterSpacing: 2),
-        ),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          keyboardType: TextInputType.number,
-          textAlign: TextAlign.center,
-          style: AppTheme.d(32, weight: FontWeight.w700, color: gc.text),
-          cursorColor: gc.accent,
-          onSubmitted: (v) => Navigator.of(dctx).pop(v),
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: gc.bgRaised2,
-            suffixText: 'MIN',
-            suffixStyle: AppTheme.s(14, color: gc.textSecondary),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide.none,
+    String? raw;
+    try {
+      raw = await showAppDialog<String>(
+        context: context,
+        builder: (dctx) => AlertDialog(
+          backgroundColor: gc.bgRaised,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(color: gc.border),
+          ),
+          title: Text(
+            title,
+            style: AppTheme.d(14, weight: FontWeight.w700, color: gc.text, letterSpacing: 2),
+          ),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            keyboardType: TextInputType.number,
+            textAlign: TextAlign.center,
+            style: AppTheme.d(32, weight: FontWeight.w700, color: gc.text),
+            cursorColor: gc.accent,
+            onSubmitted: (v) => Navigator.of(dctx).pop(v),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: gc.bgRaised2,
+              suffixText: 'MIN',
+              suffixStyle: AppTheme.s(14, color: gc.textSecondary),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
+              ),
             ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dctx).pop(),
+              child: Text(t.cancel, style: AppTheme.s(14, color: gc.textSecondary)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dctx).pop(controller.text),
+              child: Text(t.set, style: AppTheme.s(14, weight: FontWeight.w700, color: gc.accent)),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dctx).pop(),
-            child: Text(t.cancel, style: AppTheme.s(14, color: gc.textSecondary)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(dctx).pop(controller.text),
-            child: Text(t.set, style: AppTheme.s(14, weight: FontWeight.w700, color: gc.accent)),
-          ),
-        ],
-      ),
-    );
+      );
+    } finally {
+      controller.dispose();
+    }
 
     if (raw != null) {
       final parsed = int.tryParse(raw.trim());
@@ -1427,49 +1438,54 @@ class _SessionScreenState extends State<SessionScreen> {
     final controller = TextEditingController(text: type.formatParam(initial))
       ..selection = TextSelection(baseOffset: 0, extentOffset: type.formatParam(initial).length);
 
-    final raw = await showAppDialog<String>(
-      context: context,
-      builder: (dctx) => AlertDialog(
-        backgroundColor: gc.bgRaised,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: BorderSide(color: gc.border),
-        ),
-        title: Text(
-          title,
-          style: AppTheme.d(14, weight: FontWeight.w700, color: gc.text, letterSpacing: 2),
-        ),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          keyboardType: TextInputType.numberWithOptions(decimal: isDecimal),
-          textAlign: TextAlign.center,
-          style: AppTheme.d(32, weight: FontWeight.w700, color: gc.text),
-          cursorColor: gc.accent,
-          onSubmitted: (v) => Navigator.of(dctx).pop(v),
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: gc.bgRaised2,
-            suffixText: type.paramUnit,
-            suffixStyle: AppTheme.s(14, color: gc.textSecondary),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide.none,
+    String? raw;
+    try {
+      raw = await showAppDialog<String>(
+        context: context,
+        builder: (dctx) => AlertDialog(
+          backgroundColor: gc.bgRaised,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(color: gc.border),
+          ),
+          title: Text(
+            title,
+            style: AppTheme.d(14, weight: FontWeight.w700, color: gc.text, letterSpacing: 2),
+          ),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            keyboardType: TextInputType.numberWithOptions(decimal: isDecimal),
+            textAlign: TextAlign.center,
+            style: AppTheme.d(32, weight: FontWeight.w700, color: gc.text),
+            cursorColor: gc.accent,
+            onSubmitted: (v) => Navigator.of(dctx).pop(v),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: gc.bgRaised2,
+              suffixText: type.paramUnit,
+              suffixStyle: AppTheme.s(14, color: gc.textSecondary),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
+              ),
             ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dctx).pop(),
+              child: Text(t.cancel, style: AppTheme.s(14, color: gc.textSecondary)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dctx).pop(controller.text),
+              child: Text(t.set, style: AppTheme.s(14, weight: FontWeight.w700, color: gc.accent)),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dctx).pop(),
-            child: Text(t.cancel, style: AppTheme.s(14, color: gc.textSecondary)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(dctx).pop(controller.text),
-            child: Text(t.set, style: AppTheme.s(14, weight: FontWeight.w700, color: gc.accent)),
-          ),
-        ],
-      ),
-    );
+      );
+    } finally {
+      controller.dispose();
+    }
 
     if (raw != null) {
       final parsed = double.tryParse(raw.trim().replaceAll(',', '.'));
@@ -1802,44 +1818,49 @@ class _SessionScreenState extends State<SessionScreen> {
     final controller = TextEditingController(text: initial)
       ..selection = TextSelection(baseOffset: 0, extentOffset: initial.length);
 
-    final raw = await showAppDialog<String>(
-      context: context,
-      builder: (dctx) => AlertDialog(
-        backgroundColor: gc.bgRaised,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(
-          title,
-          style: AppTheme.d(14, weight: FontWeight.w700, color: gc.text, letterSpacing: 2),
-        ),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          keyboardType: TextInputType.numberWithOptions(decimal: decimal),
-          textAlign: TextAlign.center,
-          style: AppTheme.d(32, weight: FontWeight.w700, color: gc.text),
-          cursorColor: gc.accent,
-          onSubmitted: (v) => Navigator.of(dctx).pop(v),
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: gc.bgRaised2,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide.none,
+    String? raw;
+    try {
+      raw = await showAppDialog<String>(
+        context: context,
+        builder: (dctx) => AlertDialog(
+          backgroundColor: gc.bgRaised,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Text(
+            title,
+            style: AppTheme.d(14, weight: FontWeight.w700, color: gc.text, letterSpacing: 2),
+          ),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            keyboardType: TextInputType.numberWithOptions(decimal: decimal),
+            textAlign: TextAlign.center,
+            style: AppTheme.d(32, weight: FontWeight.w700, color: gc.text),
+            cursorColor: gc.accent,
+            onSubmitted: (v) => Navigator.of(dctx).pop(v),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: gc.bgRaised2,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
+              ),
             ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dctx).pop(),
+              child: Text(t.cancel, style: AppTheme.s(14, color: gc.textSecondary)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dctx).pop(controller.text),
+              child: Text(t.set, style: AppTheme.s(14, weight: FontWeight.w700, color: gc.accent)),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dctx).pop(),
-            child: Text(t.cancel, style: AppTheme.s(14, color: gc.textSecondary)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(dctx).pop(controller.text),
-            child: Text(t.set, style: AppTheme.s(14, weight: FontWeight.w700, color: gc.accent)),
-          ),
-        ],
-      ),
-    );
+      );
+    } finally {
+      controller.dispose();
+    }
 
     final parsed = double.tryParse((raw ?? '').trim().replaceAll(',', '.'));
     if (parsed != null) onSave(parsed);
@@ -1895,6 +1916,21 @@ class _SessionScreenState extends State<SessionScreen> {
                 final calories = (durationMins * 5 + volKg * 0.02).round().clamp(20, 2000);
                 final muscles = fit.activeRoutine?.name ?? 'Treino Completo';
 
+                String? photoData = fit.session?.photosAfter.lastOrNull ??
+                    fit.session?.photosBefore.lastOrNull ??
+                    (fit.sessions.isNotEmpty ? fit.sessions.last.photosAfter.lastOrNull : null) ??
+                    (fit.sessions.isNotEmpty ? fit.sessions.last.photosBefore.lastOrNull : null);
+
+                final isPath = photoData != null &&
+                    (photoData.startsWith('/') ||
+                        photoData.startsWith('file://') ||
+                        (photoData.length > 2 && photoData[1] == ':'));
+
+                var cleanPath = photoData?.replaceFirst('file://', '');
+                if (cleanPath != null && Platform.isWindows && cleanPath.startsWith('/') && cleanPath.length > 2 && cleanPath[2] == ':') {
+                  cleanPath = cleanPath.substring(1);
+                }
+
                 showSharePhotoSheet(
                   context,
                   durationStr: durStr,
@@ -1902,6 +1938,8 @@ class _SessionScreenState extends State<SessionScreen> {
                   volumeKg: volKg,
                   calories: calories,
                   muscleGroupsStr: muscles,
+                  initialImagePath: isPath ? cleanPath : null,
+                  initialImageBase64: !isPath ? photoData : null,
                 );
               },
               icon: Icon(Icons.camera_alt, size: 18, color: gc.accent),

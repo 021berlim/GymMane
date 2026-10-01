@@ -129,8 +129,8 @@ mixin RoutinesState on FitCore, LibraryState {
   void reorderRoutineExercise(String routineId, int from, int to) {
     final ids = _routine(routineId)?.exerciseIds;
     if (ids == null || from < 0 || from >= ids.length) return;
-    if (to > from) to -= 1;
-    ids.insert(to.clamp(0, ids.length), ids.removeAt(from));
+    final item = ids.removeAt(from);
+    ids.insert(to.clamp(0, ids.length), item);
     persistNow();
     notifyListeners();
   }

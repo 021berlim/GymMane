@@ -781,39 +781,44 @@ class _RoutineEditScreenState extends State<RoutineEditScreen> {
     final controller = TextEditingController(text: initial)
       ..selection = TextSelection(baseOffset: 0, extentOffset: initial.length);
 
-    final raw = await showAppDialog<String>(
-      context: context,
-      builder: (dctx) => AlertDialog(
-        backgroundColor: gc.bgRaised,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(t.weightTitle(fit.units.toUpperCase()),
-            style: AppTheme.d(14, weight: FontWeight.w700, color: gc.text, letterSpacing: 2)),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          textAlign: TextAlign.center,
-          style: AppTheme.d(32, weight: FontWeight.w700, color: gc.text),
-          cursorColor: gc.accent,
-          onSubmitted: (v) => Navigator.of(dctx).pop(v),
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: gc.bgRaised2,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+    String? raw;
+    try {
+      raw = await showAppDialog<String>(
+        context: context,
+        builder: (dctx) => AlertDialog(
+          backgroundColor: gc.bgRaised,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Text(t.weightTitle(fit.units.toUpperCase()),
+              style: AppTheme.d(14, weight: FontWeight.w700, color: gc.text, letterSpacing: 2)),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            textAlign: TextAlign.center,
+            style: AppTheme.d(32, weight: FontWeight.w700, color: gc.text),
+            cursorColor: gc.accent,
+            onSubmitted: (v) => Navigator.of(dctx).pop(v),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: gc.bgRaised2,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+            ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dctx).pop(),
+              child: Text(t.cancel, style: AppTheme.s(14, color: gc.textSecondary)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dctx).pop(controller.text),
+              child: Text(t.set, style: AppTheme.s(14, weight: FontWeight.w700, color: gc.accent)),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dctx).pop(),
-            child: Text(t.cancel, style: AppTheme.s(14, color: gc.textSecondary)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(dctx).pop(controller.text),
-            child: Text(t.set, style: AppTheme.s(14, weight: FontWeight.w700, color: gc.accent)),
-          ),
-        ],
-      ),
-    );
+      );
+    } finally {
+      controller.dispose();
+    }
 
     final parsed = double.tryParse((raw ?? '').trim().replaceAll(',', '.'));
     if (parsed != null) onSave(parsed);
@@ -828,46 +833,51 @@ class _RoutineEditScreenState extends State<RoutineEditScreen> {
     final controller = TextEditingController(text: '$initialMin')
       ..selection = TextSelection(baseOffset: 0, extentOffset: '$initialMin'.length);
 
-    final raw = await showAppDialog<String>(
-      context: context,
-      builder: (dctx) => AlertDialog(
-        backgroundColor: gc.bgRaised,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: BorderSide(color: gc.border),
-        ),
-        title: Text(
-          t.duration,
-          style: AppTheme.d(14, weight: FontWeight.w700, color: gc.text, letterSpacing: 2),
-        ),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          keyboardType: TextInputType.number,
-          textAlign: TextAlign.center,
-          style: AppTheme.d(32, weight: FontWeight.w700, color: gc.text),
-          cursorColor: gc.accent,
-          onSubmitted: (v) => Navigator.of(dctx).pop(v),
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: gc.bgRaised2,
-            suffixText: 'MIN',
-            suffixStyle: AppTheme.s(14, color: gc.textSecondary),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+    String? raw;
+    try {
+      raw = await showAppDialog<String>(
+        context: context,
+        builder: (dctx) => AlertDialog(
+          backgroundColor: gc.bgRaised,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(color: gc.border),
           ),
+          title: Text(
+            t.duration,
+            style: AppTheme.d(14, weight: FontWeight.w700, color: gc.text, letterSpacing: 2),
+          ),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            keyboardType: TextInputType.number,
+            textAlign: TextAlign.center,
+            style: AppTheme.d(32, weight: FontWeight.w700, color: gc.text),
+            cursorColor: gc.accent,
+            onSubmitted: (v) => Navigator.of(dctx).pop(v),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: gc.bgRaised2,
+              suffixText: 'MIN',
+              suffixStyle: AppTheme.s(14, color: gc.textSecondary),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dctx).pop(),
+              child: Text(t.cancel, style: AppTheme.s(14, color: gc.textSecondary)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dctx).pop(controller.text),
+              child: Text(t.set, style: AppTheme.s(14, weight: FontWeight.w700, color: gc.accent)),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dctx).pop(),
-            child: Text(t.cancel, style: AppTheme.s(14, color: gc.textSecondary)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(dctx).pop(controller.text),
-            child: Text(t.set, style: AppTheme.s(14, weight: FontWeight.w700, color: gc.accent)),
-          ),
-        ],
-      ),
-    );
+      );
+    } finally {
+      controller.dispose();
+    }
 
     final parsed = int.tryParse((raw ?? '').trim());
     if (parsed != null && parsed > 0) onSave(parsed);
@@ -885,46 +895,51 @@ class _RoutineEditScreenState extends State<RoutineEditScreen> {
     final controller = TextEditingController(text: type.formatParam(initial))
       ..selection = TextSelection(baseOffset: 0, extentOffset: type.formatParam(initial).length);
 
-    final raw = await showAppDialog<String>(
-      context: context,
-      builder: (dctx) => AlertDialog(
-        backgroundColor: gc.bgRaised,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: BorderSide(color: gc.border),
-        ),
-        title: Text(
-          title,
-          style: AppTheme.d(14, weight: FontWeight.w700, color: gc.text, letterSpacing: 2),
-        ),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          keyboardType: TextInputType.numberWithOptions(decimal: isDecimal),
-          textAlign: TextAlign.center,
-          style: AppTheme.d(32, weight: FontWeight.w700, color: gc.text),
-          cursorColor: gc.accent,
-          onSubmitted: (v) => Navigator.of(dctx).pop(v),
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: gc.bgRaised2,
-            suffixText: type.paramUnit,
-            suffixStyle: AppTheme.s(14, color: gc.textSecondary),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+    String? raw;
+    try {
+      raw = await showAppDialog<String>(
+        context: context,
+        builder: (dctx) => AlertDialog(
+          backgroundColor: gc.bgRaised,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(color: gc.border),
           ),
+          title: Text(
+            title,
+            style: AppTheme.d(14, weight: FontWeight.w700, color: gc.text, letterSpacing: 2),
+          ),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            keyboardType: TextInputType.numberWithOptions(decimal: isDecimal),
+            textAlign: TextAlign.center,
+            style: AppTheme.d(32, weight: FontWeight.w700, color: gc.text),
+            cursorColor: gc.accent,
+            onSubmitted: (v) => Navigator.of(dctx).pop(v),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: gc.bgRaised2,
+              suffixText: type.paramUnit,
+              suffixStyle: AppTheme.s(14, color: gc.textSecondary),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dctx).pop(),
+              child: Text(t.cancel, style: AppTheme.s(14, color: gc.textSecondary)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dctx).pop(controller.text),
+              child: Text(t.set, style: AppTheme.s(14, weight: FontWeight.w700, color: gc.accent)),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dctx).pop(),
-            child: Text(t.cancel, style: AppTheme.s(14, color: gc.textSecondary)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(dctx).pop(controller.text),
-            child: Text(t.set, style: AppTheme.s(14, weight: FontWeight.w700, color: gc.accent)),
-          ),
-        ],
-      ),
-    );
+      );
+    } finally {
+      controller.dispose();
+    }
 
     if (raw != null) {
       final parsed = double.tryParse(raw.trim().replaceAll(',', '.'));
@@ -944,46 +959,51 @@ class _RoutineEditScreenState extends State<RoutineEditScreen> {
     final controller = TextEditingController(text: initialStr)
       ..selection = TextSelection(baseOffset: 0, extentOffset: initialStr.length);
 
-    final raw = await showAppDialog<String>(
-      context: context,
-      builder: (dctx) => AlertDialog(
-        backgroundColor: gc.bgRaised,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: BorderSide(color: gc.border),
-        ),
-        title: Text(
-          'VELOCIDADE',
-          style: AppTheme.d(14, weight: FontWeight.w700, color: gc.text, letterSpacing: 2),
-        ),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          textAlign: TextAlign.center,
-          style: AppTheme.d(32, weight: FontWeight.w700, color: gc.text),
-          cursorColor: gc.accent,
-          onSubmitted: (v) => Navigator.of(dctx).pop(v),
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: gc.bgRaised2,
-            suffixText: 'km/h',
-            suffixStyle: AppTheme.s(14, color: gc.textSecondary),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+    String? raw;
+    try {
+      raw = await showAppDialog<String>(
+        context: context,
+        builder: (dctx) => AlertDialog(
+          backgroundColor: gc.bgRaised,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(color: gc.border),
           ),
+          title: Text(
+            'VELOCIDADE',
+            style: AppTheme.d(14, weight: FontWeight.w700, color: gc.text, letterSpacing: 2),
+          ),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            textAlign: TextAlign.center,
+            style: AppTheme.d(32, weight: FontWeight.w700, color: gc.text),
+            cursorColor: gc.accent,
+            onSubmitted: (v) => Navigator.of(dctx).pop(v),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: gc.bgRaised2,
+              suffixText: 'km/h',
+              suffixStyle: AppTheme.s(14, color: gc.textSecondary),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dctx).pop(),
+              child: Text(t.cancel, style: AppTheme.s(14, color: gc.textSecondary)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dctx).pop(controller.text),
+              child: Text(t.set, style: AppTheme.s(14, weight: FontWeight.w700, color: gc.accent)),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dctx).pop(),
-            child: Text(t.cancel, style: AppTheme.s(14, color: gc.textSecondary)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(dctx).pop(controller.text),
-            child: Text(t.set, style: AppTheme.s(14, weight: FontWeight.w700, color: gc.accent)),
-          ),
-        ],
-      ),
-    );
+      );
+    } finally {
+      controller.dispose();
+    }
 
     if (raw != null) {
       final parsed = double.tryParse(raw.trim().replaceAll(',', '.'));

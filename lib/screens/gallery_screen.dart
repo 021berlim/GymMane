@@ -11,6 +11,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../l10n/fitness_translator.dart';
 import '../l10n/l10n.dart';
 import '../models/workout.dart';
+import '../services/sqlite_store.dart';
 import '../state/fit_state.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
@@ -42,6 +43,20 @@ String _getWorkoutTitle(LoggedSession session) {
 
 class GalleryScreen extends StatefulWidget {
   const GalleryScreen({super.key});
+
+  static bool isLocalPath(String data) {
+    if (data.startsWith('/') || data.startsWith('file://')) return true;
+    if (data.length > 2 && data[1] == ':') return true;
+    return false;
+  }
+
+  static String cleanPath(String data) {
+    var p = data.replaceFirst('file://', '');
+    if (Platform.isWindows && p.startsWith('/') && p.length > 2 && p[2] == ':') {
+      p = p.substring(1);
+    }
+    return p;
+  }
 
   @override
   State<GalleryScreen> createState() => _GalleryScreenState();
@@ -103,15 +118,25 @@ class _GalleryScreenState extends State<GalleryScreen> {
     }
 
     try {
+      // Captura com 100% da qualidade nativa do sensor da câmera (máxima resolução e nitidez)
       final picked = await _picker.pickImage(
         source: source,
         imageQuality: 100,
       );
       if (picked != null) {
-        final bytes = await File(picked.path).readAsBytes();
-        final base64Str = base64Encode(bytes);
+        // Salva o arquivo no diretório permanente do app preservando 100% dos bytes originais
+        final docs = await getApplicationDocumentsDirectory();
+        final galleryDir = Directory('${docs.path}/gallery_photos');
+        if (!await galleryDir.exists()) {
+          await galleryDir.create(recursive: true);
+        }
+        final ext = picked.path.contains('.') ? picked.path.split('.').last : 'jpg';
+        final fileName = 'gallery_${DateTime.now().millisecondsSinceEpoch}.$ext';
+        final permanentFile = File('${galleryDir.path}/$fileName');
+        await File(picked.path).copy(permanentFile.path);
+
         if (mounted) {
-          _showLinkToSessionSheet(context, base64Str);
+          _showLinkToSessionSheet(context, permanentFile.path);
         }
       }
     } catch (e) {
@@ -166,7 +191,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
     );
   }
 
-  void _showLinkToSessionSheet(BuildContext context, String base64Str) {
+  void _showLinkToSessionSheet(BuildContext context, String photoData) {
     final gc = context.gc;
     final sessions = fit.sessions.reversed.toList(); // Newest first
     LoggedSession selectedSession = sessions.first;
@@ -329,10 +354,17 @@ class _GalleryScreenState extends State<GalleryScreen> {
 
                 PrimaryButton(
                   label: 'VINCULAR E SALVAR FOTO',
-                  onTap: () {
-                    fit.attachPhotoToSession(selectedSession, base64Str, before: isBefore);
-                    Navigator.pop(context);
-                    AppToast.showSuccess(context, 'Foto vinculada com sucesso!');
+                  onTap: () async {
+                    fit.attachPhotoToSession(selectedSession, photoData, before: isBefore);
+                    await SqliteStore.instance.updateSessionPhotos(
+                      sessionDate: selectedSession.date.toIso8601String(),
+                      photosBefore: selectedSession.photosBefore,
+                      photosAfter: selectedSession.photosAfter,
+                    );
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                      AppToast.showSuccess(context, 'Foto vinculada com sucesso!');
+                    }
                   },
                 ),
               ],
@@ -569,16 +601,25 @@ class _GalleryScreenState extends State<GalleryScreen> {
   }
 
   Widget _buildImageWidget(String data) {
-    if (data.startsWith('/') || data.startsWith('file://')) {
-      final file = File(data.replaceFirst('file://', ''));
+    if (GalleryScreen.isLocalPath(data)) {
+      final file = File(GalleryScreen.cleanPath(data));
       if (file.existsSync()) {
-        return Image.file(file, fit: BoxFit.cover);
+        return Image.file(
+          file,
+          fit: BoxFit.cover,
+          cacheWidth: 600, // Decodifica miniatura na resolução ideal, mantendo a galeria ultraleve e fluida
+        );
       }
     }
 
     try {
-      final bytes = base64Decode(data);
-      return Image.memory(bytes, fit: BoxFit.cover);
+      final cleanBase64 = data.contains(',') ? data.split(',').last : data;
+      final bytes = base64Decode(cleanBase64.trim());
+      return Image.memory(
+        bytes,
+        fit: BoxFit.cover,
+        cacheWidth: 600,
+      );
     } catch (_) {
       return Container(
         color: const Color(0xFF1F241C),
@@ -607,6 +648,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
             },
             onShare: (photo) {
               final durMins = photo.session.durationSec > 0 ? (photo.session.durationSec / 60).round() : 30;
+              final isPath = GalleryScreen.isLocalPath(photo.data);
               showSharePhotoSheet(
                 context,
                 durationStr: '$durMins MIN',
@@ -614,7 +656,8 @@ class _GalleryScreenState extends State<GalleryScreen> {
                 volumeKg: photo.session.volume,
                 calories: (durMins * 5 + photo.session.volume * 0.02).round().clamp(20, 2000),
                 muscleGroupsStr: '',
-                initialImageBase64: photo.data,
+                initialImagePath: isPath ? GalleryScreen.cleanPath(photo.data) : null,
+                initialImageBase64: !isPath ? photo.data : null,
               );
             },
           );
@@ -661,14 +704,19 @@ class _FullScreenPhotoViewerState extends State<_FullScreenPhotoViewer> {
   }
 
   Widget _buildImage(String data) {
-    if (data.startsWith('/') || data.startsWith('file://')) {
-      final file = File(data.replaceFirst('file://', ''));
+    if (GalleryScreen.isLocalPath(data)) {
+      final file = File(GalleryScreen.cleanPath(data));
       if (file.existsSync()) {
-        return Image.file(file, fit: BoxFit.contain);
+        return Image.file(
+          file,
+          fit: BoxFit.contain,
+          // Sem limitação de cache: exibe na resolução e nitidez máxima nativa do sensor
+        );
       }
     }
     try {
-      final bytes = base64Decode(data);
+      final cleanBase64 = data.contains(',') ? data.split(',').last : data;
+      final bytes = base64Decode(cleanBase64.trim());
       return Image.memory(bytes, fit: BoxFit.contain);
     } catch (_) {
       return const Center(child: Icon(Icons.broken_image, color: Colors.white38, size: 48));
@@ -799,15 +847,13 @@ class _FullScreenPhotoViewerState extends State<_FullScreenPhotoViewer> {
   }
 
   Future<Uint8List> _getPhotoBytes(String data) async {
-    if (data.startsWith('file://')) {
-      final path = data.replaceFirst('file://', '');
+    if (GalleryScreen.isLocalPath(data)) {
+      final path = GalleryScreen.cleanPath(data);
       final f = File(path);
       if (await f.exists()) return await f.readAsBytes();
-    } else if (data.startsWith('/')) {
-      final f = File(data);
-      if (await f.exists()) return await f.readAsBytes();
     }
-    return base64Decode(data);
+    final cleanBase64 = data.contains(',') ? data.split(',').last : data;
+    return base64Decode(cleanBase64.trim());
   }
 
   Future<void> _downloadImage(_GalleryItem photo) async {

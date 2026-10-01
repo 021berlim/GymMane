@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import '../models/goal.dart';
 import '../models/weight_entry.dart';
 import '../services/weight_trend_calculator.dart';
 import 'fit_state.dart';
@@ -34,7 +33,7 @@ class WeightTrackingCubit extends ChangeNotifier {
 
   void _recalculate() {
     double? targetWeight;
-    final bwGoal = _fit.goals.where((g) => g.type == GoalType.bodyweight).firstOrNull;
+    final bwGoal = _fit.goals.where((g) => g.isWeightGoal).firstOrNull;
     if (bwGoal != null && bwGoal.target > 0) {
       targetWeight = bwGoal.target;
     }

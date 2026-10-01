@@ -148,38 +148,43 @@ class ToolDetailScreen extends StatelessWidget {
     final controller = TextEditingController(text: initial)
       ..selection = TextSelection(baseOffset: 0, extentOffset: initial.length);
 
-    final raw = await showAppDialog<String>(
-      context: context,
-      builder: (dctx) => AlertDialog(
-        backgroundColor: gc.bgRaised,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(title, style: AppTheme.d(14, weight: FontWeight.w700, color: gc.text, letterSpacing: 2)),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          keyboardType: TextInputType.numberWithOptions(decimal: decimal),
-          textAlign: TextAlign.center,
-          style: AppTheme.d(32, weight: FontWeight.w700, color: gc.text),
-          cursorColor: gc.accent,
-          onSubmitted: (v) => Navigator.of(dctx).pop(v),
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: gc.bgRaised2,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+    String? raw;
+    try {
+      raw = await showAppDialog<String>(
+        context: context,
+        builder: (dctx) => AlertDialog(
+          backgroundColor: gc.bgRaised,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Text(title, style: AppTheme.d(14, weight: FontWeight.w700, color: gc.text, letterSpacing: 2)),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            keyboardType: TextInputType.numberWithOptions(decimal: decimal),
+            textAlign: TextAlign.center,
+            style: AppTheme.d(32, weight: FontWeight.w700, color: gc.text),
+            cursorColor: gc.accent,
+            onSubmitted: (v) => Navigator.of(dctx).pop(v),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: gc.bgRaised2,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+            ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dctx).pop(),
+              child: Text(t.cancel, style: AppTheme.s(14, color: gc.textSecondary)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dctx).pop(controller.text),
+              child: Text(t.set, style: AppTheme.s(14, weight: FontWeight.w700, color: gc.accent)),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dctx).pop(),
-            child: Text(t.cancel, style: AppTheme.s(14, color: gc.textSecondary)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(dctx).pop(controller.text),
-            child: Text(t.set, style: AppTheme.s(14, weight: FontWeight.w700, color: gc.accent)),
-          ),
-        ],
-      ),
-    );
+      );
+    } finally {
+      controller.dispose();
+    }
 
     final parsed = double.tryParse((raw ?? '').trim().replaceAll(',', '.'));
     if (parsed != null) apply(parsed);

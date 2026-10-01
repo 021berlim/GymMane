@@ -15,7 +15,6 @@ import 'package:share_plus/share_plus.dart';
 import '../l10n/l10n.dart';
 import '../models/live_session.dart';
 import '../models/workout.dart';
-import '../services/gallery.dart';
 import '../state/fit_state.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
@@ -145,26 +144,66 @@ class _SharePhotoSheetState extends State<SharePhotoSheet> {
   @override
   void initState() {
     super.initState();
-    if (widget.initialImagePath != null && widget.initialImagePath!.isNotEmpty) {
-      _photo = File(widget.initialImagePath!);
-      _resolveDimensions(_photo!);
-    } else if (widget.initialImageBase64 != null && widget.initialImageBase64!.isNotEmpty) {
-      _loadBase64Image(widget.initialImageBase64!);
+    _initPhoto();
+  }
+
+  void _initPhoto() {
+    final path = widget.initialImagePath;
+    final b64 = widget.initialImageBase64;
+
+    if (path != null && path.trim().isNotEmpty) {
+      if (_isPath(path)) {
+        _loadImageFromPath(path);
+        return;
+      } else {
+        _loadBase64Image(path);
+        return;
+      }
+    }
+
+    if (b64 != null && b64.trim().isNotEmpty) {
+      if (_isPath(b64)) {
+        _loadImageFromPath(b64);
+        return;
+      } else {
+        _loadBase64Image(b64);
+        return;
+      }
+    }
+
+    // Fallback inteligente: se nenhum parâmetro explícito foi passado, tenta carregar a foto do treino atual ou último
+    final currentSession = fit.session;
+    String? fallback = currentSession?.photosAfter.lastOrNull ??
+        currentSession?.photosBefore.lastOrNull ??
+        (fit.sessions.isNotEmpty ? fit.sessions.last.photosAfter.lastOrNull : null) ??
+        (fit.sessions.isNotEmpty ? fit.sessions.last.photosBefore.lastOrNull : null);
+
+    if (fallback != null && fallback.trim().isNotEmpty) {
+      if (_isPath(fallback)) {
+        _loadImageFromPath(fallback);
+      } else {
+        _loadBase64Image(fallback);
+      }
     }
   }
 
-  Future<void> _resolveDimensions(File file) async {
-    try {
-      if (await file.exists()) {
-        final bytes = await file.readAsBytes();
-        final decoded = await decodeImageFromList(bytes);
-        if (mounted) {
-          setState(() {
-            _photoSize = Size(decoded.width.toDouble(), decoded.height.toDouble());
-          });
-        }
-      }
-    } catch (_) {}
+  bool _isPath(String str) {
+    final s = str.trim();
+    return s.startsWith('/') || s.startsWith('file://') || (s.length > 2 && s[1] == ':');
+  }
+
+  void _loadImageFromPath(String rawPath) {
+    var clean = rawPath.replaceFirst('file://', '');
+    if (Platform.isWindows && clean.startsWith('/') && clean.length > 2 && clean[2] == ':') {
+      clean = clean.substring(1);
+    }
+    final file = File(clean);
+    if (file.existsSync()) {
+      _photo = file;
+      _resolveDimensions(file);
+    } else {
+      debugPrint('[SharePhotoSheet] Arquivo não encontrado: $clean');
+    }
   }
 
   Future<void> _loadBase64Image(String rawBase64) async {
@@ -173,7 +212,11 @@ class _SharePhotoSheetState extends State<SharePhotoSheet> {
       if (cleanStr.contains(',')) {
         cleanStr = cleanStr.split(',').last;
       }
-      cleanStr = cleanStr.replaceAll('\n', '').replaceAll('\r', '').trim();
+      cleanStr = cleanStr.replaceAll('\n', '').replaceAll('\r', '').replaceAll(' ', '').trim();
+      final mod4 = cleanStr.length % 4;
+      if (mod4 > 0) {
+        cleanStr = cleanStr.padRight(cleanStr.length + (4 - mod4), '=');
+      }
       final bytes = base64Decode(cleanStr);
       Directory tempDir;
       try {
@@ -185,13 +228,28 @@ class _SharePhotoSheetState extends State<SharePhotoSheet> {
         '${tempDir.path}/fitiron_gallery_${DateTime.now().millisecondsSinceEpoch}.png',
       );
       await file.writeAsBytes(bytes, flush: true);
-      final decoded = await decodeImageFromList(bytes);
-
       if (mounted) {
         setState(() {
           _photo = file;
-          _photoSize = Size(decoded.width.toDouble(), decoded.height.toDouble());
         });
+      }
+      await _resolveDimensions(file);
+    } catch (e) {
+      debugPrint('[SharePhotoSheet] Erro ao carregar base64: $e');
+    }
+  }
+
+  Future<void> _resolveDimensions(File file) async {
+    try {
+      if (await file.exists()) {
+        final bytes = await file.readAsBytes();
+        final decoded = await decodeImageFromList(bytes);
+        if (mounted) {
+          setState(() {
+            _photo = file;
+            _photoSize = Size(decoded.width.toDouble(), decoded.height.toDouble());
+          });
+        }
       }
     } catch (_) {}
   }
@@ -205,10 +263,8 @@ class _SharePhotoSheetState extends State<SharePhotoSheet> {
       );
       if (shot == null || !mounted) return;
       final file = File(shot.path);
+      setState(() => _photo = file);
       await _resolveDimensions(file);
-      if (mounted) {
-        setState(() => _photo = file);
-      }
     } catch (_) {}
   }
 
@@ -290,18 +346,6 @@ class _SharePhotoSheetState extends State<SharePhotoSheet> {
       );
     });
   }
-
-  Future<void> _save() => _run((png) async {
-        final ok = await saveImageToGallery(
-          png,
-          'fitiron-${DateTime.now().millisecondsSinceEpoch}.png',
-        );
-        if (!ok) throw StateError('save');
-        HapticFeedback.lightImpact();
-        if (mounted) {
-          AppToast.showSuccess(context, 'Salvo na galeria');
-        }
-      });
 
   // ─── Build ───────────────────────────────────────────────────────────────
 
@@ -444,6 +488,15 @@ class _SharePhotoSheetState extends State<SharePhotoSheet> {
                     _photo!,
                     fit: BoxFit.cover,
                     filterQuality: FilterQuality.high,
+                    errorBuilder: (context, error, stackTrace) {
+                      debugPrint('Erro ao renderizar imagem no stage: $error');
+                      return Container(
+                        color: const Color(0xFF1F241C),
+                        child: const Center(
+                          child: Icon(Icons.broken_image, color: Colors.white38, size: 48),
+                        ),
+                      );
+                    },
                   ),
                 Positioned(
                   left: _pos.dx * size.width,
@@ -593,26 +646,12 @@ class _SharePhotoSheetState extends State<SharePhotoSheet> {
           ),
           const SizedBox(height: 12),
 
-          // Save + Share action buttons
-          Row(children: [
-            Expanded(
-              child: PrimaryButton(
-                label: t.save,
-                height: 48,
-                bg: gc.bgRaised2,
-                fg: gc.text,
-                onTap: _busy ? () {} : _save,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: PrimaryButton(
-                label: _busy ? 'Preparando...' : 'Compartilhar',
-                height: 48,
-                onTap: _busy ? () {} : _share,
-              ),
-            ),
-          ]),
+          // Share action button (botão Salvar removido do card)
+          PrimaryButton(
+            label: _busy ? 'Preparando...' : 'Compartilhar',
+            height: 48,
+            onTap: _busy ? () {} : _share,
+          ),
         ],
       ),
     );

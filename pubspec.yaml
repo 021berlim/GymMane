@@ -1,7 +1,7 @@
 name: fitiron
 description: "FitIron — an offline, ad-free gym log for Android."
 publish_to: "none"
-version: 1.0.30+30
+version: 1.0.31+31
 
 environment:
   sdk: ^3.11.5
@@ -13,7 +13,6 @@ dependencies:
     sdk: flutter
 
   audioplayers: ^6.1.0
-  cupertino_icons: ^1.0.8
   file_picker: ^8.1.7
   fl_chart: ^0.70.2
   flutter_local_notifications: ^22.0.1
@@ -85,25 +84,3 @@ flutter:
           weight: 600
         - asset: assets/fonts/IBMPlexSans-700.ttf
           weight: 700
-    - family: Figtree
-      fonts:
-        - asset: assets/fonts/Figtree-Regular.ttf
-          weight: 400
-        - asset: assets/fonts/Figtree-Medium.ttf
-          weight: 500
-        - asset: assets/fonts/Figtree-SemiBold.ttf
-          weight: 600
-        - asset: assets/fonts/Figtree-Bold.ttf
-          weight: 700
-        - asset: assets/fonts/Figtree-ExtraBold.ttf
-          weight: 800
-    - family: Barlow
-      fonts:
-        - asset: assets/fonts/BarlowSemiCondensed-Medium.ttf
-          weight: 500
-        - asset: assets/fonts/BarlowSemiCondensed-SemiBold.ttf
-          weight: 600
-        - asset: assets/fonts/BarlowSemiCondensed-Bold.ttf
-          weight: 700
-        - asset: assets/fonts/BarlowSemiCondensed-ExtraBold.ttf
-          weight: 800

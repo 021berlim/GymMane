@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:archive/archive.dart';
 
 const double _lbPerKg = 2.2046226218;
@@ -178,9 +179,13 @@ String? weightCsvFromZip(List<int> bytes) {
     if (name.contains('percentage') || name.contains('fat')) continue;
     String text;
     try {
-      text = String.fromCharCodes(file.content as List<int>);
+      text = utf8.decode((file.content as List).cast<int>(), allowMalformed: true);
     } catch (_) {
-      continue;
+      try {
+        text = String.fromCharCodes(file.content as List<int>);
+      } catch (_) {
+        continue;
+      }
     }
     best = text;
     if (name == 'weight.csv') break;

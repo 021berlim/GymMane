@@ -91,6 +91,7 @@ class SqliteStore {
           await _db!.execute('ALTER TABLE routine_exercises ADD COLUMN $col');
         } catch (_) {}
       }
+      await _createIndices(_db!);
       await _migrateLegacyDataIfNeeded();
       await _syncCatalogExercisesIfNeeded();
     } catch (e, stack) {
@@ -358,6 +359,43 @@ class SqliteStore {
         is_primary INTEGER NOT NULL DEFAULT 0
       )
     ''');
+
+    await _createIndices(db);
+  }
+
+  static Future<void> _createIndices(Database db) async {
+    try {
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_sessions_date ON sessions (date)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_session_exercises_session_id ON session_exercises (session_id)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_session_sets_exercise_id ON session_sets (session_exercise_id)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_routine_exercises_routine_id ON routine_exercises (routine_id)');
+    } catch (_) {}
+  }
+
+  /// Atualiza exclusivamente as fotos de uma sessão específica sem apagar outros registros
+  Future<void> updateSessionPhotos({
+    required String sessionDate,
+    required List<String> photosBefore,
+    required List<String> photosAfter,
+  }) async {
+    final db = _db ?? await _ensureDb;
+
+    String? encodePhotos(List<String> list) {
+      final valid = list.where((e) => e.isNotEmpty).toList();
+      if (valid.isEmpty) return null;
+      if (valid.length == 1) return valid.first;
+      return jsonEncode(valid);
+    }
+
+    await db.update(
+      'sessions',
+      {
+        'photo_before': encodePhotos(photosBefore),
+        'photo_after': encodePhotos(photosAfter),
+      },
+      where: 'date = ?',
+      whereArgs: [sessionDate],
+    );
   }
 
   Future<Map<String, dynamic>> loadFullState() async {
@@ -604,7 +642,29 @@ class SqliteStore {
 
     // 8. Sessions
     try {
-      final sessionRows = await database.query('sessions', orderBy: 'id ASC');
+      List<Map<String, Object?>> sessionRows;
+      try {
+        sessionRows = await database.query('sessions', orderBy: 'id ASC');
+      } catch (cursorError) {
+        debugPrint('SqliteStore sessions batch query fallback: $cursorError');
+        final idRows = await database.rawQuery('SELECT id FROM sessions ORDER BY id ASC');
+        sessionRows = [];
+        for (final r in idRows) {
+          final sId = r['id'];
+          try {
+            final single = await database.query('sessions', where: 'id = ?', whereArgs: [sId]);
+            if (single.isNotEmpty) sessionRows.add(single.first);
+          } catch (_) {
+            final partial = await database.query(
+              'sessions',
+              columns: ['id', 'date', 'duration_sec', 'bw_before', 'bw_after'],
+              where: 'id = ?',
+              whereArgs: [sId],
+            );
+            if (partial.isNotEmpty) sessionRows.add(partial.first);
+          }
+        }
+      }
       if (sessionRows.isNotEmpty) {
         final List<Map<String, dynamic>> sessionsList = [];
         for (final sRow in sessionRows) {
@@ -705,9 +765,6 @@ class SqliteStore {
       await database.transaction((txn) async {
         await txn.delete('profiles');
         await txn.delete('app_settings');
-      await txn.delete('sessions');
-      await txn.delete('session_exercises');
-      await txn.delete('session_sets');
       await txn.delete('bodyweight');
       await txn.delete('exercise_notes');
       await txn.delete('routines');
@@ -907,9 +964,12 @@ class SqliteStore {
         }
       }
 
-      // 8. Sessions
+      // 8. Sessions (salvaguarda: deleta e reinsere apenas se a lista for válida e não-vazia)
       final sessionsList = data['sessions'] as List?;
-      if (sessionsList != null) {
+      if (sessionsList != null && sessionsList.isNotEmpty) {
+        await txn.delete('sessions');
+        await txn.delete('session_exercises');
+        await txn.delete('session_sets');
         for (final s in sessionsList) {
           if (s is! Map) continue;
           final sMap = s.cast<String, dynamic>();

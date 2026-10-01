@@ -5,7 +5,7 @@ String medalAsset(AwardId id) => 'assets/badges/${id.name}.webp';
 
 String medalOffAsset(AwardId id) => 'assets/badges/${id.name}_off.webp';
 
-String medalSpinAsset(AwardId id) => 'assets/badges/${id.name}.webp';
+String medalSpinAsset(AwardId id) => medalAsset(id);
 
 String awardName(AwardId id) => switch (id) {
       AwardId.firstStep => t.awardFirstStepName,

@@ -149,7 +149,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
                 Positioned.fill(child: AppBackground(pattern: fit.bgPattern)),
                 Positioned.fill(child: _animatedScreen()),
                 if (fit.showNav)
-                  Positioned(left: 18, right: 18, bottom: 18, child: _NavBar()),
+                  Positioned(left: 18, right: 18, bottom: 18, child: const _NavBar()),
                 if (fit.route != 'session' && _celebrating != null)
                   Positioned.fill(
                     child: AwardCelebration(

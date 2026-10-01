@@ -68,8 +68,7 @@ void main() {
     expect(find.text('Sem foto'), findsOneWidget);
     expect(find.text('Treino'), findsOneWidget);
     expect(find.text('Sequência'), findsOneWidget);
-    expect(find.text('Data'), findsOneWidget);
-    expect(find.text(t.save), findsOneWidget);
+    expect(find.text(t.save), findsNothing);
     expect(find.text('Compartilhar'), findsOneWidget);
 
     // Verify old separated slider and style presets are removed

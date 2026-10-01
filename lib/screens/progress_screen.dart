@@ -460,7 +460,7 @@ class _BodyweightCardState extends State<_BodyweightCard> {
         .toList();
 
     double? targetWeight;
-    final bwGoal = fit.goals.where((g) => g.type == GoalType.bodyweight).firstOrNull;
+    final bwGoal = fit.goals.where((g) => g.isWeightGoal).firstOrNull;
     if (bwGoal != null && bwGoal.target > 0) {
       targetWeight = bwGoal.target;
     }

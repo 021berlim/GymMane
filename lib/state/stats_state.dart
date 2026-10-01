@@ -672,28 +672,7 @@ mixin StatsState on FitCore, ToolsState, LibraryState {
     return list;
   }
 
-  int get prsThisWeek {
-    final bestOrm = <String, double>{};
-    final bestDate = <String, DateTime>{};
-    for (final s in sessions) {
-      for (final e in s.exercises) {
-        for (final st in e.sets) {
-          if (!bestOrm.containsKey(e.id) || st.oneRm > bestOrm[e.id]!) {
-            bestOrm[e.id] = st.oneRm;
-            bestDate[e.id] = s.date;
-          }
-        }
-      }
-    }
-    final start = _weekStart;
-    final end = start.add(const Duration(days: 7));
-    var n = 0;
-    bestDate.forEach((_, d) {
-      final k = _dayKey(d);
-      if (!k.isBefore(start) && k.isBefore(end)) n++;
-    });
-    return n;
-  }
+  int get prsThisWeek => weeklyPrsCount(_weekStart);
 
   List<({String name, int pct})> get muscleSplit {
     final start = DateTime.now().subtract(const Duration(days: 30));

@@ -34,6 +34,7 @@ class Goal {
   double get target => targetValue;
   bool get isPrimary => pinnedToHome;
   set isPrimary(bool val) => pinnedToHome = val;
+  bool get isWeightGoal => type == GoalType.weightTarget || type == GoalType.bodyweight;
 
   Map<String, dynamic> toJson() => {
         'id': id,

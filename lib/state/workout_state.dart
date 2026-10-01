@@ -359,7 +359,7 @@ mixin WorkoutState on FitCore, SettingsState, LibraryState, StatsState, Routines
 
   SessionExercise? get currentExercise {
     final s = session;
-    if (s == null || s.exercises.isEmpty) return null;
+    if (s == null || s.exercises.isEmpty || s.currentIndex < 0 || s.currentIndex >= s.exercises.length) return null;
     return s.exercises[s.currentIndex];
   }
 
@@ -370,15 +370,19 @@ mixin WorkoutState on FitCore, SettingsState, LibraryState, StatsState, Routines
   }
 
   void toggleSet(int exIdx, int setIdx) {
-    final st = session!.exercises[exIdx].sets[setIdx];
+    final s = session;
+    if (s == null || exIdx < 0 || exIdx >= s.exercises.length) return;
+    final ex = s.exercises[exIdx];
+    if (setIdx < 0 || setIdx >= ex.sets.length) return;
+    final st = ex.sets[setIdx];
     st.done = !st.done;
     _persist();
     notifyListeners();
     if (st.done) {
       startRest();
-      final allDone = session!.exercises[exIdx].sets.every((s) => s.done);
+      final allDone = ex.sets.every((s) => s.done);
       if (allDone) {
-        if (exIdx < session!.exercises.length - 1) {
+        if (exIdx < s.exercises.length - 1) {
           Future.delayed(const Duration(milliseconds: 800), () {
             if (session != null && session!.currentIndex == exIdx) {
               HapticFeedback.lightImpact();
