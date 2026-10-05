@@ -21,6 +21,7 @@ class ExerciseGifView extends StatefulWidget {
     this.radius = 16,
     this.fit = BoxFit.contain,
     this.isThumbnail = false,
+    this.backgroundColor,
   });
 
   final String gifPath;
@@ -30,6 +31,7 @@ class ExerciseGifView extends StatefulWidget {
   final double radius;
   final BoxFit fit;
   final bool isThumbnail;
+  final Color? backgroundColor;
 
   @override
   State<ExerciseGifView> createState() => _ExerciseGifViewState();
@@ -136,26 +138,31 @@ class _ExerciseGifViewState extends State<ExerciseGifView> {
       width: effectiveRatio != null ? (widget.width ?? double.infinity) : (widget.width ?? widget.height),
       height: effectiveRatio != null ? null : widget.height,
       decoration: BoxDecoration(
-        color: gc.bgRaised2,
+        color: widget.backgroundColor ?? gc.bgRaised2,
         borderRadius: BorderRadius.circular(widget.radius),
-        border: Border.all(color: gc.border),
+        border: Border.all(
+          color: widget.backgroundColor != null ? Colors.transparent : gc.border,
+        ),
       ),
       clipBehavior: Clip.antiAlias,
       child: _imageProvider == null
           ? _fallbackIcon(gc)
-          : Image(
-              image: _imageProvider!,
-              fit: widget.fit,
-              alignment: Alignment.center,
-              gaplessPlayback: true,
-              filterQuality: FilterQuality.low,
-              frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-                if (wasSynchronouslyLoaded || frame != null) {
-                  return child;
-                }
-                return _skeletonPlaceholder(gc);
-              },
-              errorBuilder: (context, error, stackTrace) => _fallbackIcon(gc),
+          : ClipRRect(
+              borderRadius: BorderRadius.circular(widget.radius),
+              child: Image(
+                image: _imageProvider!,
+                fit: widget.fit,
+                alignment: Alignment.center,
+                gaplessPlayback: true,
+                filterQuality: FilterQuality.low,
+                frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                  if (wasSynchronouslyLoaded || frame != null) {
+                    return child;
+                  }
+                  return _skeletonPlaceholder(gc);
+                },
+                errorBuilder: (context, error, stackTrace) => _fallbackIcon(gc),
+              ),
             ),
     );
 
@@ -171,7 +178,7 @@ class _ExerciseGifViewState extends State<ExerciseGifView> {
 
   Widget _skeletonPlaceholder(GymColors gc) {
     return Container(
-      color: gc.bgRaised,
+      color: widget.backgroundColor ?? gc.bgRaised,
       alignment: Alignment.center,
       child: SizedBox(
         width: 22,
@@ -190,7 +197,7 @@ class _ExerciseGifViewState extends State<ExerciseGifView> {
       child: Icon(
         PhosphorIconsRegular.barbell,
         size: effectiveHeight * 0.35,
-        color: gc.textTertiary,
+        color: widget.backgroundColor != null ? Colors.black38 : gc.textTertiary,
       ),
     );
   }

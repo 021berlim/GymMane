@@ -19,6 +19,7 @@ class ExerciseMedia extends StatelessWidget {
     this.radius = 20,
     this.live = false,
     this.fit,
+    this.backgroundColor,
   });
 
   final Exercise ex;
@@ -28,6 +29,7 @@ class ExerciseMedia extends StatelessWidget {
   final double radius;
   final bool live;
   final BoxFit? fit;
+  final Color? backgroundColor;
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +47,7 @@ class ExerciseMedia extends StatelessWidget {
         radius: radius,
         fit: effectiveFit,
         isThumbnail: !live && (effectiveHeight != null && effectiveHeight <= 80),
+        backgroundColor: backgroundColor,
       );
     }
     final isVideo = MediaStore.isVideo(ex.media);
@@ -63,6 +66,7 @@ class ExerciseMedia extends StatelessWidget {
       width: width,
       aspectRatio: aspectRatio,
       radius: radius,
+      backgroundColor: backgroundColor,
       child: isVideo
           ? _VideoPoster(height: effectiveHeight ?? 180)
           : Center(
@@ -91,12 +95,14 @@ class _MediaFrame extends StatelessWidget {
     this.width,
     this.aspectRatio,
     required this.radius,
+    this.backgroundColor,
   });
   final Widget child;
   final double? height;
   final double? width;
   final double? aspectRatio;
   final double radius;
+  final Color? backgroundColor;
 
   @override
   Widget build(BuildContext context) {
@@ -105,9 +111,9 @@ class _MediaFrame extends StatelessWidget {
       width: width ?? (aspectRatio != null ? double.infinity : null),
       height: aspectRatio != null ? null : height,
       decoration: BoxDecoration(
-        color: gc.bgRaised2,
+        color: backgroundColor ?? gc.bgRaised2,
         borderRadius: BorderRadius.circular(radius),
-        border: Border.all(color: gc.border),
+        border: Border.all(color: backgroundColor != null ? Colors.transparent : gc.border),
       ),
       clipBehavior: Clip.antiAlias,
       child: child,

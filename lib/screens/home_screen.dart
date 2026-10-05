@@ -99,7 +99,7 @@ class HomeScreen extends StatelessWidget {
                   style: AppTheme.d(18, weight: FontWeight.w700, color: gc.text, letterSpacing: 1),
                 ),
                 const SizedBox(height: 12),
-                _thisWeekCard(gc, pinnedGoal, pinnedProgress),
+                _thisWeekCard(context, gc, pinnedGoal, pinnedProgress),
                 const SizedBox(height: 24),
                 _activityHeader(gc),
                 const SizedBox(height: 12),
@@ -109,7 +109,7 @@ class HomeScreen extends StatelessWidget {
                     style: AppTheme.d(12, weight: FontWeight.w600, color: gc.textSecondary, letterSpacing: 3)),
                 const SizedBox(height: 10),
                 SizedBox(
-                  height: 150,
+                  height: 156,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
                     itemCount: recommended.length,
@@ -174,7 +174,10 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _thisWeekCard(GymColors gc, Goal pinnedGoal, GoalProgressResult pinnedProgress) {
+  Widget _thisWeekCard(BuildContext context, GymColors gc, Goal pinnedGoal, GoalProgressResult pinnedProgress) {
+    final lang = appLanguage;
+    final recordsLabel = lang == 'pt' ? 'RECORDES' : (lang == 'es' ? 'RÉCORDS' : 'RECORDS');
+
     return SoftCard(
       radius: 20,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -193,12 +196,12 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                flex: 3,
+                flex: 6,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
                       t.volume.toUpperCase(),
@@ -207,86 +210,122 @@ class HomeScreen extends StatelessWidget {
                       style: AppTheme.s(10, weight: FontWeight.w700, color: gc.textTertiary, letterSpacing: 0.8),
                     ),
                     const SizedBox(height: 6),
-                    RichText(
-                      text: TextSpan(
-                        text: fit.volumeValue(fit.volumeThisWeekKg),
-                        style: AppTheme.d(24, weight: FontWeight.w700, color: gc.text),
-                        children: [
-                          TextSpan(
-                            text: ' ${fit.volumeUnit}',
-                            style: AppTheme.d(13, weight: FontWeight.w600, color: gc.textSecondary),
-                          ),
-                        ],
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: RichText(
+                        text: TextSpan(
+                          text: fit.volumeValue(fit.volumeThisWeekKg),
+                          style: AppTheme.d(22, weight: FontWeight.w700, color: gc.text),
+                          children: [
+                            TextSpan(
+                              text: ' ${fit.volumeUnit}',
+                              style: AppTheme.d(12, weight: FontWeight.w600, color: gc.textSecondary),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
+              const SizedBox(width: 6),
               Expanded(
-                flex: 3,
+                flex: 5,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      t.setsToday.toUpperCase(),
+                      t.setsCaps.toUpperCase(),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AppTheme.s(10, weight: FontWeight.w700, color: gc.textTertiary, letterSpacing: 0.8),
                     ),
                     const SizedBox(height: 6),
-                    Text(
-                      '${fit.setsToday}',
-                      style: AppTheme.d(24, weight: FontWeight.w700, color: gc.text),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                flex: 3,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      t.personalRecords.toUpperCase(),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTheme.s(10, weight: FontWeight.w700, color: gc.textTertiary, letterSpacing: 0.8),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      '${fit.prsThisWeek}',
-                      style: AppTheme.d(24, weight: FontWeight.w700, color: gc.text),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    width: 38,
-                    height: 38,
-                    child: CustomPaint(
-                      painter: _MiniGoalRingPainter(
-                        pct: pinnedProgress.progressRatio.clamp(0.0, 1.0),
-                        trackColor: gc.bgRaised2,
-                        accentColor: gc.accent,
-                        strokeWidth: 4.5,
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        '${fit.setsThisWeek}',
+                        style: AppTheme.d(22, weight: FontWeight.w700, color: gc.text),
                       ),
                     ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                flex: 6,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      recordsLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTheme.s(10, weight: FontWeight.w700, color: gc.textTertiary, letterSpacing: 0.8),
+                    ),
+                    const SizedBox(height: 6),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        '${fit.prsThisWeek}',
+                        style: AppTheme.d(22, weight: FontWeight.w700, color: gc.text),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                flex: 5,
+                child: GestureDetector(
+                  onTap: fit.goProgress,
+                  behavior: HitTestBehavior.opaque,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        t.goal.toUpperCase(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTheme.s(10, weight: FontWeight.w700, color: gc.textTertiary, letterSpacing: 0.8),
+                      ),
+                      const SizedBox(height: 5),
+                      SizedBox(
+                        width: 32,
+                        height: 32,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            CustomPaint(
+                              size: const Size(32, 32),
+                              painter: _MiniGoalRingPainter(
+                                pct: pinnedProgress.progressRatio.clamp(0.0, 1.0),
+                                trackColor: gc.border.withValues(alpha: 0.5),
+                                accentColor: gc.accent,
+                                strokeWidth: 3.5,
+                              ),
+                            ),
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Padding(
+                                padding: const EdgeInsets.all(3),
+                                child: Text(
+                                  (pinnedGoal.type == GoalType.weeklyFrequency || pinnedGoal.type == GoalType.sessionsWeekly)
+                                      ? '${pinnedProgress.currentValue.round()}/${pinnedProgress.targetValue.round()}'
+                                      : '${pinnedProgress.progressPercentage}%',
+                                  style: AppTheme.d(9, weight: FontWeight.w700, color: gc.text),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    (pinnedGoal.type == GoalType.weeklyFrequency || pinnedGoal.type == GoalType.sessionsWeekly)
-                        ? '${pinnedProgress.currentValue.round()}/${pinnedProgress.targetValue.round()}'
-                        : '${pinnedProgress.progressPercentage}%',
-                    style: AppTheme.d(11, weight: FontWeight.w700, color: gc.textSecondary),
-                  ),
-                ],
+                ),
               ),
             ],
           ),
@@ -358,7 +397,7 @@ class HomeScreen extends StatelessWidget {
     return GestureDetector(
       onTap: () => fit.openExercise(ex.id),
       child: Container(
-        width: 128,
+        width: 136,
         margin: const EdgeInsets.only(right: 12),
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
@@ -369,12 +408,29 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            ExerciseMedia(ex: ex, height: 84, radius: 10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                height: 90,
+                color: Colors.white,
+                padding: const EdgeInsets.all(4),
+                child: ExerciseMedia(
+                  ex: ex,
+                  height: 82,
+                  radius: 10,
+                  backgroundColor: Colors.white,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
             const SizedBox(height: 8),
             Expanded(
-              child: Text(exerciseName(ex),
-                  maxLines: 2, overflow: TextOverflow.ellipsis,
-                  style: AppTheme.s(12, weight: FontWeight.w600, color: gc.text, height: 1.2)),
+              child: Text(
+                exerciseName(ex),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppTheme.s(12, weight: FontWeight.w600, color: gc.text, height: 1.25),
+              ),
             ),
           ],
         ),
