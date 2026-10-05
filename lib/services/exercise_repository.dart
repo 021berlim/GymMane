@@ -1,6 +1,5 @@
 import 'package:sqflite/sqflite.dart';
 
-import '../l10n/fitness_translator.dart';
 import '../models/exercise.dart';
 import 'apply_brazilian_exercises_patch.dart';
 
@@ -82,16 +81,21 @@ class ExerciseRepository {
     final whereArgs = <dynamic>[];
 
     if (cleanQuery.isNotEmpty) {
-      // Verifica se é busca direta por ID numérico (ex: "0001", "45", "1")
-      final isNumeric = RegExp(r'^\d+$').hasMatch(rawTrimmed);
+      final strippedId = rawTrimmed.replaceFirst(RegExp(r'^(#|id:?\s*)', caseSensitive: false), '').trim();
+      final isNumeric = RegExp(r'^\d+$').hasMatch(strippedId);
       if (isNumeric) {
-        final paddedId = rawTrimmed.padLeft(4, '0');
-        whereClauses.add('(id = ? OR id LIKE ? OR search_index LIKE ?)');
-        whereArgs.add(rawTrimmed);
+        final paddedId = strippedId.padLeft(4, '0');
+        final unpadded = strippedId.replaceFirst(RegExp(r'^0+'), '');
+        whereClauses.add('(id = ? OR id = ? OR id = ? OR id LIKE ? OR search_index LIKE ?)');
+        whereArgs.add(strippedId);
+        whereArgs.add(paddedId);
+        whereArgs.add(unpadded.isEmpty ? '0' : unpadded);
         whereArgs.add('$paddedId%');
         whereArgs.add('%$cleanQuery%');
       } else {
-        whereClauses.add('search_index LIKE ?');
+        whereClauses.add('(id = ? OR id LIKE ? OR search_index LIKE ?)');
+        whereArgs.add(strippedId);
+        whereArgs.add('%$strippedId%');
         whereArgs.add('%$cleanQuery%');
       }
     }

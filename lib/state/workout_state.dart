@@ -95,10 +95,9 @@ mixin WorkoutState on FitCore, SettingsState, LibraryState, StatsState, Routines
   }
 
   List<Exercise> trainSearchResults(String query) {
-    final q = query.trim().toLowerCase();
-    if (q.isEmpty) return const [];
+    if (query.trim().isEmpty) return const [];
     return allExercises
-        .where((e) => exerciseName(e).toLowerCase().contains(q) || e.name.toLowerCase().contains(q))
+        .where((e) => matchesExerciseSearch(e, query))
         .take(40)
         .toList();
   }

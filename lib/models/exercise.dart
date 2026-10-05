@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/widgets.dart';
+import '../l10n/fitness_translator.dart';
 import '../l10n/l10n.dart';
 import 'cardio_config.dart';
 
 export 'cardio_config.dart';
+export '../l10n/fitness_translator.dart' show normalizeSearchText;
 
 class Muscle {
   const Muscle(this.id, this.label, this.view);
@@ -200,6 +202,8 @@ class Exercise {
         art: _art,
         steps: _steps,
       );
+
+  bool matchesSearch(String query) => matchesExerciseSearch(this, query);
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -400,4 +404,122 @@ String muscleFamily(String muscleId) {
     default:
       return 'core';
   }
+}
+
+/// Verifica se o identificador do exercício corresponde ao termo de busca por ID.
+/// Suporta IDs alfanuméricos ("EIeI8Vf"), numéricos com ou sem zeros à esquerda ("0001", "1", "25", "0025"),
+/// e prefixos como "#" ("#0001", "#1") ou "id:" / "id " ("id: 25").
+bool matchesExerciseId(String exerciseId, String query) {
+  final cleanQuery = query.trim().toLowerCase();
+  if (cleanQuery.isEmpty) return false;
+
+  final exId = exerciseId.trim().toLowerCase();
+  if (exId.isEmpty) return false;
+  if (exId == cleanQuery) return true;
+
+  // Remove prefixos comuns como "#", "id:", "id "
+  final stripped = cleanQuery
+      .replaceFirst(RegExp(r'^(#|id:?\s*)', caseSensitive: false), '')
+      .trim();
+
+  if (stripped.isEmpty) return false;
+  if (exId == stripped) return true;
+
+  final isQueryNumeric = RegExp(r'^\d+$').hasMatch(stripped);
+  final isExIdNumeric = RegExp(r'^\d+$').hasMatch(exId);
+
+  if (isQueryNumeric && isExIdNumeric) {
+    final strippedNum = int.tryParse(stripped);
+    final exIdNum = int.tryParse(exId);
+    if (strippedNum != null && exIdNum != null && strippedNum == exIdNum) {
+      return true;
+    }
+  }
+
+  if (isQueryNumeric) {
+    final padded4 = stripped.padLeft(4, '0');
+    if (exId == padded4) return true;
+    if (exId.contains(padded4)) return true;
+  }
+
+  if (exId.contains(stripped)) return true;
+
+  return false;
+}
+
+/// Função padronizada e abrangente para pesquisa de exercícios em todo o sistema GymMane.
+/// Cobre:
+/// 1. ID exato, numérico com/sem padding, prefixado com # ou id:, ou parcial
+/// 2. Nome em Português e Inglês, nome localizado dinâmico
+/// 3. Equipamento (original, em português e traduzido)
+/// 4. Grupo muscular principal (primary), target, bodyPart e secundários
+/// 5. Dificuldade e categoria
+/// 6. Multi-termos ("supino barra", "peito halter")
+bool matchesExerciseSearch(Exercise ex, String query) {
+  final raw = query.trim();
+  if (raw.isEmpty) return true;
+
+  // 1. Busca por ID
+  if (matchesExerciseId(ex.id, raw)) return true;
+
+  // 2. Busca por texto normalizado (sem acentos e minúsculo)
+  final normQuery = normalizeSearchText(raw);
+  if (normQuery.isEmpty) return false;
+
+  const musclePtMap = <String, String>{
+    'chest': 'Peito',
+    'back': 'Costas',
+    'shoulders': 'Ombros Deltoides',
+    'biceps': 'Bíceps',
+    'triceps': 'Tríceps',
+    'forearm': 'Antebraço',
+    'abdomen': 'Abdômen Abdominais Abdominal',
+    'obliques': 'Oblíquos',
+    'quads': 'Quadríceps Pernas',
+    'hamstrings': 'Posterior de Coxa Isquiotibiais',
+    'glutes': 'Glúteos',
+    'calves': 'Panturrilhas',
+    'trapezius': 'Trapézio',
+    'cardio': 'Cardio Aeróbico',
+  };
+
+  final terms = [
+    ex.id,
+    ex.name,
+    ex.namePt,
+    ex.localizedName(),
+    exerciseName(ex),
+    ex.equipment,
+    ex.equipmentPt,
+    ex.getLocalizedEquipment(),
+    t.equipment(ex.equipment),
+    FitnessTranslator.equipmentPt[ex.equipment.toLowerCase()] ?? '',
+    ex.primary,
+    muscleLabel(ex.primary),
+    musclePtMap[ex.primary] ?? '',
+    ex.target,
+    ex.targetPt,
+    ex.getLocalizedTarget(),
+    ex.bodyPart,
+    ex.bodyPartPt,
+    ex.getLocalizedBodyPart(),
+    ...ex.secondary,
+    ...ex.secondaryMusclesPt,
+    ...ex.getLocalizedSecondaryMuscles(),
+    for (final s in ex.secondary) musclePtMap[s] ?? '',
+    ex.difficulty,
+    t.difficulty(ex.difficulty),
+    ex.category,
+  ];
+
+  final combined = normalizeSearchText(terms.join(' '));
+  if (combined.contains(normQuery)) return true;
+
+  // Multi-termos: todas as palavras digitadas precisam estar presentes em algum termo
+  final words = normQuery.split(' ').where((w) => w.isNotEmpty).toList();
+  if (words.length > 1) {
+    if (words.every((w) => combined.contains(w))) return true;
+  }
+
+  return false;
 }

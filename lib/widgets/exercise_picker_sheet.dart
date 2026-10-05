@@ -52,8 +52,6 @@ class _ExercisePickerSheetState extends State<ExercisePickerSheet> {
   Set<String> get _excluded => widget.excludedIds ?? const {};
 
   List<Exercise> get _filteredExercises {
-    final q = _query.trim().toLowerCase();
-
     return fit.allExercises.where((ex) {
       if (_excluded.contains(ex.id)) return false;
 
@@ -74,11 +72,8 @@ class _ExercisePickerSheetState extends State<ExercisePickerSheet> {
         if (fit.favorites[ex.id] != true) return false;
       }
 
-      if (q.isNotEmpty) {
-        final nameMatches = ex.name.toLowerCase().contains(q) ||
-            ex.namePt.toLowerCase().contains(q) ||
-            exerciseName(ex).toLowerCase().contains(q);
-        if (!nameMatches) return false;
+      if (_query.trim().isNotEmpty) {
+        if (!matchesExerciseSearch(ex, _query)) return false;
       }
 
       return true;

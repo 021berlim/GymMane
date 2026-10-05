@@ -52,9 +52,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
               child: _isCategorySelected
                   ? _categoryDetailHeader(gc, list.length)
-                  : _isSearching
-                      ? _searchHeader(gc, list.length)
-                      : _header(gc),
+                  : _header(gc, list.length),
             ),
           ),
           if (_isCategorySelected || _isSearching) ...[
@@ -124,7 +122,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
     );
   }
 
-  Widget _header(GymColors gc) {
+  Widget _header(GymColors gc, int count) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -136,7 +134,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
           ],
         ),
         const SizedBox(height: 14),
-        // Search exercises input
+        // Search exercises input (permanently mounted to retain focus)
         Container(
           height: 48,
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -176,62 +174,70 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
               ),
           ]),
         ),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            Expanded(
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: fit.goRoutines,
-                child: Container(
-                  height: 44,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: gc.emberSoft,
-                    border: Border.all(color: gc.ember),
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(PhosphorIconsRegular.barbell, size: 16, color: gc.ember),
-                      const SizedBox(width: 6),
-                      Text(t.goToWorkouts,
-                          style: AppTheme.d(12, weight: FontWeight.w600, color: gc.ember, letterSpacing: 0.8)),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: GestureDetector(
-                onTap: () => showCreateExerciseSheet(context),
-                child: Container(
-                  height: 44,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: gc.bgRaised2,
-                    border: Border.all(color: gc.border),
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(PhosphorIconsRegular.plus, size: 15, color: gc.text),
-                      const SizedBox(width: 6),
-                      Text(t.newExercise,
-                          style: AppTheme.d(12, weight: FontWeight.w600, color: gc.text, letterSpacing: 0.8)),
-                    ],
+        const SizedBox(height: 12),
+        if (_isSearching) ...[
+          Text(
+            '$count exercícios encontrados',
+            style: AppTheme.s(13, color: gc.textSecondary),
+          ),
+          const SizedBox(height: 14),
+        ] else ...[
+          Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: fit.goRoutines,
+                  child: Container(
+                    height: 44,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: gc.emberSoft,
+                      border: Border.all(color: gc.ember),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(PhosphorIconsRegular.barbell, size: 16, color: gc.ember),
+                        const SizedBox(width: 6),
+                        Text(t.goToWorkouts,
+                            style: AppTheme.d(12, weight: FontWeight.w600, color: gc.ember, letterSpacing: 0.8)),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 14),
-        // Subdivisão por Abas (POR MÚSCULO | EQUIPAMENTOS | FAVORITOS)
-        _tabSelector(gc),
+              const SizedBox(width: 10),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => showCreateExerciseSheet(context),
+                  child: Container(
+                    height: 44,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: gc.bgRaised2,
+                      border: Border.all(color: gc.border),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(PhosphorIconsRegular.plus, size: 15, color: gc.text),
+                        const SizedBox(width: 6),
+                        Text(t.newExercise,
+                            style: AppTheme.d(12, weight: FontWeight.w600, color: gc.text, letterSpacing: 0.8)),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          // Subdivisão por Abas (POR MÚSCULO | EQUIPAMENTOS | FAVORITOS)
+          _tabSelector(gc),
+        ],
       ],
     );
   }
@@ -309,65 +315,6 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
     );
   }
 
-  Widget _searchHeader(GymColors gc, int count) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          children: [
-            Icon(PhosphorIconsRegular.barbell, size: 22, color: gc.text),
-            const SizedBox(width: 10),
-            Text(t.exercises, style: AppTheme.d(22, weight: FontWeight.w700, color: gc.text)),
-          ],
-        ),
-        const SizedBox(height: 14),
-        Container(
-          height: 48,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            color: gc.bgRaised,
-            border: Border.all(color: gc.border),
-            borderRadius: BorderRadius.circular(100),
-          ),
-          child: Row(children: [
-            SvgPathIcon(Ic.search, size: 16, color: gc.textSecondary),
-            const SizedBox(width: 10),
-            Expanded(
-              child: TextField(
-                controller: _c,
-                onChanged: (val) {
-                  fit.setExSearch(val);
-                  setState(() {});
-                },
-                style: AppTheme.s(14, color: gc.text),
-                cursorColor: gc.accent,
-                decoration: InputDecoration(
-                  isCollapsed: true,
-                  border: InputBorder.none,
-                  hintText: t.searchExercises,
-                  hintStyle: AppTheme.s(14, color: gc.textSecondary),
-                ),
-              ),
-            ),
-            GestureDetector(
-              onTap: () {
-                _c.clear();
-                fit.setExSearch('');
-                setState(() {});
-              },
-              child: Icon(PhosphorIconsRegular.xCircle, size: 18, color: gc.textSecondary),
-            ),
-          ]),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          '$count exercícios encontrados',
-          style: AppTheme.s(13, color: gc.textSecondary),
-        ),
-        const SizedBox(height: 14),
-      ],
-    );
-  }
 
   Widget _muscleCard(GymColors gc, String muscleId) {
     final count = fit.allExercises

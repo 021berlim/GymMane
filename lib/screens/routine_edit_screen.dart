@@ -60,14 +60,10 @@ class _RoutineEditScreenState extends State<RoutineEditScreen> {
   }
 
   List<Exercise> get _filtered {
-    final q = _q.trim().toLowerCase();
     return fit.allExercises.where((ex) {
       if (_favouritesOnly && fit.favorites[ex.id] != true) return false;
 
-      if (q.isNotEmpty &&
-          !ex.name.toLowerCase().contains(q) &&
-          !ex.localizedName().toLowerCase().contains(q) &&
-          !exerciseName(ex).toLowerCase().contains(q)) {
+      if (_q.trim().isNotEmpty && !matchesExerciseSearch(ex, _q)) {
         return false;
       }
       if (_muscleFilter != null &&
@@ -259,49 +255,53 @@ class _RoutineEditScreenState extends State<RoutineEditScreen> {
           ),
         ],
         const SizedBox(height: 20),
+        // Search exercises input (permanently mounted to preserve focus)
+        Container(
+          height: 48,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: gc.bgRaised,
+            border: Border.all(color: gc.border),
+            borderRadius: BorderRadius.circular(100),
+          ),
+          child: Row(children: [
+            SvgPathIcon(Ic.search, size: 16, color: gc.textSecondary),
+            const SizedBox(width: 10),
+            Expanded(
+              child: TextField(
+                controller: _search,
+                onChanged: (v) => setState(() => _q = v),
+                style: AppTheme.s(14, color: gc.text),
+                cursorColor: gc.accent,
+                decoration: InputDecoration(
+                  isCollapsed: true,
+                  border: InputBorder.none,
+                  hintText: t.addExercises,
+                  hintStyle: AppTheme.s(14, color: gc.textSecondary),
+                ),
+              ),
+            ),
+            if (_hasActiveFilters)
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: _clearFilters,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 6),
+                  child: SvgPathIcon(Ic.closeThin, size: 14, color: gc.textSecondary),
+                ),
+              ),
+          ]),
+        ),
+        const SizedBox(height: 14),
         if (_isCategorySelected) ...[
           _categoryDetailHeader(gc, categoryExerciseCount),
         ] else if (_isSearching) ...[
-          _searchHeader(gc, categoryExerciseCount),
-        ] else ...[
-          // Search exercises input
-          Container(
-            height: 48,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              color: gc.bgRaised,
-              border: Border.all(color: gc.border),
-              borderRadius: BorderRadius.circular(100),
-            ),
-            child: Row(children: [
-              SvgPathIcon(Ic.search, size: 16, color: gc.textSecondary),
-              const SizedBox(width: 10),
-              Expanded(
-                child: TextField(
-                  controller: _search,
-                  onChanged: (v) => setState(() => _q = v),
-                  style: AppTheme.s(14, color: gc.text),
-                  cursorColor: gc.accent,
-                  decoration: InputDecoration(
-                    isCollapsed: true,
-                    border: InputBorder.none,
-                    hintText: t.addExercises,
-                    hintStyle: AppTheme.s(14, color: gc.textSecondary),
-                  ),
-                ),
-              ),
-              if (_hasActiveFilters)
-                GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: _clearFilters,
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 6),
-                    child: SvgPathIcon(Ic.closeThin, size: 14, color: gc.textSecondary),
-                  ),
-                ),
-            ]),
+          Text(
+            '$categoryExerciseCount exercícios encontrados',
+            style: AppTheme.s(13, color: gc.textSecondary),
           ),
           const SizedBox(height: 14),
+        ] else ...[
           CategoryTabSelector(
             selectedTab: _tab,
             onTabSelected: (i) {
@@ -378,53 +378,6 @@ class _RoutineEditScreenState extends State<RoutineEditScreen> {
     );
   }
 
-  Widget _searchHeader(GymColors gc, int count) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Container(
-          height: 48,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            color: gc.bgRaised,
-            border: Border.all(color: gc.border),
-            borderRadius: BorderRadius.circular(100),
-          ),
-          child: Row(children: [
-            SvgPathIcon(Ic.search, size: 16, color: gc.textSecondary),
-            const SizedBox(width: 10),
-            Expanded(
-              child: TextField(
-                controller: _search,
-                onChanged: (v) => setState(() => _q = v),
-                style: AppTheme.s(14, color: gc.text),
-                cursorColor: gc.accent,
-                decoration: InputDecoration(
-                  isCollapsed: true,
-                  border: InputBorder.none,
-                  hintText: t.addExercises,
-                  hintStyle: AppTheme.s(14, color: gc.textSecondary),
-                ),
-              ),
-            ),
-            GestureDetector(
-              onTap: () {
-                _search.clear();
-                setState(() => _q = '');
-              },
-              child: Icon(PhosphorIconsRegular.xCircle, size: 18, color: gc.textSecondary),
-            ),
-          ]),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          '$count exercícios encontrados',
-          style: AppTheme.s(13, color: gc.textSecondary),
-        ),
-        const SizedBox(height: 14),
-      ],
-    );
-  }
 
   Widget _empty(GymColors gc) {
     return Padding(

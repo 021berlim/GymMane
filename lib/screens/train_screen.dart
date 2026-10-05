@@ -246,8 +246,6 @@ class _TrainScreenState extends State<TrainScreen> {
   }
 
   List<Exercise> get _reviewFilteredExercises {
-    final q = _q.trim().toLowerCase();
-
     return fit.allExercises.where((ex) {
       if (_selectedMuscle != null) {
         if (_selectedMuscle == 'cardio') {
@@ -266,12 +264,8 @@ class _TrainScreenState extends State<TrainScreen> {
         if (fit.favorites[ex.id] != true) return false;
       }
 
-      if (q.isNotEmpty) {
-        final nameMatches = ex.name.toLowerCase().contains(q) ||
-            ex.namePt.toLowerCase().contains(q) ||
-            ex.localizedName().toLowerCase().contains(q) ||
-            exerciseName(ex).toLowerCase().contains(q);
-        if (!nameMatches) return false;
+      if (_q.trim().isNotEmpty) {
+        if (!matchesExerciseSearch(ex, _q)) return false;
       }
 
       return true;
